@@ -26,16 +26,21 @@ export function NavActions({ user }: { user: User | null }) {
 
   return (
     <div className="flex items-center gap-3">
-      <div
-        className="flex h-10 w-10 items-center justify-center rounded-full text-base font-bold text-white"
-        style={{ background: "#B45309" }}
-        aria-hidden
+      <Link
+        href="/profile"
+        className="flex items-center gap-3"
+        aria-label="我的帳戶"
       >
-        {initials}
-      </div>
-      <span className="hidden text-base font-medium sm:inline" style={{ color: "#1C1917" }}>
-        {displayName}
-      </span>
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-full text-base font-bold text-white"
+          style={{ background: "#B45309" }}
+        >
+          {initials}
+        </div>
+        <span className="hidden text-base font-medium sm:inline" style={{ color: "#1C1917" }}>
+          {displayName}
+        </span>
+      </Link>
       <form action={signOut}>
         <button
           type="submit"
