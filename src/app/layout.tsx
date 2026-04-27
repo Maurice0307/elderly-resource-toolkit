@@ -11,13 +11,19 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   applicationName: siteConfig.shortName,
   metadataBase: new URL(siteConfig.url),
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: siteConfig.shortName,
+  },
+  formatDetection: { telephone: false },
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-Hant" className="h-full antialiased">
+    <html lang="zh-Hant" className="h-full antialiased" style={{ colorScheme: "light only" }}>
       <body className="min-h-full flex flex-col bg-white text-slate-900 text-[20px] leading-relaxed">
         <NavBar />
         {children}
