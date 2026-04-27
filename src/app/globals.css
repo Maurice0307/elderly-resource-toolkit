@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/* ── 強制亮色模式 ── */
+:root {
+  color-scheme: light only;
+}
+
+/* ── 全域排版 ── */
+body {
+  background-color: #FFFBF5;   /* 溫暖米白底 */
+  color: #1C1917;               /* stone-950：高對比深色字 */
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
+               "Helvetica Neue", Arial, sans-serif;
+  font-size: 20px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 連結預設不加底線，hover 才加 ── */
+a { text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── 焦點環：明顯的橘色，符合無障礙要求 ── */
+:focus-visible {
+  outline: 4px solid #D97706;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
