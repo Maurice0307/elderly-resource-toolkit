@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { signOut } from "@/lib/auth/actions";
 
-export function NavActions({ user }: { user: User | null }) {
+export function NavActions({ user, role }: { user: User | null; role?: string | null }) {
   if (!user) {
     return (
       <Link
@@ -24,8 +24,19 @@ export function NavActions({ user }: { user: User | null }) {
 
   const initials = displayName.slice(0, 1).toUpperCase();
 
+  const isStaff = role === "moderator" || role === "admin";
+
   return (
     <div className="flex items-center gap-3">
+      {isStaff && (
+        <Link
+          href="/admin"
+          className="hidden rounded-full px-4 py-2 text-base font-semibold sm:inline-block"
+          style={{ background: "#1C1917", color: "#FDE68A" }}
+        >
+          後台
+        </Link>
+      )}
       <Link
         href="/profile"
         className="flex items-center gap-3"

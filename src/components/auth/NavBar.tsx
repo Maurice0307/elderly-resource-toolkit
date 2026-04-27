@@ -7,6 +7,16 @@ export async function NavBar() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  let role: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    role = profile?.role ?? null;
+  }
+
   return (
     <header
       className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3"
@@ -42,7 +52,7 @@ export async function NavBar() {
         🔍
       </Link>
 
-      <NavActions user={user} />
+      <NavActions user={user} role={role} />
     </header>
   );
 }
