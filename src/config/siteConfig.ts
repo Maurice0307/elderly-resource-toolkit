@@ -2,7 +2,7 @@ export const siteConfig = {
   name: "長者資源工具包",
   shortName: "長者工具包",
   description: "中高齡者、家屬與志工的全方位陪伴與資源導航平台",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://elderly-resource-toolkit.vercel.app",
   defaultRegionCode: process.env.NEXT_PUBLIC_DEFAULT_REGION_CODE ?? "TW-TYC-ZL",
   brand: {
     primary: "#2563EB",
