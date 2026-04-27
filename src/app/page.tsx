@@ -192,6 +192,60 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── 互助問答 ── */}
+      <section className="px-6 py-14" style={{ background: "#FFFBF5" }}>
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-center text-3xl font-bold" style={{ color: "#1C1917" }}>
+            互助問答
+          </h2>
+          <p className="mt-2 text-center text-lg" style={{ color: "#57534E" }}>
+            有問題就發問，在地志工來解答
+          </p>
+
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <Link
+              href="/qa"
+              className="group flex flex-col rounded-2xl bg-white p-8 shadow-sm transition hover:shadow-md"
+              style={{ border: "2px solid #E7E5E4", borderLeftWidth: 6, borderLeftColor: "#0369A1" }}
+            >
+              <span className="text-5xl">💬</span>
+              <h3 className="mt-4 text-2xl font-bold" style={{ color: "#0369A1" }}>
+                瀏覽問答
+              </h3>
+              <p className="mt-2 text-lg leading-relaxed" style={{ color: "#57534E" }}>
+                看看其他人問過什麼，或搜尋在地資訊
+              </p>
+              <span
+                className="mt-4 text-lg font-semibold transition group-hover:translate-x-1"
+                style={{ color: "#0369A1" }}
+              >
+                進入問答 →
+              </span>
+            </Link>
+
+            <Link
+              href="/qa/ask"
+              className="group flex flex-col rounded-2xl bg-white p-8 shadow-sm transition hover:shadow-md"
+              style={{ border: "2px solid #E7E5E4", borderLeftWidth: 6, borderLeftColor: "#7E22CE" }}
+            >
+              <span className="text-5xl">✋</span>
+              <h3 className="mt-4 text-2xl font-bold" style={{ color: "#7E22CE" }}>
+                我要發問
+              </h3>
+              <p className="mt-2 text-lg leading-relaxed" style={{ color: "#57534E" }}>
+                「中壢哪裡有免費量血壓？」在地志工來回答
+              </p>
+              <span
+                className="mt-4 text-lg font-semibold transition group-hover:translate-x-1"
+                style={{ color: "#7E22CE" }}
+              >
+                立即發問 →
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── 底部說明 ── */}
       <footer
         className="mt-auto px-6 py-8 text-center text-base"
