@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth/requireRole";
 import { approveResource, rejectResource, markResourceEnded } from "@/lib/admin/actions";
+import { ResourceReviewPanel } from "@/components/admin/ResourceReviewPanel";
 
 const statusMap: Record<string, { label: string; bg: string; color: string }> = {
   pending:  { label: "待審核", bg: "#FEF3C7", color: "#92400E" },
@@ -20,7 +21,7 @@ export default async function AdminResourcesPage({
 
   const { data: rawResources, error: resourcesError } = await admin
     .from("resources")
-    .select("id, name, summary, scope, status, created_at, submitted_by, subcategory_id")
+    .select("id, name, summary, description, phone, address, website_url, tags, scope, status, created_at, submitted_by, subcategory_id")
     .eq("status", status)
     .order("created_at", { ascending: true })
     .limit(50);
@@ -140,39 +141,8 @@ export default async function AdminResourcesPage({
                     </p>
                   </div>
 
-                  {/* Actions */}
+                  {/* Quick actions (non-pending) */}
                   <div className="flex flex-wrap gap-2 shrink-0">
-                    <a
-                      href={`/resources/health/${r.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-full px-4 py-2 text-base font-semibold"
-                      style={{ background: "#F5F0E8", color: "#78716C", border: "1.5px solid #E7E5E4" }}
-                    >
-                      預覽
-                    </a>
-                    {r.status === "pending" && (
-                      <>
-                        <form action={approveResource.bind(null, r.id)}>
-                          <button
-                            type="submit"
-                            className="rounded-full px-4 py-2 text-base font-bold text-white"
-                            style={{ background: "#065F46" }}
-                          >
-                            ✅ 核准
-                          </button>
-                        </form>
-                        <form action={rejectResource.bind(null, r.id)}>
-                          <button
-                            type="submit"
-                            className="rounded-full px-4 py-2 text-base font-bold text-white"
-                            style={{ background: "#DC2626" }}
-                          >
-                            ✗ 拒絕
-                          </button>
-                        </form>
-                      </>
-                    )}
                     {r.status === "active" && (
                       <form action={markResourceEnded.bind(null, r.id)}>
                         <button
@@ -195,8 +165,24 @@ export default async function AdminResourcesPage({
                         </button>
                       </form>
                     )}
+                    {r.status === "pending" && (
+                      <form action={rejectResource.bind(null, r.id)}>
+                        <button
+                          type="submit"
+                          className="rounded-full px-4 py-2 text-base font-semibold"
+                          style={{ background: "#FEE2E2", color: "#DC2626", border: "1.5px solid #FCA5A5" }}
+                        >
+                          ✗ 直接拒絕
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </div>
+
+                {/* AI review panel — pending only */}
+                {r.status === "pending" && (
+                  <ResourceReviewPanel resource={r as Parameters<typeof ResourceReviewPanel>[0]["resource"]} />
+                )}
               </li>
             );
           })}

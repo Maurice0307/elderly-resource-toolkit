@@ -24,6 +24,36 @@ async function assertAdmin() {
 
 // ── Resource moderation ────────────────────────────────────────────────
 
+export async function updateAndApproveResource(
+  resourceId: string,
+  fields: {
+    name: string;
+    summary: string;
+    description: string;
+    phone: string;
+    address: string;
+    website_url: string;
+    tags: string[];
+  },
+) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  await admin
+    .from("resources")
+    .update({
+      name: fields.name || undefined,
+      summary: fields.summary || null,
+      description: fields.description || null,
+      phone: fields.phone || null,
+      address: fields.address || null,
+      website_url: fields.website_url || null,
+      tags: fields.tags,
+      status: "active",
+    })
+    .eq("id", resourceId);
+  revalidatePath("/admin/resources");
+}
+
 export async function approveResource(resourceId: string) {
   await assertAdmin();
   const admin = createAdminClient();
