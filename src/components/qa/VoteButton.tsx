@@ -27,8 +27,8 @@ export function VoteButton({ answerId, questionId, voteCount, hasVoted, userId }
       className="flex items-center gap-1.5 rounded-full px-4 py-2 text-base font-semibold transition disabled:opacity-60"
       style={
         hasVoted
-          ? { background: "#FEF3C7", color: "#92400E", border: "1.5px solid #FDE68A" }
-          : { background: "#F5F0E8", color: "#78716C", border: "1.5px solid #E7E5E4" }
+          ? { background: "var(--bg-accent)", color: "#92400E", border: "1.5px solid #FDE68A", minHeight: "var(--hit)" }
+          : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)", minHeight: "var(--hit)" }
       }
     >
       👍 {voteCount}

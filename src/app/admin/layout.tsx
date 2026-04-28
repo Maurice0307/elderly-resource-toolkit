@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { role, displayName } = await requireRole("moderator");
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ background: "#FFFBF5" }}>
+    <div className="flex min-h-screen flex-col" style={{ background: "var(--bg-page)" }}>
       {/* Admin top bar */}
       <div
         className="sticky top-0 z-30 flex items-center gap-4 px-5 py-3"
@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           className="ml-auto rounded-full px-3 py-1 text-sm font-semibold"
           style={
             role === "admin"
-              ? { background: "#B45309", color: "#FFFBEB" }
+              ? { background: "var(--cta)", color: "var(--cta-on)" }
               : { background: "#374151", color: "#D1D5DB" }
           }
         >

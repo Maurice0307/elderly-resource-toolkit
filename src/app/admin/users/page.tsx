@@ -23,10 +23,10 @@ export default async function AdminUsersPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold" style={{ color: "#1C1917" }}>
+      <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
         用戶管理
       </h1>
-      <p className="mt-1 text-lg" style={{ color: "#57534E" }}>
+      <p className="mt-1 text-lg" style={{ color: "var(--text-secondary)" }}>
         僅超級管理員可見。調整角色後立即生效。
       </p>
 
@@ -37,20 +37,20 @@ export default async function AdminUsersPage() {
           return (
             <li
               key={u.id}
-              className="flex flex-wrap items-center gap-3 rounded-2xl bg-white p-5"
-              style={{ border: "2px solid #E7E5E4" }}
+              className="flex flex-wrap items-center gap-3 rounded-2xl p-5"
+              style={{ background: "var(--bg-elevated)", border: "2px solid var(--border)" }}
             >
               <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
-                style={{ background: "#B45309" }}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold"
+                style={{ background: "var(--cta)", color: "var(--cta-on)" }}
               >
                 {(u.display_name ?? "?").slice(0, 1).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xl font-bold" style={{ color: "#1C1917" }}>
+                <p className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
                   {u.display_name ?? "（未設定名稱）"}
                   {isSelf && (
-                    <span className="ml-2 text-sm font-normal" style={{ color: "#A8A29E" }}>
+                    <span className="ml-2 text-sm font-normal" style={{ color: "var(--text-muted)" }}>
                       （你）
                     </span>
                   )}
@@ -62,7 +62,7 @@ export default async function AdminUsersPage() {
                   >
                     {info.label}
                   </span>
-                  <span className="text-sm" style={{ color: "#A8A29E" }}>
+                  <span className="text-sm" style={{ color: "var(--text-muted)" }}>
                     積分 {u.points}
                   </span>
                 </div>

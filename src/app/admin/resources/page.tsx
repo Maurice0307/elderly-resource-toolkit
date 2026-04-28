@@ -56,7 +56,7 @@ export default async function AdminResourcesPage({
 
   return (
     <div>
-      <h1 className="text-3xl font-bold" style={{ color: "#1C1917" }}>
+      <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
         資源審核
       </h1>
 
@@ -90,7 +90,7 @@ export default async function AdminResourcesPage({
       {resources.length === 0 ? (
         <div
           className="mt-8 rounded-2xl p-10 text-center text-xl"
-          style={{ background: "#F5F0E8", color: "#78716C" }}
+          style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
         >
           目前沒有「{statusMap[status]?.label}」狀態的資源
         </div>
@@ -102,8 +102,8 @@ export default async function AdminResourcesPage({
             return (
               <li
                 key={r.id}
-                className="rounded-2xl bg-white p-6"
-                style={{ border: "2px solid #E7E5E4" }}
+                className="rounded-2xl p-6"
+                style={{ background: "var(--bg-elevated)", border: "2px solid var(--border)" }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -127,15 +127,15 @@ export default async function AdminResourcesPage({
                         {r.scope === "national" ? "全國" : "在地"}
                       </span>
                     </div>
-                    <h2 className="mt-2 text-2xl font-bold" style={{ color: "#1C1917" }}>
+                    <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
                       {r.name}
                     </h2>
                     {r.summary && (
-                      <p className="mt-1 text-lg" style={{ color: "#57534E" }}>
+                      <p className="mt-1 text-lg" style={{ color: "var(--text-secondary)" }}>
                         {r.summary}
                       </p>
                     )}
-                    <p className="mt-2 text-sm" style={{ color: "#A8A29E" }}>
+                    <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
                       投稿者：{submitterName} ·{" "}
                       {new Date(r.created_at).toLocaleDateString("zh-TW")}
                     </p>

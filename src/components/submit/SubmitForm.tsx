@@ -83,8 +83,8 @@ export function SubmitForm({ subcategories, regions }: Props) {
               className="flex cursor-pointer items-center gap-3 rounded-2xl px-6 py-4 text-xl transition"
               style={
                 scope === v
-                  ? { background: "#FEF3C7", border: "2px solid #FDE68A", color: "#92400E", fontWeight: 600 }
-                  : { background: "#F5F0E8", border: "2px solid transparent", color: "#57534E" }
+                  ? { background: "var(--bg-accent)", border: "2px solid #FDE68A", color: "#92400E", fontWeight: 600, minHeight: "var(--hit)" }
+                  : { background: "var(--bg-soft)", border: "2px solid transparent", color: "var(--text-secondary)", minHeight: "var(--hit)" }
               }
             >
               <input
@@ -178,7 +178,7 @@ export function SubmitForm({ subcategories, regions }: Props) {
       {state?.error && (
         <div
           className="rounded-xl px-5 py-4 text-lg"
-          style={{ background: "#FEE2E2", color: "#991B1B" }}
+          style={{ background: "var(--alert-soft)", color: "var(--alert)" }}
         >
           {state.error}
         </div>
@@ -187,13 +187,13 @@ export function SubmitForm({ subcategories, regions }: Props) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-2xl py-6 text-2xl font-bold text-white transition disabled:opacity-60"
-        style={{ background: "#B45309" }}
+        className="w-full rounded-2xl py-6 text-2xl font-bold transition disabled:opacity-60"
+        style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
       >
         {pending ? "送出中…" : "📮 送出投稿"}
       </button>
 
-      <p className="text-center text-base" style={{ color: "#A8A29E" }}>
+      <p className="text-center text-base" style={{ color: "var(--text-muted)" }}>
         投稿後會由志工審核，通過後才會公開顯示
       </p>
     </form>
@@ -202,7 +202,7 @@ export function SubmitForm({ subcategories, regions }: Props) {
 
 /* helpers */
 const inputClass = "w-full rounded-xl border px-5 py-4 text-xl outline-none transition focus:ring-2";
-const inputStyle = { borderColor: "#E7E5E4", background: "#FFFBF5", color: "#1C1917" };
+const inputStyle = { borderColor: "var(--border)", background: "var(--bg-page)", color: "var(--text-primary)" };
 
 function Field({
   label,
@@ -217,11 +217,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-lg font-semibold" style={{ color: "#1C1917" }}>
+      <label className="mb-2 block text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
         {label}
-        {required && <span className="ml-1 text-base" style={{ color: "#DC2626" }}>＊</span>}
+        {required && <span className="ml-1 text-base" style={{ color: "var(--alert)" }}>＊</span>}
       </label>
-      {hint && <p className="mb-2 text-base" style={{ color: "#78716C" }}>{hint}</p>}
+      {hint && <p className="mb-2 text-base" style={{ color: "var(--text-muted)" }}>{hint}</p>}
       {children}
     </div>
   );

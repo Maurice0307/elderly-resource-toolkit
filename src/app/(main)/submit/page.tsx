@@ -35,17 +35,17 @@ export default async function SubmitPage() {
   }[];
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "#FFFBF5" }}>
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-2xl">
-        <Link href="/" className="text-lg font-medium" style={{ color: "#B45309" }}>
+        <Link href="/" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
           ← 回首頁
         </Link>
 
         <header className="mt-5">
-          <h1 className="text-4xl font-bold" style={{ color: "#1C1917" }}>
+          <h1 className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
             投稿資源
           </h1>
-          <p className="mt-2 text-xl leading-relaxed" style={{ color: "#57534E" }}>
+          <p className="mt-2 text-xl leading-relaxed" style={{ color: "var(--text-secondary)" }}>
             知道一個對長輩很有幫助的服務？填寫以下資料，讓更多人看見它。
           </p>
         </header>

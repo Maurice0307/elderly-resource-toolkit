@@ -137,16 +137,17 @@ export function VoiceSearchHero() {
           placeholder="例：腳痛怎麼辦、附近有共餐嗎"
           className="flex-1 rounded-2xl px-6 py-5 text-xl outline-none"
           style={{
-            background: "#FFFBEB",
-            color: "#1C1917",
-            border: `2px solid ${listening ? "#DC2626" : "rgba(253,230,138,0.7)"}`,
+            background: "#FFFFFF",
+            color: "var(--text-primary)",
+            border: `2px solid ${listening ? "var(--alert)" : "rgba(255,255,255,0.7)"}`,
             fontStyle: listening && interim ? "italic" : "normal",
+            minHeight: "var(--hit)",
           }}
         />
         <button
           type="submit"
           className="rounded-2xl px-7 py-5 text-xl font-bold transition"
-          style={{ background: "#FFFBEB", color: "#92400E" }}
+          style={{ background: "#FFFFFF", color: "var(--cta)", minHeight: "var(--hit)" }}
         >
           搜尋
         </button>
@@ -160,16 +161,17 @@ export function VoiceSearchHero() {
           aria-label={listening ? "停止錄音" : "開始語音搜尋"}
           className="inline-flex items-center justify-center gap-3 rounded-full px-10 py-5 text-xl font-bold shadow-xl transition"
           style={{
-            background: listening ? "#DC2626" : "#FFFBEB",
-            color: listening ? "#FFFFFF" : "#92400E",
+            background: listening ? "var(--alert)" : "#FFFFFF",
+            color: listening ? "#FFFFFF" : "var(--cta)",
             cursor: supported ? "pointer" : "not-allowed",
             opacity: supported ? 1 : 0.6,
+            minHeight: "var(--hit)",
           }}
         >
           {listening ? "🔴 錄音中…點擊停止" : "🎙 按一下說話"}
         </button>
         {!supported && (
-          <p className="text-base" style={{ color: "#FDE68A" }}>
+          <p className="text-base" style={{ color: "#F5EFE7" }}>
             您的瀏覽器不支援語音辨識，請改用 Chrome 或 Safari
           </p>
         )}
@@ -177,10 +179,10 @@ export function VoiceSearchHero() {
           <p className="text-base font-semibold" style={{ color: "#FECACA" }}>{error}</p>
         )}
         {listening && !interim && (
-          <p className="text-base" style={{ color: "#FDE68A" }}>請說話，例如：「媽媽腳痛想去醫院」</p>
+          <p className="text-base" style={{ color: "#F5EFE7" }}>請說話，例如：「媽媽腳痛想去醫院」</p>
         )}
         {!listening && text && (
-          <p className="text-base" style={{ color: "#FDE68A" }}>聽到：「{text}」，正在搜尋…</p>
+          <p className="text-base" style={{ color: "#F5EFE7" }}>聽到：「{text}」，正在搜尋…</p>
         )}
       </div>
     </div>

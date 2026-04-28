@@ -58,7 +58,7 @@ export function ShareCardButton({ resource }: Props) {
         disabled={busy}
         aria-label={`生成 ${resource.name} 分享圖卡`}
         className="inline-flex w-full items-center justify-center gap-3 rounded-2xl py-6 text-2xl font-bold shadow-md transition active:scale-95 disabled:opacity-60"
-        style={{ background: "#B45309", color: "#FFFFFF" }}
+        style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
       >
         {busy ? "生成中…" : "🖼 生成圖卡"}
       </button>

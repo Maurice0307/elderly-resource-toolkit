@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/siteConfig";
 import { NavBar } from "@/components/auth/NavBar";
+import { ScrollToTop } from "@/components/common/ScrollToTop";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,9 +25,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-Hant" className="h-full antialiased" style={{ colorScheme: "light only" }}>
-      <body className="min-h-full flex flex-col bg-white text-slate-900 text-[20px] leading-relaxed">
+      <body className="min-h-full flex flex-col">
         <NavBar />
         {children}
+        <ScrollToTop />
       </body>
     </html>
   );

@@ -9,8 +9,8 @@ export function NavActions({ user, role }: { user: User | null; role?: string | 
     return (
       <Link
         href="/login"
-        className="rounded-full px-5 py-2 text-base font-semibold text-white transition"
-        style={{ background: "#B45309" }}
+        className="rounded-full px-5 py-2 text-base font-semibold transition"
+        style={{ background: "var(--cta)", color: "var(--cta-on)" }}
       >
         登入
       </Link>
@@ -32,7 +32,7 @@ export function NavActions({ user, role }: { user: User | null; role?: string | 
         <Link
           href="/admin"
           className="hidden rounded-full px-4 py-2 text-base font-semibold sm:inline-block"
-          style={{ background: "#1C1917", color: "#FDE68A" }}
+          style={{ background: "var(--text-primary)", color: "var(--bg-accent)" }}
         >
           後台
         </Link>
@@ -43,12 +43,12 @@ export function NavActions({ user, role }: { user: User | null; role?: string | 
         aria-label="我的帳戶"
       >
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-full text-base font-bold text-white"
-          style={{ background: "#B45309" }}
+          className="flex h-10 w-10 items-center justify-center rounded-full text-base font-bold"
+          style={{ background: "var(--cta)", color: "var(--cta-on)" }}
         >
           {initials}
         </div>
-        <span className="hidden text-base font-medium sm:inline" style={{ color: "#1C1917" }}>
+        <span className="hidden text-base font-medium sm:inline" style={{ color: "var(--text-primary)" }}>
           {displayName}
         </span>
       </Link>
@@ -56,7 +56,7 @@ export function NavActions({ user, role }: { user: User | null; role?: string | 
         <button
           type="submit"
           className="rounded-full px-4 py-2 text-base font-medium transition"
-          style={{ background: "#F5F0E8", color: "#78716C" }}
+          style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
         >
           登出
         </button>

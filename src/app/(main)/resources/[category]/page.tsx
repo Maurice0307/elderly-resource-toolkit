@@ -29,14 +29,14 @@ export default async function CategoryPage({
   const resources = await listResourcesByCategory({ categorySlug: category, subcategorySlug: sub, scope });
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "#FFFBF5" }}>
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-5xl">
 
         {/* 返回 */}
         <Link
           href="/resources"
           className="inline-flex items-center gap-1 text-lg font-medium"
-          style={{ color: "#B45309" }}
+          style={{ color: "var(--cta)" }}
         >
           ← 全部分類
         </Link>
@@ -46,7 +46,7 @@ export default async function CategoryPage({
           <h1 className="text-4xl font-bold" style={{ color: cat.color }}>
             {cat.name}
           </h1>
-          <p className="mt-1 text-xl" style={{ color: "#57534E" }}>
+          <p className="mt-1 text-xl" style={{ color: "var(--text-secondary)" }}>
             找到 {resources.length} 項服務
           </p>
         </header>
@@ -66,8 +66,8 @@ export default async function CategoryPage({
                 className="rounded-full px-6 py-3 text-lg font-semibold transition"
                 style={
                   active
-                    ? { background: cat.color, color: "#FFFFFF" }
-                    : { background: "#F5F0E8", color: "#44403C", border: "1px solid #E7E5E4" }
+                    ? { background: cat.color, color: "var(--cta-on)", minHeight: "var(--hit)" }
+                    : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1px solid var(--border)", minHeight: "var(--hit)" }
                 }
               >
                 {s === "all" ? "全部" : s === "national" ? "全國" : "在地"}
@@ -83,8 +83,8 @@ export default async function CategoryPage({
             className="rounded-full px-4 py-2 text-base font-semibold transition"
             style={
               !sub
-                ? { background: "#1C1917", color: "#FFFFFF" }
-                : { background: "#F5F0E8", color: "#44403C", border: "1px solid #E7E5E4" }
+                ? { background: "var(--text-primary)", color: "var(--cta-on)" }
+                : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1px solid var(--border)" }
             }
           >
             全部
@@ -100,8 +100,8 @@ export default async function CategoryPage({
                 className="rounded-full px-4 py-2 text-base font-medium transition"
                 style={
                   sub === s.slug
-                    ? { background: "#1C1917", color: "#FFFFFF" }
-                    : { background: "#F5F0E8", color: "#44403C", border: "1px solid #E7E5E4" }
+                    ? { background: "var(--text-primary)", color: "var(--cta-on)" }
+                    : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1px solid var(--border)" }
                 }
               >
                 {s.name}
@@ -115,7 +115,7 @@ export default async function CategoryPage({
           {resources.length === 0 ? (
             <div
               className="rounded-2xl p-12 text-center text-xl"
-              style={{ background: "#FEF3C7", color: "#92400E", border: "2px dashed #FDE68A" }}
+              style={{ background: "var(--bg-accent)", color: "#92400E", border: "2px dashed #FDE68A" }}
             >
               此分類目前還沒有資源。<br />
               歡迎到「我有好點子」頁面投稿！

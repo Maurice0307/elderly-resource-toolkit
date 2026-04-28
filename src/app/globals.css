@@ -3,26 +3,72 @@
 /* ── 強制亮色模式 ── */
 :root {
   color-scheme: light only;
+
+  /* 表面 */
+  --bg-page: #FAF8F5;          /* 主背景：溫暖米白 */
+  --bg-elevated: #FFFFFF;      /* 卡片底色 */
+  --bg-soft: #F1ECE3;          /* 次級區塊底 */
+  --bg-accent: #FEF3C7;        /* 提示／徽章底 */
+
+  /* 文字 */
+  --text-primary: #2C3E50;     /* 主要文字：深藍灰，高對比 */
+  --text-secondary: #5D6D7E;   /* 次要文字 */
+  --text-muted: #95A5A6;       /* 弱化文字 */
+  --text-inverse: #FFFFFF;
+
+  /* 主要 CTA */
+  --cta: #8D6E63;              /* 溫暖棕：主要按鈕 */
+  --cta-hover: #6D4C41;
+  --cta-soft: #EFEBE9;
+  --cta-on: #FFFFFF;
+
+  /* 語意色 */
+  --success: #4CAF50;
+  --success-soft: #E8F5E9;
+  --warning: #F57C00;
+  --warning-soft: #FFF3E0;
+  --alert: #B71C1C;
+  --alert-soft: #FFEBEE;
+
+  /* 邊框 */
+  --border: #E5DFD3;
+  --border-strong: #C9C0AD;
+
+  /* 互動 */
+  --hit: 48px;                 /* 最小點擊區 */
+  --radius-card: 1rem;
+  --radius-pill: 999px;
 }
 
 /* ── 全域排版 ── */
 body {
-  background-color: #FFFBF5;   /* 溫暖米白底 */
-  color: #1C1917;               /* stone-950：高對比深色字 */
+  background-color: var(--bg-page);
+  color: var(--text-primary);
   font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
                "Helvetica Neue", Arial, sans-serif;
-  font-size: 20px;
-  line-height: 1.75;
+  font-size: 18px;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
+
+/* 標題行高略緊湊 */
+h1, h2, h3, h4 { line-height: 1.35; }
 
 /* ── 連結預設不加底線，hover 才加 ── */
 a { text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* ── 焦點環：明顯的橘色，符合無障礙要求 ── */
+/* ── 按鈕／連結最小點擊區 ── */
+button, [role="button"], a.btn, .btn {
+  min-height: var(--hit);
+}
+
+/* ── 焦點環：明顯，符合無障礙 ── */
 :focus-visible {
-  outline: 4px solid #D97706;
+  outline: 4px solid var(--cta);
   outline-offset: 3px;
   border-radius: 6px;
 }
+
+/* ── 輔助：圖示放大 1.5x（在元素上加 .icon-lg） ── */
+.icon-lg { font-size: 1.5em; line-height: 1; }

@@ -124,18 +124,18 @@ export default async function SearchPage({
   const selectedCat = availableCats.find((c) => c.slug === cat);
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "#FFFBF5" }}>
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-lg font-medium" style={{ color: "#B45309" }}>
+        <Link href="/" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
           ← 回首頁
         </Link>
 
-        <h1 className="mt-5 text-4xl font-bold" style={{ color: "#1C1917" }}>
+        <h1 className="mt-5 text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
           搜尋資源
         </h1>
 
         {region && (
-          <p className="mt-2 text-base" style={{ color: "#78716C" }}>
+          <p className="mt-2 text-base" style={{ color: "var(--text-muted)" }}>
             📍 在地優先：{region.name}（同時顯示全國資源）
           </p>
         )}
@@ -150,12 +150,12 @@ export default async function SearchPage({
               autoFocus
               placeholder="腳痛怎麼辦、附近有共餐嗎、防詐騙…"
               className="flex-1 rounded-2xl border px-6 py-5 text-xl outline-none transition focus:ring-2"
-              style={{ borderColor: "#E7E5E4", background: "#FFFFFF", color: "#1C1917" }}
+              style={{ borderColor: "var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)" }}
             />
             <button
               type="submit"
-              className="rounded-2xl px-7 py-5 text-xl font-bold text-white"
-              style={{ background: "#B45309" }}
+              className="rounded-2xl px-7 py-5 text-xl font-bold"
+              style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
             >
               搜尋
             </button>
@@ -183,7 +183,7 @@ export default async function SearchPage({
                 {intent.source === "llm" ? "✨ AI 智慧理解" : "🔎 關鍵字匹配"}
               </span>
               {intent.reasoning && (
-                <span className="text-base" style={{ color: "#57534E" }}>
+                <span className="text-base" style={{ color: "var(--text-secondary)" }}>
                   {intent.reasoning}
                 </span>
               )}
@@ -212,7 +212,7 @@ export default async function SearchPage({
         {/* 結果 */}
         {q && (
           <div className="mt-6">
-            <p className="text-lg" style={{ color: "#57534E" }}>
+            <p className="text-lg" style={{ color: "var(--text-secondary)" }}>
               {results.length > 0 ? (
                 <>
                   找到 <strong>{results.length}</strong> 筆
@@ -235,8 +235,8 @@ export default async function SearchPage({
                   className="rounded-full px-4 py-2 text-base font-semibold transition"
                   style={
                     !cat
-                      ? { background: "#B45309", color: "#FFFFFF" }
-                      : { background: "#F5F0E8", color: "#78716C", border: "1.5px solid #E7E5E4" }
+                      ? { background: "var(--cta)", color: "var(--cta-on)" }
+                      : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)" }
                   }
                 >
                   全部 ({allResults.length})
@@ -251,7 +251,7 @@ export default async function SearchPage({
                       className="rounded-full px-4 py-2 text-base font-semibold transition"
                       style={
                         isActive
-                          ? { background: c.color, color: "#FFFFFF" }
+                          ? { background: c.color, color: "var(--cta-on)" }
                           : {
                               background: c.color + "15",
                               color: c.color,
@@ -269,9 +269,9 @@ export default async function SearchPage({
             {results.length === 0 ? (
               <div
                 className="mt-6 rounded-2xl p-10 text-center text-xl"
-                style={{ background: "#FEF3C7", color: "#92400E", border: "2px dashed #FDE68A" }}
+                style={{ background: "var(--bg-accent)", color: "#92400E", border: "2px dashed #FDE68A" }}
               >
-                <div className="text-5xl">🔍</div>
+                <div className="text-7xl">🔍</div>
                 <p className="mt-4">試試其他關鍵字，或瀏覽下方分類</p>
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   {["送餐", "日照", "輔具", "交通", "喘息", "失智"].map((kw) => (
@@ -280,8 +280,8 @@ export default async function SearchPage({
                       href={`/search?q=${encodeURIComponent(kw)}&mode=intent`}
                       className="rounded-full px-4 py-2 text-base font-medium"
                       style={{
-                        background: "#FFFFFF",
-                        color: "#B45309",
+                        background: "var(--bg-elevated)",
+                        color: "var(--cta)",
                         border: "1.5px solid #FDE68A",
                       }}
                     >
@@ -301,8 +301,13 @@ export default async function SearchPage({
                     <li key={r.id}>
                       <Link
                         href={`/resources/${catSlug}/${r.id}`}
-                        className="group flex flex-col rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-                        style={{ border: "2px solid #E7E5E4" }}
+                        className="group flex flex-col rounded-2xl p-6 shadow-sm transition hover:shadow-md"
+                        style={{
+                          background: "var(--bg-elevated)",
+                          border: "2px solid var(--border)",
+                          borderLeftWidth: 6,
+                          borderLeftColor: cMeta?.color ?? "var(--cta)",
+                        }}
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           {cMeta && (
@@ -317,8 +322,8 @@ export default async function SearchPage({
                             className="rounded-full px-3 py-1 text-sm"
                             style={
                               r.scope === "national"
-                                ? { background: "#FEF3C7", color: "#92400E" }
-                                : { background: "#ECFDF5", color: "#065F46" }
+                                ? { background: "var(--bg-accent)", color: "#92400E" }
+                                : { background: "var(--success-soft)", color: "#065F46" }
                             }
                           >
                             {r.scope === "national" ? "全國" : "在地"}
@@ -334,7 +339,7 @@ export default async function SearchPage({
                           {r.region?.name && (
                             <span
                               className="rounded-full px-3 py-1 text-sm"
-                              style={{ background: "#F5F5F4", color: "#57534E" }}
+                              style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
                             >
                               {r.region.name}
                             </span>
@@ -342,27 +347,27 @@ export default async function SearchPage({
                         </div>
                         <h2
                           className="mt-3 text-2xl font-bold leading-snug"
-                          style={{ color: "#1C1917" }}
+                          style={{ color: "var(--text-primary)" }}
                         >
                           {r.name}
                         </h2>
                         {r.summary && (
                           <p
                             className="mt-2 line-clamp-2 text-lg leading-relaxed"
-                            style={{ color: "#57534E" }}
+                            style={{ color: "var(--text-secondary)" }}
                           >
                             {r.summary}
                           </p>
                         )}
                         <div className="mt-3 flex items-center justify-between">
                           {r.like_count > 0 && (
-                            <span className="text-base" style={{ color: "#A8A29E" }}>
+                            <span className="text-base" style={{ color: "var(--text-muted)" }}>
                               👍 {r.like_count}
                             </span>
                           )}
                           <span
                             className="ml-auto text-base font-semibold transition group-hover:translate-x-1"
-                            style={{ color: "#B45309" }}
+                            style={{ color: "var(--cta)" }}
                           >
                             查看 →
                           </span>
@@ -379,7 +384,7 @@ export default async function SearchPage({
         {/* 未輸入時顯示分類入口 */}
         {!q && (
           <div className="mt-10">
-            <p className="text-lg font-medium" style={{ color: "#57534E" }}>
+            <p className="text-lg font-medium" style={{ color: "var(--text-secondary)" }}>
               或直接瀏覽分類：
             </p>
             <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">

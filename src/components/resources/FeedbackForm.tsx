@@ -49,45 +49,45 @@ export function FeedbackForm({
         type="button"
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 rounded-2xl px-6 py-4 text-xl font-semibold transition"
-        style={{ background: "#F5F0E8", color: "#78716C", border: "2px solid #E7E5E4" }}
+        style={{ background: "var(--bg-soft)", color: "var(--text-secondary)", border: "2px solid var(--border)", minHeight: "var(--hit)" }}
       >
-        ⚠️ 回報問題
+        <span className="icon-lg">⚠️</span> 回報問題
       </button>
 
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
-          style={{ background: "rgba(0,0,0,0.4)" }}
+          style={{ background: "rgba(44,62,80,0.4)" }}
           onClick={(e) => { if (e.target === e.currentTarget) close(); }}
         >
           <div
             className="w-full max-w-md rounded-t-3xl p-8 sm:rounded-3xl"
-            style={{ background: "#FFFFFF" }}
+            style={{ background: "var(--bg-elevated)" }}
           >
             {status === "done" ? (
               <div className="text-center">
-                <div className="text-5xl">🙏</div>
-                <h2 className="mt-4 text-2xl font-bold" style={{ color: "#1C1917" }}>
+                <div className="text-7xl">🙏</div>
+                <h2 className="mt-4 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
                   感謝您的回報
                 </h2>
-                <p className="mt-2 text-lg" style={{ color: "#57534E" }}>
+                <p className="mt-2 text-lg" style={{ color: "var(--text-secondary)" }}>
                   我們會盡快確認並更新資訊
                 </p>
                 <button
                   type="button"
                   onClick={close}
-                  className="mt-6 w-full rounded-2xl py-4 text-xl font-bold text-white"
-                  style={{ background: "#B45309" }}
+                  className="mt-6 w-full rounded-2xl py-4 text-xl font-bold"
+                  style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
                 >
                   關閉
                 </button>
               </div>
             ) : (
               <>
-                <h2 className="text-2xl font-bold" style={{ color: "#1C1917" }}>
+                <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
                   回報資訊問題
                 </h2>
-                <p className="mt-1 text-base" style={{ color: "#78716C" }}>
+                <p className="mt-1 text-base" style={{ color: "var(--text-muted)" }}>
                   讓我們知道哪裡需要更新
                 </p>
 
@@ -98,8 +98,8 @@ export function FeedbackForm({
                       className="flex cursor-pointer items-center gap-4 rounded-2xl px-5 py-4 transition"
                       style={
                         type === opt.value
-                          ? { background: "#FEF3C7", border: "2px solid #FDE68A" }
-                          : { background: "#F5F0E8", border: "2px solid transparent" }
+                          ? { background: "var(--bg-accent)", border: "2px solid #FDE68A", minHeight: "var(--hit)" }
+                          : { background: "var(--bg-soft)", border: "2px solid transparent", minHeight: "var(--hit)" }
                       }
                     >
                       <input
@@ -110,7 +110,7 @@ export function FeedbackForm({
                         onChange={() => setType(opt.value)}
                         className="accent-amber-700"
                       />
-                      <span className="text-lg" style={{ color: "#1C1917" }}>
+                      <span className="text-lg" style={{ color: "var(--text-primary)" }}>
                         {opt.label}
                       </span>
                     </label>
@@ -123,7 +123,7 @@ export function FeedbackForm({
                   placeholder="補充說明（選填）"
                   rows={3}
                   className="mt-4 w-full resize-none rounded-xl border px-5 py-4 text-lg outline-none"
-                  style={{ borderColor: "#E7E5E4", background: "#FFFBF5", color: "#1C1917" }}
+                  style={{ borderColor: "var(--border)", background: "var(--bg-page)", color: "var(--text-primary)" }}
                 />
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
@@ -131,7 +131,7 @@ export function FeedbackForm({
                     type="button"
                     onClick={close}
                     className="rounded-2xl py-4 text-xl font-semibold"
-                    style={{ background: "#F5F0E8", color: "#78716C" }}
+                    style={{ background: "var(--bg-soft)", color: "var(--text-secondary)", minHeight: "var(--hit)" }}
                   >
                     取消
                   </button>
@@ -139,8 +139,8 @@ export function FeedbackForm({
                     type="button"
                     onClick={submit}
                     disabled={status === "submitting"}
-                    className="rounded-2xl py-4 text-xl font-bold text-white disabled:opacity-60"
-                    style={{ background: "#B45309" }}
+                    className="rounded-2xl py-4 text-xl font-bold disabled:opacity-60"
+                    style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
                   >
                     {status === "submitting" ? "送出中…" : "送出回報"}
                   </button>

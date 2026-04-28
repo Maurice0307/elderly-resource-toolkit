@@ -43,14 +43,14 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
   const reg = Array.isArray(resource.region) ? resource.region[0] : resource.region;
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "#FFFBF5" }}>
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-3xl">
 
         {/* 返回 */}
         <Link
           href={`/resources/${cat.slug}`}
           className="inline-flex items-center gap-1 text-lg font-medium"
-          style={{ color: "#B45309" }}
+          style={{ color: "var(--cta)" }}
         >
           ← 回到{cat.name}
         </Link>
@@ -62,8 +62,8 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
               className="rounded-full px-4 py-1 text-base font-semibold"
               style={
                 resource.scope === "national"
-                  ? { background: "#FEF3C7", color: "#92400E" }
-                  : { background: "#ECFDF5", color: "#065F46" }
+                  ? { background: "var(--bg-accent)", color: "#92400E" }
+                  : { background: "var(--success-soft)", color: "#065F46" }
               }
             >
               {resource.scope === "national" ? "全國" : "在地"}
@@ -71,7 +71,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
             {reg ? (
               <span
                 className="rounded-full px-4 py-1 text-base"
-                style={{ background: "#F5F0E8", color: "#57534E" }}
+                style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
               >
                 {reg.name}
               </span>
@@ -79,18 +79,18 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
             {sub ? (
               <span
                 className="rounded-full px-4 py-1 text-base"
-                style={{ background: "#F5F0E8", color: "#57534E" }}
+                style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
               >
                 {sub.name}
               </span>
             ) : null}
           </div>
 
-          <h1 className="mt-4 text-4xl font-bold leading-tight" style={{ color: "#1C1917" }}>
+          <h1 className="mt-4 text-4xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
             {resource.name}
           </h1>
           {resource.summary ? (
-            <p className="mt-3 text-xl leading-relaxed" style={{ color: "#44403C" }}>
+            <p className="mt-3 text-xl leading-relaxed" style={{ color: "var(--text-secondary)" }}>
               {resource.summary}
             </p>
           ) : null}
@@ -126,36 +126,36 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
         {resource.description ? (
           <section
             className="mt-8 rounded-2xl p-7 text-xl leading-relaxed whitespace-pre-line"
-            style={{ background: "#FFFFFF", border: "1px solid #E7E5E4", color: "#1C1917" }}
+            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
           >
             {resource.description}
           </section>
         ) : null}
 
         {/* 聯絡資訊 */}
-        <section className="mt-6 space-y-4 text-lg" style={{ color: "#44403C" }}>
+        <section className="mt-6 space-y-4 text-lg" style={{ color: "var(--text-secondary)" }}>
           {resource.address ? (
             <div className="flex gap-2">
-              <span>📍</span>
+              <span className="icon-lg">📍</span>
               <span>{resource.address}</span>
             </div>
           ) : null}
           {resource.website_url ? (
             <div className="flex gap-2">
-              <span>🔗</span>
+              <span className="icon-lg">🔗</span>
               <a
                 href={resource.website_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="break-all underline"
-                style={{ color: "#1D4ED8" }}
+                style={{ color: "var(--cta)" }}
               >
                 {resource.website_url}
               </a>
             </div>
           ) : null}
           {resource.source_org ? (
-            <p className="text-base" style={{ color: "#A8A29E" }}>
+            <p className="text-base" style={{ color: "var(--text-muted)" }}>
               資料來源：{resource.source_org}
             </p>
           ) : null}
@@ -168,7 +168,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
               <span
                 key={tag}
                 className="rounded-full px-3 py-1 text-base font-medium"
-                style={{ background: "#FEF3C7", color: "#92400E" }}
+                style={{ background: "var(--bg-accent)", color: "#92400E" }}
               >
                 #{tag}
               </span>
@@ -179,7 +179,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
         {/* 互動：按讚 + 回報 */}
         <div
           className="mt-10 flex flex-wrap gap-4 border-t pt-8"
-          style={{ borderColor: "#E7E5E4" }}
+          style={{ borderColor: "var(--border)" }}
         >
           <LikeButton
             resourceId={resource.id}

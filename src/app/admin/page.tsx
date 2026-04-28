@@ -26,7 +26,7 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold" style={{ color: "#1C1917" }}>
+      <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
         概覽
       </h1>
 
@@ -54,9 +54,9 @@ export default async function AdminDashboard() {
 
       <div
         className="mt-8 rounded-2xl p-6 text-lg"
-        style={{ background: "#F5F0E8", color: "#57534E", border: "1px solid #E7E5E4" }}
+        style={{ background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
       >
-        <p className="font-semibold" style={{ color: "#1C1917" }}>快速指引</p>
+        <p className="font-semibold" style={{ color: "var(--text-primary)" }}>快速指引</p>
         <ul className="mt-3 list-inside list-disc space-y-1">
           <li>待審核資源需到「資源審核」頁面處理</li>
           <li>不當問答可在「問答管理」頁面下架</li>

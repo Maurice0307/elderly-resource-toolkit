@@ -16,20 +16,20 @@ export default function LoginPage() {
   return (
     <div
       className="w-full max-w-md rounded-3xl p-8 shadow-lg"
-      style={{ background: "#FFFFFF", border: "2px solid #E7E5E4" }}
+      style={{ background: "var(--bg-elevated)", border: "2px solid var(--border)" }}
     >
-      <Link href="/" className="text-lg font-medium" style={{ color: "#B45309" }}>
+      <Link href="/" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
         ← 回首頁
       </Link>
 
-      <h1 className="mt-5 text-3xl font-bold" style={{ color: "#1C1917" }}>
+      <h1 className="mt-5 text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
         {mode === "login" ? "登入帳號" : "建立帳號"}
       </h1>
 
       {/* 模式切換 */}
       <div
         className="mt-5 flex rounded-2xl p-1"
-        style={{ background: "#F5F0E8" }}
+        style={{ background: "var(--bg-soft)" }}
       >
         <button
           type="button"
@@ -37,8 +37,8 @@ export default function LoginPage() {
           className="flex-1 rounded-xl py-3 text-lg font-semibold transition"
           style={
             mode === "login"
-              ? { background: "#FFFFFF", color: "#B45309", boxShadow: "0 1px 4px rgba(0,0,0,.08)" }
-              : { color: "#78716C" }
+              ? { background: "var(--bg-elevated)", color: "var(--cta)", boxShadow: "0 1px 4px rgba(0,0,0,.08)" }
+              : { color: "var(--text-secondary)" }
           }
         >
           登入
@@ -49,8 +49,8 @@ export default function LoginPage() {
           className="flex-1 rounded-xl py-3 text-lg font-semibold transition"
           style={
             mode === "register"
-              ? { background: "#FFFFFF", color: "#B45309", boxShadow: "0 1px 4px rgba(0,0,0,.08)" }
-              : { color: "#78716C" }
+              ? { background: "var(--bg-elevated)", color: "var(--cta)", boxShadow: "0 1px 4px rgba(0,0,0,.08)" }
+              : { color: "var(--text-secondary)" }
           }
         >
           註冊
@@ -91,7 +91,7 @@ export default function LoginPage() {
           <label
             htmlFor="email"
             className="mb-2 block text-lg font-medium"
-            style={{ color: "#1C1917" }}
+            style={{ color: "var(--text-primary)" }}
           >
             電子郵件
           </label>
@@ -104,9 +104,9 @@ export default function LoginPage() {
             placeholder="example@email.com"
             className="w-full rounded-xl border px-5 py-4 text-xl outline-none transition focus:ring-2"
             style={{
-              borderColor: "#E7E5E4",
-              color: "#1C1917",
-              background: "#FFFBF5",
+              borderColor: "var(--border)",
+              color: "var(--text-primary)",
+              background: "var(--bg-page)",
             }}
           />
         </div>
@@ -115,7 +115,7 @@ export default function LoginPage() {
           <label
             htmlFor="password"
             className="mb-2 block text-lg font-medium"
-            style={{ color: "#1C1917" }}
+            style={{ color: "var(--text-primary)" }}
           >
             密碼
           </label>
@@ -128,9 +128,9 @@ export default function LoginPage() {
             placeholder={mode === "register" ? "至少 6 個字元" : ""}
             className="w-full rounded-xl border px-5 py-4 text-xl outline-none transition focus:ring-2"
             style={{
-              borderColor: "#E7E5E4",
-              color: "#1C1917",
-              background: "#FFFBF5",
+              borderColor: "var(--border)",
+              color: "var(--text-primary)",
+              background: "var(--bg-page)",
             }}
           />
         </div>
@@ -138,7 +138,7 @@ export default function LoginPage() {
         {error && (
           <div
             className="rounded-xl px-5 py-3 text-base"
-            style={{ background: "#FEE2E2", color: "#991B1B" }}
+            style={{ background: "var(--alert-soft)", color: "var(--alert)" }}
           >
             {error}
           </div>
@@ -147,8 +147,8 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-2xl py-5 text-xl font-bold text-white transition disabled:opacity-60"
-          style={{ background: "#B45309" }}
+          className="w-full rounded-2xl py-5 text-xl font-bold transition disabled:opacity-60"
+          style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
         >
           {pending ? "處理中…" : mode === "login" ? "登入" : "建立帳號"}
         </button>
@@ -156,11 +156,11 @@ export default function LoginPage() {
 
       {/* Divider */}
       <div className="my-6 flex items-center gap-4">
-        <div className="flex-1" style={{ height: 1, background: "#E7E5E4" }} />
-        <span className="text-base" style={{ color: "#A8A29E" }}>
+        <div className="flex-1" style={{ height: 1, background: "var(--border)" }} />
+        <span className="text-base" style={{ color: "var(--text-muted)" }}>
           或
         </span>
-        <div className="flex-1" style={{ height: 1, background: "#E7E5E4" }} />
+        <div className="flex-1" style={{ height: 1, background: "var(--border)" }} />
       </div>
 
       {/* Google OAuth */}
@@ -168,7 +168,7 @@ export default function LoginPage() {
         <button
           type="submit"
           className="flex w-full items-center justify-center gap-3 rounded-2xl border py-5 text-xl font-semibold transition hover:bg-gray-50"
-          style={{ borderColor: "#E7E5E4", color: "#1C1917" }}
+          style={{ borderColor: "var(--border)", color: "var(--text-primary)", minHeight: "var(--hit)" }}
         >
           <svg className="h-6 w-6" viewBox="0 0 24 24" aria-hidden>
             <path

@@ -5,34 +5,52 @@ export const metadata = { title: "生活資源" };
 
 export default function ResourcesIndexPage() {
   return (
-    <main className="px-6 py-10">
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-5xl">
         <Link
           href="/"
-          className="text-base text-blue-700 hover:underline"
+          className="text-lg font-medium"
+          style={{ color: "var(--cta)" }}
           aria-label="回到首頁"
         >
           ← 回首頁
         </Link>
-        <h1 className="mt-4 text-3xl font-bold text-slate-900">7 大生活資源</h1>
-        <p className="mt-2 text-lg text-slate-600">
+        <h1 className="mt-4 text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
+          7 大生活資源
+        </h1>
+        <p className="mt-2 text-xl" style={{ color: "var(--text-secondary)" }}>
           選擇下方分類，查看全國與在地服務。
         </p>
 
-        <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((cat) => (
             <li key={cat.slug}>
               <Link
                 href={`/resources/${cat.slug}`}
-                className="block rounded-2xl border-2 border-slate-200 bg-white p-6 transition hover:border-blue-500 hover:shadow-md focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-300"
-                style={{ borderLeftColor: cat.color, borderLeftWidth: 8 }}
+                className="group flex items-center gap-4 rounded-2xl p-6 shadow-sm transition hover:shadow-md"
+                style={{
+                  background: "var(--bg-elevated)",
+                  border: "2px solid var(--border)",
+                  borderLeftWidth: 6,
+                  borderLeftColor: cat.color,
+                  minHeight: "var(--hit)",
+                }}
               >
-                <div className="text-2xl font-bold text-slate-900">
-                  {cat.name}
+                <div className="flex-1">
+                  <div className="text-2xl font-bold" style={{ color: cat.color }}>
+                    {cat.name}
+                  </div>
+                  <div className="mt-1 text-base" style={{ color: "var(--text-muted)" }}>
+                    {cat.subcategories.length} 項服務
+                  </div>
                 </div>
-                <div className="mt-2 text-base text-slate-600">
-                  {cat.subcategories.length} 項服務
-                </div>
+                <span
+                  className="text-3xl transition group-hover:translate-x-1"
+                  style={{ color: cat.color }}
+                  aria-hidden
+                >
+                  →
+                </span>
               </Link>
             </li>
           ))}

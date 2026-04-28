@@ -22,18 +22,18 @@ export function AnswerForm({ questionId }: { questionId: string }) {
         rows={5}
         placeholder="分享你知道的，幫助更多人 🙌"
         className="w-full rounded-2xl border px-5 py-4 text-xl outline-none transition focus:ring-2"
-        style={{ borderColor: "#E7E5E4", background: "#FFFFFF", color: "#1C1917", resize: "vertical" }}
+        style={{ borderColor: "var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", resize: "vertical" }}
       />
       {state?.error && (
-        <p className="mt-2 text-base font-medium" style={{ color: "#DC2626" }}>
+        <p className="mt-2 text-base font-medium" style={{ color: "var(--alert)" }}>
           {state.error}
         </p>
       )}
       <button
         type="submit"
         disabled={pending}
-        className="mt-3 rounded-2xl px-8 py-4 text-xl font-bold text-white transition disabled:opacity-60"
-        style={{ background: "#B45309" }}
+        className="mt-3 rounded-2xl px-8 py-4 text-xl font-bold transition disabled:opacity-60"
+        style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
       >
         {pending ? "送出中…" : "送出回答"}
       </button>

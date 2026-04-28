@@ -108,9 +108,9 @@ export function LocationBadge({
           <span
             className="rounded-full px-4 py-2 text-base font-semibold"
             style={{
-              background: "rgba(255,251,235,0.15)",
-              color: "#FDE68A",
-              border: "1.5px solid rgba(253,230,138,0.5)",
+              background: "rgba(255,255,255,0.15)",
+              color: "#FFFFFF",
+              border: "1.5px solid rgba(255,255,255,0.5)",
             }}
           >
             📍 目前位置：{currentName}
@@ -121,9 +121,9 @@ export function LocationBadge({
             disabled={busy}
             className="rounded-full px-4 py-2 text-base font-semibold"
             style={{
-              background: "rgba(255,251,235,0.1)",
-              color: "#FDE68A",
-              border: "1.5px solid rgba(253,230,138,0.4)",
+              background: "rgba(255,255,255,0.1)",
+              color: "#FFFFFF",
+              border: "1.5px solid rgba(255,255,255,0.4)",
             }}
           >
             {busy ? "定位中…" : "重新定位"}
@@ -134,9 +134,9 @@ export function LocationBadge({
             disabled={busy}
             className="rounded-full px-4 py-2 text-base font-semibold"
             style={{
-              background: "rgba(255,251,235,0.1)",
-              color: "#FDE68A",
-              border: "1.5px solid rgba(253,230,138,0.4)",
+              background: "rgba(255,255,255,0.1)",
+              color: "#FFFFFF",
+              border: "1.5px solid rgba(255,255,255,0.4)",
             }}
           >
             清除
@@ -148,7 +148,7 @@ export function LocationBadge({
           onClick={() => detect(false)}
           disabled={busy || !autoTried}
           className="rounded-full px-5 py-3 text-base font-semibold"
-          style={{ background: "#FFFBEB", color: "#92400E" }}
+          style={{ background: "#FFFFFF", color: "var(--cta)", minHeight: "var(--hit)" }}
         >
           {busy ? "📍 定位中…" : "📍 開啟在地推薦"}
         </button>

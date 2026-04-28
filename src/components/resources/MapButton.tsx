@@ -21,9 +21,9 @@ export function MapButton({ address, latitude, longitude, resourceName }: Props)
       rel="noopener noreferrer"
       aria-label={`開啟地圖導航至 ${resourceName}`}
       className="inline-flex w-full items-center justify-center gap-3 rounded-2xl py-6 text-2xl font-bold shadow-md transition active:scale-95"
-      style={{ background: "#1D4ED8", color: "#FFFFFF" }}
+      style={{ background: "#1D4ED8", color: "var(--cta-on)", minHeight: "var(--hit)" }}
     >
-      📍&nbsp;開啟地圖
+      <span className="icon-lg">📍</span>&nbsp;開啟地圖
     </a>
   );
 }

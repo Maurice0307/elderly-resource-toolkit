@@ -53,25 +53,25 @@ export default async function QAPage({
   const regions = regionRows ?? [];
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "#FFFBF5" }}>
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-lg font-medium" style={{ color: "#B45309" }}>
+        <Link href="/" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
           ← 回首頁
         </Link>
 
         <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold" style={{ color: "#1C1917" }}>
+            <h1 className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
               互助問答
             </h1>
-            <p className="mt-2 text-xl" style={{ color: "#57534E" }}>
+            <p className="mt-2 text-xl" style={{ color: "var(--text-secondary)" }}>
               有疑問就問，在地志工來解答
             </p>
           </div>
           <Link
             href="/qa/ask"
-            className="rounded-2xl px-7 py-4 text-xl font-bold text-white transition hover:opacity-90"
-            style={{ background: "#B45309" }}
+            className="rounded-2xl px-7 py-4 text-xl font-bold transition hover:opacity-90"
+            style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
           >
             ＋ 發問
           </Link>
@@ -84,8 +84,8 @@ export default async function QAPage({
             className="rounded-full px-4 py-2 text-base font-semibold"
             style={
               !region
-                ? { background: "#B45309", color: "#FFFFFF" }
-                : { background: "#F5F0E8", color: "#78716C", border: "1.5px solid #E7E5E4" }
+                ? { background: "var(--cta)", color: "var(--cta-on)" }
+                : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)" }
             }
           >
             全部地區
@@ -97,8 +97,8 @@ export default async function QAPage({
               className="rounded-full px-4 py-2 text-base font-semibold"
               style={
                 region === r.code
-                  ? { background: "#B45309", color: "#FFFFFF" }
-                  : { background: "#F5F0E8", color: "#78716C", border: "1.5px solid #E7E5E4" }
+                  ? { background: "var(--cta)", color: "var(--cta-on)" }
+                  : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)" }
               }
             >
               {r.name}
@@ -110,14 +110,14 @@ export default async function QAPage({
         {questions.length === 0 ? (
           <div
             className="mt-10 rounded-2xl p-10 text-center text-xl"
-            style={{ background: "#FEF3C7", color: "#92400E", border: "2px dashed #FDE68A" }}
+            style={{ background: "var(--bg-accent)", color: "#92400E", border: "2px dashed #FDE68A" }}
           >
-            <div className="text-5xl">💬</div>
+            <div className="text-7xl">💬</div>
             <p className="mt-4">還沒有問題，成為第一個發問的人吧！</p>
             <Link
               href="/qa/ask"
-              className="mt-6 inline-block rounded-full px-6 py-3 text-lg font-semibold text-white"
-              style={{ background: "#B45309" }}
+              className="mt-6 inline-block rounded-full px-6 py-3 text-lg font-semibold"
+              style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
             >
               立即發問
             </Link>
@@ -131,14 +131,20 @@ export default async function QAPage({
                 <li key={q.id}>
                   <Link
                     href={`/qa/${q.id}`}
-                    className="group flex flex-col rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-                    style={{ border: "2px solid #E7E5E4" }}
+                    className="group flex flex-col rounded-2xl p-6 shadow-sm transition hover:shadow-md"
+                    style={{
+                      background: "var(--bg-elevated)",
+                      border: "2px solid var(--border)",
+                      borderLeftWidth: 6,
+                      borderLeftColor: q.status === "resolved" ? "var(--success)" : "var(--cta)",
+                      minHeight: "var(--hit)",
+                    }}
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       {q.status === "resolved" && (
                         <span
                           className="rounded-full px-3 py-1 text-sm font-semibold"
-                          style={{ background: "#ECFDF5", color: "#065F46" }}
+                          style={{ background: "var(--success-soft)", color: "#065F46" }}
                         >
                           ✅ 已解決
                         </span>
@@ -146,7 +152,7 @@ export default async function QAPage({
                       {reg && (
                         <span
                           className="rounded-full px-3 py-1 text-sm"
-                          style={{ background: "#F5F0E8", color: "#78716C" }}
+                          style={{ background: "var(--bg-soft)", color: "var(--text-muted)" }}
                         >
                           📍 {reg.name}
                         </span>
@@ -155,7 +161,7 @@ export default async function QAPage({
                         <span
                           key={tag}
                           className="rounded-full px-3 py-1 text-sm"
-                          style={{ background: "#FEF3C7", color: "#92400E" }}
+                          style={{ background: "var(--bg-accent)", color: "#92400E" }}
                         >
                           #{tag}
                         </span>
@@ -163,16 +169,16 @@ export default async function QAPage({
                     </div>
                     <h2
                       className="mt-3 text-2xl font-bold leading-snug"
-                      style={{ color: "#1C1917" }}
+                      style={{ color: "var(--text-primary)" }}
                     >
                       {q.title}
                     </h2>
-                    <div className="mt-3 flex items-center justify-between text-base" style={{ color: "#A8A29E" }}>
+                    <div className="mt-3 flex items-center justify-between text-base" style={{ color: "var(--text-muted)" }}>
                       <span>
                         {author?.display_name ?? "匿名"} ·{" "}
                         {new Date(q.created_at).toLocaleDateString("zh-TW")}
                       </span>
-                      <span className="font-semibold" style={{ color: q.answer_count > 0 ? "#065F46" : "#A8A29E" }}>
+                      <span className="font-semibold" style={{ color: q.answer_count > 0 ? "var(--success)" : "var(--text-muted)" }}>
                         💬 {q.answer_count} 則回答
                       </span>
                     </div>

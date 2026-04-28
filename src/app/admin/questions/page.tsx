@@ -27,7 +27,7 @@ export default async function AdminQuestionsPage({
 
   return (
     <div>
-      <h1 className="text-3xl font-bold" style={{ color: "#1C1917" }}>
+      <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
         問答管理
       </h1>
 
@@ -43,8 +43,8 @@ export default async function AdminQuestionsPage({
             className="rounded-full px-5 py-2 text-base font-semibold"
             style={
               view === t.key
-                ? { background: "#B45309", color: "#FFFFFF" }
-                : { background: "#F5F0E8", color: "#78716C", border: "1.5px solid #E7E5E4" }
+                ? { background: "var(--cta)", color: "var(--cta-on)" }
+                : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)" }
             }
           >
             {t.label}
@@ -59,9 +59,10 @@ export default async function AdminQuestionsPage({
             return (
               <li
                 key={q.id}
-                className="flex flex-wrap items-center gap-3 rounded-2xl bg-white p-5"
+                className="flex flex-wrap items-center gap-3 rounded-2xl p-5"
                 style={{
-                  border: q.status === "hidden" ? "2px solid #FCA5A5" : "2px solid #E7E5E4",
+                  background: "var(--bg-elevated)",
+                  border: q.status === "hidden" ? "2px solid #FCA5A5" : "2px solid var(--border)",
                   opacity: q.status === "hidden" ? 0.75 : 1,
                 }}
               >
@@ -71,10 +72,10 @@ export default async function AdminQuestionsPage({
                       className="rounded-full px-3 py-1 text-sm font-semibold"
                       style={
                         q.status === "hidden"
-                          ? { background: "#FEE2E2", color: "#DC2626" }
+                          ? { background: "var(--alert-soft)", color: "var(--alert)" }
                           : q.status === "resolved"
-                          ? { background: "#ECFDF5", color: "#065F46" }
-                          : { background: "#F5F0E8", color: "#78716C" }
+                          ? { background: "var(--success-soft)", color: "#065F46" }
+                          : { background: "var(--bg-soft)", color: "var(--text-secondary)" }
                       }
                     >
                       {q.status === "hidden" ? "已隱藏" : q.status === "resolved" ? "已解決" : "開放中"}
@@ -84,11 +85,11 @@ export default async function AdminQuestionsPage({
                     href={`/qa/${q.id}`}
                     target="_blank"
                     className="mt-1 block text-xl font-bold leading-snug underline"
-                    style={{ color: "#1C1917" }}
+                    style={{ color: "var(--text-primary)" }}
                   >
                     {q.title}
                   </Link>
-                  <p className="text-sm" style={{ color: "#A8A29E" }}>
+                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                     {author?.display_name ?? "匿名"} · {new Date(q.created_at).toLocaleDateString("zh-TW")} · {q.answer_count} 則回答
                   </p>
                 </div>
@@ -98,7 +99,7 @@ export default async function AdminQuestionsPage({
                       <button
                         type="submit"
                         className="rounded-full px-4 py-2 text-base font-semibold"
-                        style={{ background: "#FEE2E2", color: "#DC2626", border: "1.5px solid #FCA5A5" }}
+                        style={{ background: "var(--alert-soft)", color: "var(--alert)", border: "1.5px solid #FCA5A5", minHeight: "var(--hit)" }}
                       >
                         下架
                       </button>
@@ -108,7 +109,7 @@ export default async function AdminQuestionsPage({
                       <button
                         type="submit"
                         className="rounded-full px-4 py-2 text-base font-semibold"
-                        style={{ background: "#ECFDF5", color: "#065F46", border: "1.5px solid #6EE7B7" }}
+                        style={{ background: "var(--success-soft)", color: "#065F46", border: "1.5px solid #6EE7B7", minHeight: "var(--hit)" }}
                       >
                         恢復
                       </button>
@@ -128,24 +129,24 @@ export default async function AdminQuestionsPage({
             return (
               <li
                 key={a.id}
-                className="flex flex-wrap items-start gap-3 rounded-2xl bg-white p-5"
-                style={{ border: "2px solid #E7E5E4" }}
+                className="flex flex-wrap items-start gap-3 rounded-2xl p-5"
+                style={{ background: "var(--bg-elevated)", border: "2px solid var(--border)" }}
               >
                 <div className="flex-1 min-w-0">
                   <p
                     className="text-lg leading-relaxed line-clamp-3"
-                    style={{ color: "#1C1917" }}
+                    style={{ color: "var(--text-primary)" }}
                   >
                     {a.body}
                   </p>
-                  <p className="mt-1 text-sm" style={{ color: "#A8A29E" }}>
+                  <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
                     {author?.display_name ?? "匿名"} · {new Date(a.created_at).toLocaleDateString("zh-TW")}
                     {" · "}
                     <Link
                       href={`/qa/${a.question_id}`}
                       target="_blank"
                       className="underline"
-                      style={{ color: "#B45309" }}
+                      style={{ color: "var(--cta)" }}
                     >
                       查看問題
                     </Link>
@@ -155,7 +156,7 @@ export default async function AdminQuestionsPage({
                   <button
                     type="submit"
                     className="rounded-full px-4 py-2 text-base font-semibold"
-                    style={{ background: "#FEE2E2", color: "#DC2626", border: "1.5px solid #FCA5A5" }}
+                    style={{ background: "var(--alert-soft)", color: "var(--alert)", border: "1.5px solid #FCA5A5", minHeight: "var(--hit)" }}
                   >
                     刪除
                   </button>

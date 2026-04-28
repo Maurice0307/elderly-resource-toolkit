@@ -11,10 +11,10 @@ type ResourceWithSub = Resource & {
 };
 
 const statusLabel: Record<string, { text: string; bg: string; color: string }> = {
-  pending:  { text: "審核中",  bg: "#FEF3C7", color: "#92400E" },
-  active:   { text: "已上架",  bg: "#ECFDF5", color: "#065F46" },
-  ended:    { text: "已結束",  bg: "#F5F5F4", color: "#78716C" },
-  archived: { text: "已封存",  bg: "#F5F5F4", color: "#78716C" },
+  pending:  { text: "審核中",  bg: "var(--bg-accent)", color: "#92400E" },
+  active:   { text: "已上架",  bg: "var(--success-soft)", color: "#065F46" },
+  ended:    { text: "已結束",  bg: "var(--bg-soft)", color: "var(--text-muted)" },
+  archived: { text: "已封存",  bg: "var(--bg-soft)", color: "var(--text-muted)" },
 };
 
 function getCatSlug(row: ResourceWithSub): string {
@@ -35,8 +35,13 @@ function ResourceCard({
   return (
     <Link
       href={`/resources/${catSlug}/${r.id}`}
-      className="group relative flex flex-col rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-      style={{ border: "2px solid #E7E5E4" }}
+      className="group relative flex flex-col rounded-2xl p-6 shadow-sm transition hover:shadow-md"
+      style={{
+        background: "var(--bg-elevated)",
+        border: "2px solid var(--border)",
+        borderLeftWidth: 6,
+        borderLeftColor: cat?.color ?? "var(--cta)",
+      }}
     >
       {statusBadge && (
         <span
@@ -59,24 +64,24 @@ function ResourceCard({
           className="rounded-full px-3 py-1 text-sm"
           style={
             r.scope === "national"
-              ? { background: "#FEF3C7", color: "#92400E" }
-              : { background: "#ECFDF5", color: "#065F46" }
+              ? { background: "var(--bg-accent)", color: "#92400E" }
+              : { background: "var(--success-soft)", color: "#065F46" }
           }
         >
           {r.scope === "national" ? "全國" : "在地"}
         </span>
       </div>
-      <h2 className="mt-3 text-2xl font-bold leading-snug" style={{ color: "#1C1917" }}>
+      <h2 className="mt-3 text-2xl font-bold leading-snug" style={{ color: "var(--text-primary)" }}>
         {r.name}
       </h2>
       {r.summary && (
-        <p className="mt-2 line-clamp-2 text-lg leading-relaxed" style={{ color: "#57534E" }}>
+        <p className="mt-2 line-clamp-2 text-lg leading-relaxed" style={{ color: "var(--text-secondary)" }}>
           {r.summary}
         </p>
       )}
       <span
         className="ml-auto mt-3 text-base font-semibold transition group-hover:translate-x-1"
-        style={{ color: "#B45309" }}
+        style={{ color: "var(--cta)" }}
       >
         查看 →
       </span>
@@ -88,7 +93,7 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="mt-4 rounded-2xl p-8 text-center text-xl"
-      style={{ background: "#FEF3C7", color: "#92400E", border: "2px dashed #FDE68A" }}
+      style={{ background: "var(--bg-accent)", color: "#92400E", border: "2px dashed #FDE68A" }}
     >
       {children}
     </div>
@@ -128,25 +133,25 @@ export default async function ProfilePage() {
   const submittedResources = (submittedData ?? []) as ResourceWithSub[];
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "#FFFBF5" }}>
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-lg font-medium" style={{ color: "#B45309" }}>
+        <Link href="/" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
           ← 回首頁
         </Link>
 
         {/* 個人資訊 */}
         <div className="mt-6 flex items-center gap-5">
           <div
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-3xl font-bold text-white"
-            style={{ background: "#B45309" }}
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-3xl font-bold"
+            style={{ background: "var(--cta)", color: "var(--cta-on)" }}
           >
             {initials}
           </div>
           <div>
-            <p className="text-2xl font-bold" style={{ color: "#1C1917" }}>
+            <p className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
               {displayName}
             </p>
-            <p className="text-base" style={{ color: "#78716C" }}>
+            <p className="text-base" style={{ color: "var(--text-muted)" }}>
               {user.email}
             </p>
           </div>
@@ -154,9 +159,9 @@ export default async function ProfilePage() {
 
         {/* 我的收藏 */}
         <section className="mt-10">
-          <h2 className="text-2xl font-bold" style={{ color: "#1C1917" }}>
+          <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
             ❤️ 我的收藏
-            <span className="ml-2 text-lg font-normal" style={{ color: "#78716C" }}>
+            <span className="ml-2 text-lg font-normal" style={{ color: "var(--text-muted)" }}>
               ({likedResources.length})
             </span>
           </h2>
@@ -181,9 +186,9 @@ export default async function ProfilePage() {
 
         {/* 我的投稿 */}
         <section className="mt-12 pb-12">
-          <h2 className="text-2xl font-bold" style={{ color: "#1C1917" }}>
+          <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
             📮 我的投稿
-            <span className="ml-2 text-lg font-normal" style={{ color: "#78716C" }}>
+            <span className="ml-2 text-lg font-normal" style={{ color: "var(--text-muted)" }}>
               ({submittedResources.length})
             </span>
           </h2>

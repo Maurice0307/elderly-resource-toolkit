@@ -54,18 +54,18 @@ export function LikeButton({ resourceId, initialCount, initialLiked, userId }: P
       className="flex items-center gap-2 rounded-2xl px-6 py-4 text-xl font-semibold transition disabled:opacity-60"
       style={
         liked
-          ? { background: "#FEF3C7", color: "#92400E", border: "2px solid #FDE68A" }
-          : { background: "#F5F0E8", color: "#78716C", border: "2px solid #E7E5E4" }
+          ? { background: "var(--bg-accent)", color: "#92400E", border: "2px solid #FDE68A", minHeight: "var(--hit)" }
+          : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "2px solid var(--border)", minHeight: "var(--hit)" }
       }
       aria-pressed={liked}
       title={userId ? undefined : "請先登入才能按讚"}
     >
-      <span>{liked ? "👍" : "👍"}</span>
+      <span className="icon-lg">👍</span>
       <span>有幫助</span>
       {count > 0 && (
         <span
           className="rounded-full px-2 py-0.5 text-base font-bold"
-          style={liked ? { background: "#B45309", color: "#fff" } : { background: "#E7E5E4", color: "#57534E" }}
+          style={liked ? { background: "var(--cta)", color: "var(--cta-on)" } : { background: "var(--border)", color: "var(--text-secondary)" }}
         >
           {count}
         </span>

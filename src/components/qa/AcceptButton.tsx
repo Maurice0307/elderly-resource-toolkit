@@ -23,7 +23,7 @@ export function AcceptButton({
     return (
       <span
         className="flex items-center gap-1.5 rounded-full px-4 py-2 text-base font-semibold"
-        style={{ background: "#ECFDF5", color: "#065F46", border: "1.5px solid #6EE7B7" }}
+        style={{ background: "var(--success-soft)", color: "#065F46", border: "1.5px solid #6EE7B7" }}
       >
         ✅ 已採納
       </span>
@@ -40,8 +40,8 @@ export function AcceptButton({
       className="flex items-center gap-1.5 rounded-full px-4 py-2 text-base font-semibold transition disabled:opacity-60"
       style={
         isAccepted
-          ? { background: "#ECFDF5", color: "#065F46", border: "1.5px solid #6EE7B7" }
-          : { background: "#F5F0E8", color: "#78716C", border: "1.5px solid #E7E5E4" }
+          ? { background: "var(--success-soft)", color: "#065F46", border: "1.5px solid #6EE7B7", minHeight: "var(--hit)" }
+          : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)", minHeight: "var(--hit)" }
       }
     >
       {isAccepted ? "✅ 已採納" : "採納此答案"}

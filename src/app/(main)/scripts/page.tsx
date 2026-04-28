@@ -29,17 +29,17 @@ export default async function ScriptsPage() {
   );
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "#FFFBF5" }}>
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-5xl">
-        <Link href="/" className="text-lg font-medium" style={{ color: "#B45309" }}>
+        <Link href="/" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
           ← 回首頁
         </Link>
 
         <header className="mt-5">
-          <h1 className="text-4xl font-bold" style={{ color: "#1C1917" }}>
+          <h1 className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
             溝通錦囊
           </h1>
-          <p className="mt-2 text-xl" style={{ color: "#57534E" }}>
+          <p className="mt-2 text-xl" style={{ color: "var(--text-secondary)" }}>
             真實對話示範，讓每一次互動都更有溫度
           </p>
         </header>
@@ -49,12 +49,12 @@ export default async function ScriptsPage() {
           return (
             <section key={a.slug} className="mt-12">
               <div className="flex items-center gap-3">
-                <span className="text-4xl">{a.emoji}</span>
+                <span className="text-6xl">{a.emoji}</span>
                 <div>
-                  <h2 className="text-2xl font-bold" style={{ color: "#1C1917" }}>
+                  <h2 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
                     {a.label}
                   </h2>
-                  <p className="text-base" style={{ color: "#78716C" }}>
+                  <p className="text-base" style={{ color: "var(--text-muted)" }}>
                     {a.desc}
                   </p>
                 </div>
@@ -63,7 +63,7 @@ export default async function ScriptsPage() {
               {list.length === 0 ? (
                 <div
                   className="mt-4 rounded-2xl p-8 text-center text-lg"
-                  style={{ background: "#FEF3C7", color: "#92400E", border: "2px dashed #FDE68A" }}
+                  style={{ background: "var(--bg-accent)", color: "#92400E", border: "2px dashed #FDE68A" }}
                 >
                   內容整理中，敬請期待
                 </div>
@@ -73,19 +73,25 @@ export default async function ScriptsPage() {
                     <li key={script.id}>
                       <Link
                         href={`/scripts/${script.slug}`}
-                        className="group flex flex-col rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-                        style={{ border: "2px solid #E7E5E4" }}
+                        className="group flex flex-col rounded-2xl p-6 shadow-sm transition hover:shadow-md"
+                        style={{
+                          background: "var(--bg-elevated)",
+                          border: "2px solid var(--border)",
+                          borderLeftWidth: 6,
+                          borderLeftColor: "var(--cta)",
+                          minHeight: "var(--hit)",
+                        }}
                       >
                         <h3
                           className="text-xl font-bold"
-                          style={{ color: "#1C1917" }}
+                          style={{ color: "var(--text-primary)" }}
                         >
                           {script.title}
                         </h3>
                         {script.context ? (
                           <p
                             className="mt-2 line-clamp-2 text-base leading-relaxed"
-                            style={{ color: "#57534E" }}
+                            style={{ color: "var(--text-secondary)" }}
                           >
                             {script.context}
                           </p>
@@ -93,13 +99,13 @@ export default async function ScriptsPage() {
                         <div className="mt-4 flex items-center justify-between">
                           <span
                             className="rounded-full px-3 py-1 text-sm font-medium"
-                            style={{ background: "#FEF3C7", color: "#92400E" }}
+                            style={{ background: "var(--bg-accent)", color: "#92400E" }}
                           >
                             {script.ok_examples.length + script.ng_examples.length} 句對話
                           </span>
                           <span
                             className="text-base font-semibold transition group-hover:translate-x-1"
-                            style={{ color: "#B45309" }}
+                            style={{ color: "var(--cta)" }}
                           >
                             查看 →
                           </span>

@@ -22,13 +22,13 @@ export async function NavBar() {
     <header
       className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3"
       style={{
-        background: "rgba(255,251,245,0.92)",
+        background: "rgba(250,248,245,0.92)",
         backdropFilter: "blur(8px)",
-        borderBottom: "1px solid #E7E5E4",
+        borderBottom: "1px solid var(--border)",
       }}
     >
       {/* Logo */}
-      <Link href="/" className="shrink-0 text-xl font-bold" style={{ color: "#92400E" }}>
+      <Link href="/" className="shrink-0 text-xl font-bold" style={{ color: "var(--cta)" }}>
         {siteConfig.shortName}
       </Link>
 

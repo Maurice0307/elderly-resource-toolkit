@@ -13,14 +13,20 @@ export function ResourceCard({ resource, href }: Props) {
   return (
     <Link
       href={href}
-      className="group block rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-      style={{ border: "2px solid #E7E5E4" }}
+      className="group block rounded-2xl p-6 shadow-sm transition hover:shadow-md"
+      style={{
+        background: "var(--bg-elevated)",
+        border: "2px solid var(--border)",
+        borderLeftWidth: 6,
+        borderLeftColor: "var(--cta)",
+        minHeight: "var(--hit)",
+      }}
     >
       {/* 標題列 */}
       <div className="flex items-start justify-between gap-3">
         <h3
           className="text-2xl font-bold leading-snug"
-          style={{ color: "#1C1917" }}
+          style={{ color: "var(--text-primary)" }}
         >
           {resource.name}
         </h3>
@@ -28,8 +34,8 @@ export function ResourceCard({ resource, href }: Props) {
           className="mt-1 shrink-0 rounded-full px-3 py-1 text-sm font-semibold"
           style={
             resource.scope === "national"
-              ? { background: "#FEF3C7", color: "#92400E" }
-              : { background: "#ECFDF5", color: "#065F46" }
+              ? { background: "var(--bg-accent)", color: "#92400E" }
+              : { background: "var(--success-soft)", color: "#065F46" }
           }
         >
           {resource.scope === "national" ? "全國" : "在地"}
@@ -40,7 +46,7 @@ export function ResourceCard({ resource, href }: Props) {
       {resource.summary ? (
         <p
           className="mt-3 text-lg leading-relaxed"
-          style={{ color: "#44403C" }}
+          style={{ color: "var(--text-secondary)" }}
         >
           {resource.summary}
         </p>
@@ -50,14 +56,14 @@ export function ResourceCard({ resource, href }: Props) {
       <dl className="mt-4 space-y-2">
         {resource.phone ? (
           <div className="flex items-center gap-2">
-            <dt className="text-xl">📞</dt>
-            <dd className="text-xl font-bold tracking-wide" style={{ color: "#B45309" }}>
+            <dt className="icon-lg text-xl">📞</dt>
+            <dd className="text-xl font-bold tracking-wide" style={{ color: "var(--cta)" }}>
               {resource.phone}
             </dd>
           </div>
         ) : null}
         {resource.address ? (
-          <div className="flex items-start gap-2 text-base" style={{ color: "#57534E" }}>
+          <div className="flex items-start gap-2 text-base" style={{ color: "var(--text-secondary)" }}>
             <dt className="shrink-0">📍</dt>
             <dd>{resource.address}</dd>
           </div>
@@ -71,7 +77,7 @@ export function ResourceCard({ resource, href }: Props) {
             <span
               key={tag}
               className="rounded-full px-3 py-1 text-sm font-medium"
-              style={{ background: "#FEF3C7", color: "#92400E" }}
+              style={{ background: "var(--bg-accent)", color: "#92400E" }}
             >
               #{tag}
             </span>
@@ -81,7 +87,7 @@ export function ResourceCard({ resource, href }: Props) {
 
       <div
         className="mt-5 text-base font-semibold transition group-hover:translate-x-1"
-        style={{ color: "#B45309" }}
+        style={{ color: "var(--cta)" }}
       >
         查看詳情 →
       </div>

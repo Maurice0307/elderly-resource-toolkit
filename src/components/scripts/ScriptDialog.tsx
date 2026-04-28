@@ -56,7 +56,7 @@ export function ScriptDialog({ okExamples, ngExamples, tips }: Props) {
         <section>
           <div
             className="mb-4 text-2xl font-bold"
-            style={{ color: "#1C1917" }}
+            style={{ color: "var(--text-primary)" }}
           >
             💡 使用小技巧
           </div>
@@ -65,11 +65,11 @@ export function ScriptDialog({ okExamples, ngExamples, tips }: Props) {
               <li
                 key={i}
                 className="flex gap-3 rounded-2xl px-5 py-4 text-lg leading-relaxed"
-                style={{ background: "#FEF3C7", color: "#1C1917" }}
+                style={{ background: "var(--bg-accent)", color: "var(--text-primary)" }}
               >
                 <span
-                  className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-                  style={{ background: "#B45309" }}
+                  className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+                  style={{ background: "var(--cta)", color: "var(--cta-on)" }}
                 >
                   {i + 1}
                 </span>
@@ -96,10 +96,10 @@ function BubbleRow({ line, type }: { line: ScriptLine; type: "ok" | "ng" }) {
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
         style={{
           background: isLongBei
-            ? "#78716C"
+            ? "var(--text-muted)"
             : type === "ok"
-            ? "#B45309"
-            : "#DC2626",
+            ? "var(--cta)"
+            : "var(--alert)",
         }}
       >
         {line.role.slice(0, 1)}
@@ -110,15 +110,15 @@ function BubbleRow({ line, type }: { line: ScriptLine; type: "ok" | "ng" }) {
         className="max-w-xs rounded-2xl px-5 py-4 text-xl leading-relaxed sm:max-w-sm"
         style={
           isLongBei
-            ? { background: "#F5F0E8", color: "#1C1917" }
+            ? { background: "var(--bg-soft)", color: "var(--text-primary)" }
             : type === "ok"
-            ? { background: "#FEF3C7", color: "#1C1917" }
-            : { background: "#FEE2E2", color: "#1C1917" }
+            ? { background: "var(--bg-accent)", color: "var(--text-primary)" }
+            : { background: "#FEE2E2", color: "var(--text-primary)" }
         }
       >
         <span
           className="mb-1 block text-sm font-semibold"
-          style={{ color: "#78716C" }}
+          style={{ color: "var(--text-muted)" }}
         >
           {line.role}
         </span>

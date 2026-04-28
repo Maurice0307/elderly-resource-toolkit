@@ -39,26 +39,26 @@ export default async function ScriptDetailPage({ params }: { params: Promise<Par
   const script = data as CommunicationScript;
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "#FFFBF5" }}>
+    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
       <div className="mx-auto max-w-2xl">
-        <Link href="/scripts" className="text-lg font-medium" style={{ color: "#B45309" }}>
+        <Link href="/scripts" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
           ← 溝通錦囊
         </Link>
 
         <header className="mt-5">
           <span
             className="rounded-full px-4 py-1 text-base font-semibold"
-            style={{ background: "#FEF3C7", color: "#92400E" }}
+            style={{ background: "var(--bg-accent)", color: "#92400E" }}
           >
             {audienceLabel[script.audience] ?? script.audience}
           </span>
 
-          <h1 className="mt-4 text-4xl font-bold leading-tight" style={{ color: "#1C1917" }}>
+          <h1 className="mt-4 text-4xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
             {script.title}
           </h1>
 
           {script.context ? (
-            <p className="mt-3 text-xl leading-relaxed" style={{ color: "#44403C" }}>
+            <p className="mt-3 text-xl leading-relaxed" style={{ color: "var(--text-secondary)" }}>
               {script.context}
             </p>
           ) : null}
@@ -76,7 +76,7 @@ export default async function ScriptDetailPage({ params }: { params: Promise<Par
               <span
                 key={tag}
                 className="rounded-full px-3 py-1 text-base font-medium"
-                style={{ background: "#FEF3C7", color: "#92400E" }}
+                style={{ background: "var(--bg-accent)", color: "#92400E" }}
               >
                 #{tag}
               </span>
