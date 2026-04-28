@@ -3,7 +3,22 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export async function GET() {
+  return NextResponse.json({ ok: true, key: !!process.env.ANTHROPIC_API_KEY });
+}
+
 export async function POST(req: NextRequest) {
+  console.log("[ai-clean] POST called");
+  try {
+    return await handlePost(req);
+  } catch (e) {
+    console.error("[ai-clean] unhandled error:", e);
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: `伺服器錯誤：${msg}` }, { status: 500 });
+  }
+}
+
+async function handlePost(req: NextRequest) {
   // Verify caller is moderator or admin
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -35,13 +50,15 @@ export async function POST(req: NextRequest) {
 
   const client = new Anthropic({ apiKey });
 
-  const message = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `你是長者服務資源平台的內容編輯。請將以下用戶投稿整理成適合發布的繁體中文格式。
+  let message;
+  try {
+    message = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: `你是長者服務資源平台的內容編輯。請將以下用戶投稿整理成適合發布的繁體中文格式。
 
 原始投稿：
 名稱：${resource.name}
@@ -70,9 +87,13 @@ export async function POST(req: NextRequest) {
   "website_url": "...",
   "tags": ["...", "..."]
 }`,
-      },
-    ],
-  });
+        },
+      ],
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: `Anthropic API 錯誤：${msg}` }, { status: 500 });
+  }
 
   const text = message.content[0].type === "text" ? message.content[0].text.trim() : "";
 

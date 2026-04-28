@@ -1,15 +1,22 @@
 import Link from "next/link";
 import { siteConfig } from "@/config/siteConfig";
 import { categories } from "@/config/categories";
+import { VoiceSearchHero } from "@/components/search/VoiceSearchHero";
+import { LocationBadge } from "@/components/location/LocationBadge";
+import { getUserRegionCode } from "@/lib/location/cookies";
+import { getRegionByCode } from "@/lib/location/regions";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const code = await getUserRegionCode();
+  const region = code ? await getRegionByCode(code) : null;
+
   return (
     <main className="flex flex-1 flex-col">
 
       {/* ── Hero ── */}
       <section
         style={{ background: "linear-gradient(135deg, #92400E 0%, #B45309 60%, #D97706 100%)" }}
-        className="px-6 py-16 sm:py-20"
+        className="px-6 py-14 sm:py-16"
       >
         <div className="mx-auto max-w-2xl text-center">
           <p
@@ -19,7 +26,7 @@ export default function HomePage() {
             {siteConfig.shortName}
           </p>
           <h1
-            className="mt-4 text-4xl font-bold leading-tight sm:text-5xl"
+            className="mt-3 text-4xl font-bold leading-tight sm:text-5xl"
             style={{ color: "#FFFBEB" }}
           >
             {siteConfig.name}
@@ -31,28 +38,20 @@ export default function HomePage() {
             中高齡者、家屬與志工的<br />全方位資源導航平台
           </p>
 
-          {/* 語音搜尋 */}
-          <button
-            type="button"
-            disabled
-            aria-label="語音搜尋（開發中）"
-            className="mt-10 inline-flex items-center justify-center gap-3 rounded-full px-12 py-6 text-2xl font-bold shadow-xl transition"
-            style={{
-              background: "#FFFBEB",
-              color: "#92400E",
-              cursor: "not-allowed",
-              opacity: 0.95,
-            }}
-          >
-            🎙&nbsp;按住說話
-          </button>
-          <p className="mt-4 text-base" style={{ color: "#FDE68A" }}>
-            語音搜尋功能即將推出
-          </p>
+          {/* 語音 + 文字搜尋 */}
+          <VoiceSearchHero />
+
+          {/* 在地化定位 */}
+          <div className="mt-6">
+            <LocationBadge
+              currentName={region?.name ?? null}
+              currentCode={region?.code ?? null}
+            />
+          </div>
 
           <Link
             href="/submit"
-            className="mt-6 inline-block rounded-full px-8 py-3 text-lg font-semibold transition"
+            className="mt-8 inline-block rounded-full px-8 py-3 text-lg font-semibold transition"
             style={{ background: "rgba(255,255,255,0.15)", color: "#FDE68A", border: "1.5px solid rgba(253,230,138,0.5)" }}
           >
             📮 知道好資源？點此投稿
