@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type SpeechRecognitionEvent = {
-  results: ArrayLike<ArrayLike<{ transcript: string }>>;
+  resultIndex: number;
+  results: ArrayLike<{
+    isFinal: boolean;
+    [index: number]: { transcript: string };
+    0: { transcript: string };
+    length: number;
+  }>;
 };
 type SpeechRecognitionErrorEvent = { error: string; message?: string };
 type SpeechRecognitionInstance = {
@@ -13,9 +19,11 @@ type SpeechRecognitionInstance = {
   interimResults: boolean;
   start: () => void;
   stop: () => void;
+  abort: () => void;
   onresult: ((e: SpeechRecognitionEvent) => void) | null;
   onerror: ((e: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
+  onstart: (() => void) | null;
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
@@ -29,10 +37,12 @@ declare global {
 export function VoiceSearchHero() {
   const router = useRouter();
   const [text, setText] = useState("");
+  const [interim, setInterim] = useState("");
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const [error, setError] = useState("");
   const recogRef = useRef<SpeechRecognitionInstance | null>(null);
+  const navigateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const Ctor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
@@ -41,22 +51,52 @@ export function VoiceSearchHero() {
     const r = new Ctor();
     r.lang = "zh-TW";
     r.continuous = false;
-    r.interimResults = false;
+    r.interimResults = true;
+
+    r.onstart = () => {
+      setListening(true);
+      setInterim("");
+      setError("");
+    };
+
     r.onresult = (e) => {
-      const t = e.results[0]?.[0]?.transcript ?? "";
-      setText(t);
-      if (t.trim()) {
-        router.push(`/search?q=${encodeURIComponent(t.trim())}&mode=intent`);
+      let finalT = "";
+      let interimT = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i];
+        const t = res[0]?.transcript ?? "";
+        if (res.isFinal) finalT += t;
+        else interimT += t;
+      }
+      if (interimT) setInterim(interimT);
+      if (finalT.trim()) {
+        const cleaned = finalT.trim();
+        setText(cleaned);
+        setInterim("");
+        if (navigateTimerRef.current) clearTimeout(navigateTimerRef.current);
+        navigateTimerRef.current = setTimeout(() => {
+          router.push(`/search?q=${encodeURIComponent(cleaned)}&mode=intent`);
+        }, 700);
       }
     };
+
     r.onerror = (e) => {
-      setError(`語音辨識錯誤：${e.error}`);
+      const map: Record<string, string> = {
+        "not-allowed": "請允許麥克風權限後再試一次",
+        "no-speech": "沒有偵測到聲音，請靠近麥克風再試一次",
+        network: "網路問題，請檢查網路連線",
+        "audio-capture": "找不到麥克風裝置",
+      };
+      setError(map[e.error] ?? `語音辨識錯誤：${e.error}`);
       setListening(false);
     };
+
     r.onend = () => setListening(false);
     recogRef.current = r;
+
     return () => {
-      try { r.stop(); } catch {}
+      try { r.abort(); } catch { /* noop */ }
+      if (navigateTimerRef.current) clearTimeout(navigateTimerRef.current);
     };
   }, [router]);
 
@@ -66,9 +106,10 @@ export function VoiceSearchHero() {
     if (listening) {
       recogRef.current.stop();
     } else {
+      setText("");
+      setInterim("");
       try {
         recogRef.current.start();
-        setListening(true);
       } catch (e) {
         setError(`無法啟動麥克風：${e instanceof Error ? e.message : String(e)}`);
       }
@@ -81,16 +122,26 @@ export function VoiceSearchHero() {
     router.push(`/search?q=${encodeURIComponent(text.trim())}&mode=intent`);
   }
 
+  const display = listening && interim ? interim : text;
+
   return (
     <div className="mx-auto mt-10 max-w-xl">
       <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row">
         <input
           type="search"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          value={display}
+          onChange={(e) => {
+            setText(e.target.value);
+            setInterim("");
+          }}
           placeholder="例：腳痛怎麼辦、附近有共餐嗎"
           className="flex-1 rounded-2xl px-6 py-5 text-xl outline-none"
-          style={{ background: "#FFFBEB", color: "#1C1917", border: "2px solid rgba(253,230,138,0.7)" }}
+          style={{
+            background: "#FFFBEB",
+            color: "#1C1917",
+            border: `2px solid ${listening ? "#DC2626" : "rgba(253,230,138,0.7)"}`,
+            fontStyle: listening && interim ? "italic" : "normal",
+          }}
         />
         <button
           type="submit"
@@ -123,10 +174,13 @@ export function VoiceSearchHero() {
           </p>
         )}
         {error && (
-          <p className="text-base" style={{ color: "#FECACA" }}>{error}</p>
+          <p className="text-base font-semibold" style={{ color: "#FECACA" }}>{error}</p>
         )}
-        {listening && (
-          <p className="text-base" style={{ color: "#FDE68A" }}>請說話，例如：「腳痛怎麼辦」</p>
+        {listening && !interim && (
+          <p className="text-base" style={{ color: "#FDE68A" }}>請說話，例如：「媽媽腳痛想去醫院」</p>
+        )}
+        {!listening && text && (
+          <p className="text-base" style={{ color: "#FDE68A" }}>聽到：「{text}」，正在搜尋…</p>
         )}
       </div>
     </div>
