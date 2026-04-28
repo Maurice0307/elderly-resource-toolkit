@@ -1,21 +1,63 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { ActivityCard, ActivityGroup } from "@/types/domain";
+import type { ActivityCard } from "@/types/domain";
 
 export const metadata = { title: "互動圖卡" };
 
-const groups: { slug: ActivityGroup; label: string; emoji: string; desc: string }[] = [
-  { slug: "move",   label: "動動生活", emoji: "🏃", desc: "居家運動、防跌、保健操" },
-  { slug: "create", label: "創意生活", emoji: "🎨", desc: "手工、園藝、創意活動" },
-  { slug: "smart",  label: "智慧生活", emoji: "💡", desc: "營養飲食、數位工具教學" },
+type Theme = {
+  key: string;
+  label: string;
+  emoji: string;
+  desc: string;
+  color: string;
+};
+
+const themes: Theme[] = [
+  { key: "craft", label: "手工美勞", emoji: "🎨", desc: "黏土、摺紙、書籤等手作", color: "#DC2626" },
+  { key: "plant", label: "花草植栽", emoji: "🌿", desc: "種植、苔球、療癒系活動", color: "#15803D" },
+  { key: "draw",  label: "創意繪畫", emoji: "🖌️", desc: "生命故事、禪繞畫、拼圖",   color: "#EA580C" },
+  { key: "body",  label: "動動身體", emoji: "🏃", desc: "護膝、防跌、椅子運動",   color: "#0369A1" },
+  { key: "smart", label: "智慧生活", emoji: "💡", desc: "營養飲食、數位工具教學",   color: "#7E22CE" },
 ];
 
-const interactSeries: { key: string; label: string; color: string; matchPrefix: string[] }[] = [
-  { key: "craft", label: "手工美勞", color: "#DC2626", matchPrefix: ["手工美勞"] },
-  { key: "plant", label: "花草植栽", color: "#15803D", matchPrefix: ["花草植栽"] },
-  { key: "draw",  label: "創意繪畫", color: "#EA580C", matchPrefix: ["創意繪畫"] },
-  { key: "body",  label: "動動身體", color: "#0369A1", matchPrefix: ["動動身體"] },
-];
+// 按 slug 明確指定主題（最穩定，不依賴標題或 group_slug）
+const THEME_BY_SLUG: Record<string, string> = {
+  // 手工美勞
+  "interact-clay": "craft",
+  "interact-origami": "craft",
+  "interact-leaf-bookmark": "craft",
+  // 花草植栽
+  "interact-moss-ball": "plant",
+  "interact-bean-sprout": "plant",
+  "balcony-garden": "plant",
+  // 創意繪畫
+  "interact-life-story": "draw",
+  "interact-zentangle": "draw",
+  "interact-memory-puzzle": "draw",
+  // 動動身體
+  "interact-knee-care": "body",
+  "chair-exercise": "body",
+  "fall-prevention": "body",
+  "morning-stretch": "body",
+  // 智慧生活
+  "my-plate": "smart",
+  "line-video-call": "smart",
+};
+
+function themeKeyFor(card: ActivityCard): string {
+  return (
+    THEME_BY_SLUG[card.slug] ??
+    (card.group_slug === "smart" ? "smart" : card.group_slug === "move" ? "body" : "craft")
+  );
+}
+
+function isInteract(card: ActivityCard): boolean {
+  return (card.tags ?? []).includes("陪伴互動");
+}
+
+function cleanTitle(card: ActivityCard): string {
+  return card.title.replace(/^[^：:①②③④⑤]*[①②③④⑤]?[:：]\s*/, "");
+}
 
 async function getCards(): Promise<ActivityCard[]> {
   const supabase = await createClient();
@@ -23,31 +65,20 @@ async function getCards(): Promise<ActivityCard[]> {
     .from("activity_cards")
     .select("*")
     .eq("status", "active")
-    .order("group_slug")
     .order("created_at");
   if (error) throw error;
   return (data ?? []) as ActivityCard[];
 }
 
-function isInteract(card: ActivityCard): boolean {
-  return (card.tags ?? []).includes("陪伴互動");
-}
-
-function matchSeries(card: ActivityCard) {
-  return interactSeries.find((s) => s.matchPrefix.some((p) => card.title.startsWith(p)));
-}
-
 export default async function ActivitiesPage() {
   const cards = await getCards();
-  const interactCards = cards.filter(isInteract);
-  const soloCards = cards.filter((c) => !isInteract(c));
-  const byGroup = Object.fromEntries(
-    groups.map((g) => [g.slug, soloCards.filter((c) => c.group_slug === g.slug)]),
-  );
-  const bySeries = Object.fromEntries(
-    interactSeries.map((s) => [
-      s.key,
-      interactCards.filter((c) => matchSeries(c)?.key === s.key),
+  const byTheme = Object.fromEntries(
+    themes.map((t) => [
+      t.key,
+      cards
+        .filter((c) => themeKeyFor(c) === t.key)
+        // 互動陪伴排前面
+        .sort((a, b) => Number(isInteract(b)) - Number(isInteract(a))),
     ]),
   );
 
@@ -63,172 +94,106 @@ export default async function ActivitiesPage() {
             互動圖卡
           </h1>
           <p className="mt-2 text-xl" style={{ color: "#57534E" }}>
-            步驟式大圖卡，一鍵分享給家人與長輩
+            步驟式大圖卡，志工 / 家屬可帶領長輩互動，也可長者自己跟著做
           </p>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm" style={{ background: "#FEF3C7", color: "#92400E" }}>
+            <span>🤝</span>
+            <span>標有「<strong>陪伴互動</strong>」的圖卡，建議由志工或家屬帶領</span>
+          </div>
         </header>
 
-        {/* ── 陪伴互動專區（志工 / 家屬帶領） ── */}
-        {interactCards.length > 0 && (
-          <section
-            className="mt-10 rounded-3xl p-6 sm:p-8"
-            style={{
-              background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
-              border: "2px solid #FDE68A",
-            }}
-          >
-            <div className="flex flex-wrap items-baseline gap-3">
-              <span className="text-3xl">🤝</span>
-              <h2 className="text-2xl font-bold" style={{ color: "#92400E" }}>
-                陪伴互動專區
-              </h2>
-              <span
-                className="rounded-full px-3 py-1 text-sm font-semibold"
-                style={{ background: "#92400E", color: "#FFFBEB" }}
-              >
-                志工 / 家屬帶領
-              </span>
-            </div>
-            <p className="mt-2 text-base" style={{ color: "#78716C" }}>
-              專為「陪伴」設計：每張圖卡含進行前的話題、活動中的互動、完成後的分享，幫助與長輩建立連結。
-            </p>
+        {/* 主題快選 */}
+        <nav className="mt-6 flex flex-wrap gap-2">
+          {themes.map((t) => (
+            <a
+              key={t.key}
+              href={`#theme-${t.key}`}
+              className="rounded-full px-4 py-2 text-base font-semibold"
+              style={{ background: t.color + "15", color: t.color, border: `1.5px solid ${t.color}40` }}
+            >
+              {t.emoji} {t.label}（{(byTheme[t.key] ?? []).length}）
+            </a>
+          ))}
+        </nav>
 
-            {interactSeries.map((s) => {
-              const list = bySeries[s.key] ?? [];
-              if (list.length === 0) return null;
-              return (
-                <div key={s.key} className="mt-6">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-1 w-8 rounded-full"
-                      style={{ background: s.color }}
-                    />
-                    <h3
-                      className="text-xl font-bold"
-                      style={{ color: s.color }}
-                    >
-                      {s.label}
-                    </h3>
-                    <span className="text-sm" style={{ color: "#78716C" }}>
-                      {list.length} 張
-                    </span>
-                  </div>
-                  <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {list.map((card) => (
-                      <li key={card.id}>
-                        <Link
-                          href={`/activities/${card.slug}`}
-                          className="group flex flex-col rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md"
-                          style={{ border: `2px solid ${s.color}30`, borderLeftWidth: 6, borderLeftColor: s.color }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-4xl">{card.cover_emoji ?? "📋"}</span>
-                            <h4
-                              className="text-lg font-bold leading-snug"
-                              style={{ color: "#1C1917" }}
-                            >
-                              {card.title.replace(/^.+?[①②③④⑤]?[:：]\s*/, "")}
-                            </h4>
-                          </div>
-                          {card.summary && (
-                            <p
-                              className="mt-2 line-clamp-2 text-base leading-relaxed"
-                              style={{ color: "#57534E" }}
-                            >
-                              {card.summary}
-                            </p>
-                          )}
-                          <div className="mt-3 flex items-center justify-between">
-                            <span
-                              className="rounded-full px-3 py-1 text-sm font-medium"
-                              style={{ background: s.color + "15", color: s.color }}
-                            >
-                              {card.steps.length} 步驟
-                            </span>
-                            <span
-                              className="text-base font-semibold transition group-hover:translate-x-1"
-                              style={{ color: s.color }}
-                            >
-                              開始 →
-                            </span>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </section>
-        )}
-
-        {/* ── 一般圖卡（自助式） ── */}
-        {groups.map((g) => {
-          const groupCards = byGroup[g.slug] ?? [];
-          if (groupCards.length === 0 && interactCards.length > 0) return null;
+        {/* 主題區塊 */}
+        {themes.map((t) => {
+          const list = byTheme[t.key] ?? [];
+          if (list.length === 0) return null;
           return (
-            <section key={g.slug} className="mt-12">
+            <section key={t.key} id={`theme-${t.key}`} className="mt-12 scroll-mt-20">
               <div className="flex items-center gap-3">
-                <span className="text-4xl">{g.emoji}</span>
+                <span className="text-4xl">{t.emoji}</span>
                 <div>
-                  <h2 className="text-2xl font-bold" style={{ color: "#1C1917" }}>
-                    {g.label}
+                  <h2 className="text-2xl font-bold" style={{ color: t.color }}>
+                    {t.label}
                   </h2>
                   <p className="text-base" style={{ color: "#78716C" }}>
-                    {g.desc}
+                    {t.desc} · 共 {list.length} 張
                   </p>
                 </div>
               </div>
 
-              {groupCards.length === 0 ? (
-                <div
-                  className="mt-4 rounded-2xl p-8 text-center text-lg"
-                  style={{ background: "#FEF3C7", color: "#92400E", border: "2px dashed #FDE68A" }}
-                >
-                  內容整理中，敬請期待
-                </div>
-              ) : (
-                <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {groupCards.map((card) => (
+              <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {list.map((card) => {
+                  const interactive = isInteract(card);
+                  return (
                     <li key={card.id}>
                       <Link
                         href={`/activities/${card.slug}`}
-                        className="group flex flex-col rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-                        style={{ border: "2px solid #E7E5E4" }}
+                        className="group flex h-full flex-col rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md"
+                        style={{
+                          border: `2px solid ${t.color}25`,
+                          borderLeftWidth: 6,
+                          borderLeftColor: t.color,
+                        }}
                       >
-                        <span className="text-5xl">{card.cover_emoji ?? "📋"}</span>
-                        <h3
-                          className="mt-4 text-xl font-bold leading-snug"
-                          style={{ color: "#1C1917" }}
-                        >
-                          {card.title}
-                        </h3>
-                        {card.summary ? (
+                        <div className="flex items-start gap-3">
+                          <span className="text-4xl">{card.cover_emoji ?? "📋"}</span>
+                          <div className="flex-1">
+                            <h3
+                              className="text-lg font-bold leading-snug"
+                              style={{ color: "#1C1917" }}
+                            >
+                              {cleanTitle(card)}
+                            </h3>
+                            {interactive && (
+                              <span
+                                className="mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-bold"
+                                style={{ background: "#FEF3C7", color: "#92400E" }}
+                              >
+                                🤝 陪伴互動
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {card.summary && (
                           <p
-                            className="mt-2 text-base leading-relaxed"
+                            className="mt-3 line-clamp-3 text-base leading-relaxed"
                             style={{ color: "#57534E" }}
                           >
                             {card.summary}
                           </p>
-                        ) : null}
-                        <div className="mt-4 flex items-center justify-between">
+                        )}
+                        <div className="mt-auto flex items-center justify-between pt-4">
                           <span
                             className="rounded-full px-3 py-1 text-sm font-medium"
-                            style={{ background: "#FEF3C7", color: "#92400E" }}
+                            style={{ background: t.color + "15", color: t.color }}
                           >
-                            {card.steps.length} 個步驟
+                            {card.steps.length} 步驟
                           </span>
                           <span
                             className="text-base font-semibold transition group-hover:translate-x-1"
-                            style={{ color: "#B45309" }}
+                            style={{ color: t.color }}
                           >
                             開始 →
                           </span>
                         </div>
                       </Link>
                     </li>
-                  ))}
-                </ul>
-              )}
+                  );
+                })}
+              </ul>
             </section>
           );
         })}

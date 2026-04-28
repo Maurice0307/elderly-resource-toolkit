@@ -43,17 +43,17 @@ const cards = [
   {
     group_slug: "create",
     slug: "interact-origami",
-    title: "手工美勞②：摺紙",
-    summary: "用簡單的色紙，摺出愛心、康乃馨、小熊、小鳥等可愛圖形。約 15 分鐘。",
-    cover_emoji: "🦢",
+    title: "手工美勞②：摺紙（含幸運星教學）",
+    summary: "用簡單的色紙摺幸運星、愛心、康乃馨、小熊、小鳥；幸運星最容易上手，新手強烈推薦。約 15 分鐘。",
+    cover_emoji: "⭐",
     identity_tags: ["volunteer", "family"],
-    tags: ["陪伴互動", "手工美勞", "摺紙", "15分鐘"],
+    tags: ["陪伴互動", "手工美勞", "摺紙", "幸運星", "15分鐘"],
     steps: [
-      { order: 1, title: "準備材料", description: "在文具店購買不同花色的色紙。志工或家屬請在家先學會幾種摺法（愛心、康乃馨、小熊、小鳥），這樣現場才能順利帶領。", tip: "可上 YouTube 搜尋「簡單摺紙 教學」找適合長輩的步驟。" },
-      { order: 2, title: "進行前：聊聊喜好", description: "問問好朋友：「你最喜歡什麼形狀或動物？」可選擇對方喜歡的款式開始，例如喜歡花就摺康乃馨。", tip: "這也是話匣子的開場：「以前過母親節有沒有收過什麼花？」" },
-      { order: 3, title: "示範並一起摺", description: "把步驟拆成 3～5 段，每一段先示範一次再讓好朋友跟著做。手掌不靈活時，可幫忙壓摺線。", tip: "用力壓平摺線是長輩常需要協助的環節。" },
-      { order: 4, title: "比較作品", description: "完成後可讓好朋友看看「自己摺的」與「示範的」差別，討論哪邊不一樣。也可以摺多個放在一起。", tip: "活動中可用手機搜尋影片輔助。" },
-      { order: 5, title: "完成後：分享布置", description: "和好朋友討論「想布置在家中的哪個角落」？放在窗台、書桌、玄關都很美。", tip: "完成後立刻拍照存檔，下次來看時會更有印象。" },
+      { order: 1, title: "準備材料", description: "在文具店購買不同花色的色紙；要摺幸運星可額外準備 1.5 公分寬、35～40 公分長的紙條（用 A4 紙裁切或包裝紙皆可）。志工或家屬請先在家學會 1～2 種摺法。", tip: "幸運星紙條越長，星星越大；初學者從 35 公分試起。" },
+      { order: 2, title: "進行前：聊聊喜好", description: "問問好朋友：「你最喜歡什麼形狀或動物？」可選擇對方喜歡的款式開始；如果想送人，建議從幸運星入門（可裝玻璃罐送孫子孫女）。", tip: "話匣子開場：「以前過母親節有沒有收過什麼花？」" },
+      { order: 3, title: "幸運星 5 步驟（推薦入門）", description: "①距離一端 5 公分處打一個平結並整理成五邊形，多餘短端折入。②用長端沿五邊形每一邊整齊纏繞，方向一致。③剩下 2 公分時將末端折入縫隙藏好。④用食指拇指輕捏五邊形每個角，讓它鼓起變立體。⑤完成立體小星星！", tip: "纏繞要每圈壓平、力道要輕，太用力紙條會折斷。" },
+      { order: 4, title: "進階：愛心 / 康乃馨 / 小熊 / 小鳥", description: "幸運星熟練後，可挑戰愛心（簡單）、康乃馨（適合送長輩）、小熊（小孩會喜歡）、小鳥（最有挑戰）。每種都先示範一段、好朋友跟著摺一段。", tip: "壓摺線是長輩常需要協助的環節，可代為施力。" },
+      { order: 5, title: "完成後：分享布置", description: "和好朋友討論「想布置在家中的哪個角落」？幸運星可裝在玻璃罐當禮物，紙花可放在客廳花瓶。", tip: "完成後立刻拍照，下次來看會有成就感。" },
     ],
   },
   {
@@ -185,4 +185,16 @@ for (const card of cards) {
     success++;
   }
 }
+
+// 刪除已併入 interact-origami 的舊版幸運星卡
+const { error: delErr } = await admin
+  .from("activity_cards")
+  .delete()
+  .eq("slug", "paper-folding");
+if (delErr) {
+  console.error("✗ delete paper-folding:", delErr.message);
+} else {
+  console.log("✓ deleted paper-folding (merged into interact-origami)");
+}
+
 console.log(`\nDone. ${success}/${cards.length} cards upserted.`);
