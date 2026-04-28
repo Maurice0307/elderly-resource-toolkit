@@ -39,13 +39,18 @@ export type CategoryRef = { slug: CategorySlug; name: string };
 
 // ── 互動圖卡 ────────────────────────────────────
 
-export type ActivityGroup = "move" | "create" | "smart";
+export type ActivityGroup = "move" | "create" | "smart" | "health" | "life";
+
+export type VideoProvider = "youtube" | "vimeo" | "self" | "none";
 
 export type ActivityStep = {
   order: number;
   title: string;
   description: string;
   tip?: string;
+  image_url?: string;
+  video_url?: string;
+  video_start?: number; // seconds — jump to this timestamp
 };
 
 export type ActivityCard = {
@@ -55,12 +60,55 @@ export type ActivityCard = {
   title: string;
   summary: string | null;
   cover_emoji: string | null;
+  cover_image_url: string | null;
+  hero_image_url: string | null;
+  video_url: string | null;
+  video_provider: VideoProvider | null;
+  source_url: string | null;
+  source_org: string | null;
+  duration_min: number | null;
   identity_tags: IdentitySlug[];
   steps: ActivityStep[];
   tags: string[];
   like_count: number;
   status: string;
   created_at: string;
+};
+
+// ── 每日新知 ────────────────────────────────────
+
+export type DailyNews = {
+  id: string;
+  source_org: string;
+  source_url: string;
+  title: string;
+  summary_md: string;
+  image_url: string | null;
+  tags: string[];
+  published_at: string | null;
+  fetched_at: string;
+  status: "active" | "hidden" | "draft";
+  created_at: string;
+};
+
+// ── 社群投稿 ────────────────────────────────────
+
+export type CommunitySubmissionType = "activity" | "script";
+
+export type CommunitySubmission = {
+  id: string;
+  type: CommunitySubmissionType;
+  title: string;
+  payload: Record<string, unknown>;
+  source_url: string | null;
+  contact: string | null;
+  submitted_by: string | null;
+  status: "pending" | "approved" | "rejected" | "needs_more_info";
+  review_notes: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 // ── 溝通錦囊 ────────────────────────────────────
