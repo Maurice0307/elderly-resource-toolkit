@@ -5,6 +5,120 @@ import { VoiceSearchHero } from "@/components/search/VoiceSearchHero";
 import { LocationBadge } from "@/components/location/LocationBadge";
 import { getUserRegionCode } from "@/lib/location/cookies";
 import { getRegionByCode } from "@/lib/location/regions";
+import { createClient } from "@/lib/supabase/server";
+
+async function NewsSection() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("daily_news")
+    .select("id, title, source_org, tags, image_url, published_at, fetched_at")
+    .eq("status", "active")
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(4);
+
+  if (!data || data.length === 0) return null;
+
+  const [featured, ...rest] = data;
+
+  return (
+    <section className="px-6 py-14" style={{ background: "var(--bg-page)" }}>
+      <div className="mx-auto max-w-5xl">
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
+              📰 今日新聞
+            </h2>
+            <p className="mt-2 text-lg" style={{ color: "var(--text-secondary)" }}>
+              長輩友善資訊，重點整理一目了然
+            </p>
+          </div>
+          <Link
+            href="/news"
+            className="rounded-full px-5 py-3 text-base font-semibold transition hover:opacity-80"
+            style={{ background: "var(--bg-soft)", color: "var(--cta)", border: "1.5px solid var(--border)" }}
+          >
+            看全部 →
+          </Link>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
+          {/* 主要大卡 */}
+          <Link
+            href={`/news/${featured.id}`}
+            className="group flex flex-col overflow-hidden rounded-2xl shadow-sm transition hover:shadow-md lg:col-span-3"
+            style={{ background: "var(--bg-elevated)", border: "2px solid var(--border)" }}
+          >
+            {featured.image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={featured.image_url}
+                alt=""
+                className="w-full object-cover"
+                style={{ height: 200 }}
+              />
+            )}
+            <div className="flex flex-1 flex-col p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+                  {featured.source_org}
+                </span>
+                {(featured.tags ?? []).slice(0, 2).map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="rounded-full px-2 py-0.5 text-xs"
+                    style={{ background: "var(--bg-accent)", color: "#92400E" }}
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-2 text-xl font-bold leading-snug" style={{ color: "var(--text-primary)" }}>
+                {featured.title}
+              </p>
+              <span
+                className="mt-auto pt-4 text-base font-semibold transition group-hover:translate-x-1"
+                style={{ color: "#EA580C" }}
+              >
+                閱讀重點 →
+              </span>
+            </div>
+          </Link>
+
+          {/* 右側小卡 */}
+          <ul className="flex flex-col gap-4 lg:col-span-2">
+            {rest.map((item) => (
+              <li key={item.id} className="flex-1">
+                <Link
+                  href={`/news/${item.id}`}
+                  className="group flex h-full items-center gap-3 overflow-hidden rounded-2xl shadow-sm transition hover:shadow-md"
+                  style={{ background: "var(--bg-elevated)", border: "2px solid var(--border)" }}
+                >
+                  {item.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.image_url}
+                      alt=""
+                      className="shrink-0 object-cover"
+                      style={{ width: 80, height: "100%", minHeight: 80 }}
+                    />
+                  )}
+                  <div className="flex min-w-0 flex-1 flex-col py-3 pr-4" style={{ paddingLeft: item.image_url ? 0 : "1rem" }}>
+                    <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                      {item.source_org}
+                    </span>
+                    <p className="mt-1 line-clamp-2 text-base font-semibold leading-snug" style={{ color: "var(--text-primary)" }}>
+                      {item.title}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default async function HomePage() {
   const code = await getUserRegionCode();
@@ -272,6 +386,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── 今日新聞 ── */}
+      <NewsSection />
 
       {/* ── 底部說明 ── */}
       <footer

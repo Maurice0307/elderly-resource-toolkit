@@ -98,6 +98,33 @@ export async function deleteAnswer(answerId: string) {
   revalidatePath("/admin/questions");
 }
 
+// ── News moderation ────────────────────────────────────────────────────
+
+export async function hideNews(newsId: string) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  await admin.from("daily_news").update({ status: "hidden" }).eq("id", newsId);
+  revalidatePath("/admin/news");
+  revalidatePath("/news");
+}
+
+export async function restoreNews(newsId: string) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  await admin.from("daily_news").update({ status: "active" }).eq("id", newsId);
+  revalidatePath("/admin/news");
+  revalidatePath("/news");
+}
+
+export async function deleteNews(newsId: string) {
+  const { role: callerRole } = await assertAdmin();
+  if (callerRole !== "admin") redirect("/");
+  const admin = createAdminClient();
+  await admin.from("daily_news").delete().eq("id", newsId);
+  revalidatePath("/admin/news");
+  revalidatePath("/news");
+}
+
 // ── User management (admin only) ───────────────────────────────────────
 
 export async function setUserRole(targetUserId: string, role: "user" | "moderator" | "admin") {
