@@ -5,7 +5,7 @@ export const metadata = { title: "後台管理" };
 
 const navItems = [
   { href: "/admin", label: "📊 概覽", exact: true },
-  { href: "/admin/resources", label: "📦 資源審核" },
+  { href: "/admin/resources", label: "📦 資源管理" },
   { href: "/admin/questions", label: "💬 問答管理" },
   { href: "/admin/news", label: "📰 新聞管理", adminOnly: true },
   { href: "/admin/users", label: "👥 用戶管理", adminOnly: true },

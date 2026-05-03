@@ -125,6 +125,78 @@ export async function deleteNews(newsId: string) {
   revalidatePath("/news");
 }
 
+// ── Resource CRUD (admin full control) ────────────────────────────────────────
+
+export async function deleteResource(resourceId: string) {
+  const { role: callerRole } = await assertAdmin();
+  if (callerRole !== "admin") redirect("/");
+  const admin = createAdminClient();
+  const { error } = await admin.from("resources").delete().eq("id", resourceId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/resources");
+}
+
+export async function createResourceAdmin(formData: FormData) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  const scope = (formData.get("scope") as string) || "local";
+  const identityTags = formData.getAll("identity_tags") as string[];
+  const tagsRaw = (formData.get("tags") as string) ?? "";
+  const tags = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
+
+  const { error } = await admin.from("resources").insert({
+    subcategory_id: formData.get("subcategory_id") as string,
+    scope,
+    region_id: scope === "local" ? ((formData.get("region_id") as string) || null) : null,
+    name: formData.get("name") as string,
+    summary: (formData.get("summary") as string) || null,
+    description: (formData.get("description") as string) || null,
+    phone: (formData.get("phone") as string) || null,
+    phone_hint: (formData.get("phone_hint") as string) || null,
+    address: (formData.get("address") as string) || null,
+    website_url: (formData.get("website_url") as string) || null,
+    identity_tags: identityTags,
+    tags,
+    source_org: (formData.get("source_org") as string) || null,
+    status: (formData.get("status") as string) || "active",
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/resources");
+  redirect("/admin/resources?status=active");
+}
+
+export async function updateResourceAdmin(resourceId: string, formData: FormData) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  const scope = (formData.get("scope") as string) || "local";
+  const identityTags = formData.getAll("identity_tags") as string[];
+  const tagsRaw = (formData.get("tags") as string) ?? "";
+  const tags = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
+
+  const { error } = await admin
+    .from("resources")
+    .update({
+      subcategory_id: formData.get("subcategory_id") as string,
+      scope,
+      region_id: scope === "local" ? ((formData.get("region_id") as string) || null) : null,
+      name: formData.get("name") as string,
+      summary: (formData.get("summary") as string) || null,
+      description: (formData.get("description") as string) || null,
+      phone: (formData.get("phone") as string) || null,
+      phone_hint: (formData.get("phone_hint") as string) || null,
+      address: (formData.get("address") as string) || null,
+      website_url: (formData.get("website_url") as string) || null,
+      identity_tags: identityTags,
+      tags,
+      source_org: (formData.get("source_org") as string) || null,
+      status: (formData.get("status") as string) || "active",
+    })
+    .eq("id", resourceId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/resources");
+  redirect("/admin/resources?status=active");
+}
+
 // ── User management (admin only) ───────────────────────────────────────
 
 export async function setUserRole(targetUserId: string, role: "user" | "moderator" | "admin") {

@@ -1,123 +1,211 @@
+import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth/requireRole";
+import { DeleteResourceButton } from "@/components/admin/DeleteResourceButton";
 import { approveResource, rejectResource, markResourceEnded } from "@/lib/admin/actions";
-import { ResourceReviewPanel } from "@/components/admin/ResourceReviewPanel";
 
-const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-  pending:  { label: "待審核", bg: "#FEF3C7", color: "#92400E" },
-  active:   { label: "已上架", bg: "#ECFDF5", color: "#065F46" },
-  ended:    { label: "已結束", bg: "#F5F5F4", color: "#78716C" },
-  archived: { label: "已封存", bg: "#F5F5F4", color: "#78716C" },
-};
+const STATUS_TABS = [
+  { value: "active",   label: "已上架", bg: "#ECFDF5", color: "#065F46" },
+  { value: "pending",  label: "待審核", bg: "#FEF3C7", color: "#92400E" },
+  { value: "ended",    label: "已結束", bg: "#F5F5F4", color: "#78716C" },
+  { value: "archived", label: "已封存", bg: "#F5F5F4", color: "#78716C" },
+];
 
 export default async function AdminResourcesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   await requireRole("moderator");
-  const { status = "pending" } = await searchParams;
+  const { status = "active", q = "" } = await searchParams;
   const admin = createAdminClient();
 
-  const { data: rawResources, error: resourcesError } = await admin
+  // ── Fetch resources ──────────────────────────────────────────────────
+  let query = admin
     .from("resources")
-    .select("id, name, summary, description, phone, address, website_url, tags, scope, status, created_at, submitted_by, subcategory_id")
+    .select("id, name, summary, phone, website_url, scope, status, created_at, subcategory_id, region_id")
     .eq("status", status)
-    .order("created_at", { ascending: true })
-    .limit(50);
+    .order("created_at", { ascending: false })
+    .limit(200);
 
-  const resources = rawResources ?? [];
+  if (q) query = query.ilike("name", `%${q}%`);
 
-  // Batch-fetch subcategory names
-  const subcatIds = [...new Set(resources.map((r) => r.subcategory_id).filter(Boolean))] as string[];
-  const subcatMap: Record<string, string> = {};
+  const { data: resources = [], error } = await query;
+
+  // ── Subcategory + category lookup ────────────────────────────────────
+  const subcatIds = [...new Set((resources ?? []).map((r) => r.subcategory_id).filter(Boolean))] as string[];
+  const subcatMap: Record<string, { name: string; category_name: string }> = {};
+
   if (subcatIds.length > 0) {
     const { data: subcats } = await admin
       .from("subcategories")
-      .select("id, name")
+      .select("id, name, category_id")
       .in("id", subcatIds);
-    for (const s of subcats ?? []) subcatMap[s.id] = s.name;
-  }
 
-  // Batch-fetch submitter display names
-  const submitterIds = [...new Set(resources.map((r) => r.submitted_by).filter(Boolean))] as string[];
-  const submitterMap: Record<string, string> = {};
-  if (submitterIds.length > 0) {
-    const { data: submitterProfiles } = await admin
-      .from("profiles")
-      .select("id, display_name")
-      .in("id", submitterIds);
-    for (const p of submitterProfiles ?? []) {
-      submitterMap[p.id] = p.display_name ?? "匿名";
+    const catIds = [...new Set((subcats ?? []).map((s) => s.category_id).filter(Boolean))] as string[];
+    const catMap: Record<string, string> = {};
+
+    if (catIds.length > 0) {
+      const { data: cats } = await admin.from("categories").select("id, name").in("id", catIds);
+      for (const c of cats ?? []) catMap[c.id] = c.name;
+    }
+    for (const s of subcats ?? []) {
+      subcatMap[s.id] = { name: s.name, category_name: catMap[s.category_id] ?? "" };
     }
   }
 
-  const tabs = ["pending", "active", "ended", "archived"];
+  // ── Region lookup ────────────────────────────────────────────────────
+  const regionIds = [...new Set((resources ?? []).map((r) => r.region_id).filter(Boolean))] as string[];
+  const regionMap: Record<string, string> = {};
+  if (regionIds.length > 0) {
+    const { data: regs } = await admin.from("regions").select("id, name").in("id", regionIds);
+    for (const r of regs ?? []) regionMap[r.id] = r.name;
+  }
+
+  // ── Pending count for badge ──────────────────────────────────────────
+  const { count: pendingCount } = await admin
+    .from("resources")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+
+  const currentTab = STATUS_TABS.find((t) => t.value === status) ?? STATUS_TABS[0];
 
   return (
     <div>
-      <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-        資源審核
-      </h1>
-
-      {/* Status tabs */}
-      <div className="mt-4 flex gap-2 overflow-x-auto">
-        {tabs.map((s) => {
-          const info = statusMap[s];
-          return (
-            <a
-              key={s}
-              href={`/admin/resources?status=${s}`}
-              className="shrink-0 rounded-full px-5 py-2 text-base font-semibold transition"
-              style={
-                status === s
-                  ? { background: info.color, color: "#FFFFFF" }
-                  : { background: info.bg, color: info.color, border: `1.5px solid ${info.color}40` }
-              }
-            >
-              {info.label}
-            </a>
-          );
-        })}
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
+          資源管理
+        </h1>
+        <Link
+          href="/admin/resources/new"
+          className="rounded-xl px-5 py-2.5 text-base font-bold transition"
+          style={{ background: "var(--cta)", color: "var(--cta-on)" }}
+        >
+          ＋ 新增資源
+        </Link>
       </div>
 
-      {resourcesError && (
+      {/* Status tabs */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {STATUS_TABS.map((tab) => (
+          <a
+            key={tab.value}
+            href={`/admin/resources?status=${tab.value}`}
+            className="relative shrink-0 rounded-full px-5 py-2 text-base font-semibold transition"
+            style={
+              status === tab.value
+                ? { background: tab.color, color: "#FFFFFF" }
+                : { background: tab.bg, color: tab.color, border: `1.5px solid ${tab.color}40` }
+            }
+          >
+            {tab.label}
+            {tab.value === "pending" && (pendingCount ?? 0) > 0 && (
+              <span
+                className="ml-2 rounded-full px-2 py-0.5 text-xs font-bold"
+                style={{ background: "#DC2626", color: "#fff" }}
+              >
+                {pendingCount}
+              </span>
+            )}
+          </a>
+        ))}
+      </div>
+
+      {/* Search bar */}
+      <form method="GET" className="mt-4 flex gap-2">
+        <input type="hidden" name="status" value={status} />
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="搜尋資源名稱…"
+          className="flex-1 rounded-xl border px-4 py-2 text-base"
+          style={{
+            background: "var(--bg-elevated)",
+            borderColor: "var(--border)",
+            color: "var(--text-primary)",
+          }}
+        />
+        <button
+          type="submit"
+          className="rounded-xl px-5 py-2 font-semibold"
+          style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
+        >
+          搜尋
+        </button>
+      </form>
+
+      {error && (
         <div className="mt-4 rounded-xl p-4 text-sm font-mono" style={{ background: "#FEE2E2", color: "#DC2626" }}>
-          查詢錯誤：{resourcesError.message}
+          查詢錯誤：{error.message}
         </div>
       )}
 
-      {resources.length === 0 ? (
+      {/* Summary */}
+      <p className="mt-3 text-sm" style={{ color: "var(--text-muted)" }}>
+        共 {resources?.length ?? 0} 筆「{currentTab.label}」資源
+        {q && `（搜尋：${q}）`}
+      </p>
+
+      {/* Table */}
+      {(resources?.length ?? 0) === 0 ? (
         <div
           className="mt-8 rounded-2xl p-10 text-center text-xl"
           style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
         >
-          目前沒有「{statusMap[status]?.label}」狀態的資源
+          目前沒有「{currentTab.label}」資源
         </div>
       ) : (
-        <ul className="mt-6 space-y-4">
-          {resources.map((r) => {
-            const subcatName = subcatMap[r.subcategory_id ?? ""] ?? null;
-            const submitterName = submitterMap[r.submitted_by ?? ""] ?? "匿名";
-            return (
-              <li
-                key={r.id}
-                className="rounded-2xl p-6"
-                style={{ background: "var(--bg-elevated)", border: "2px solid var(--border)" }}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap gap-2">
-                      {subcatName && (
-                        <span
-                          className="rounded-full px-3 py-1 text-sm font-semibold"
-                          style={{ background: "#F5F0E8", color: "#78716C" }}
-                        >
-                          {subcatName}
-                        </span>
+        <div className="mt-4 overflow-x-auto rounded-2xl" style={{ border: "1.5px solid var(--border)" }}>
+          <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "var(--bg-soft)", borderBottom: "1.5px solid var(--border)" }}>
+                {["分類", "範圍／地區", "名稱", "摘要", "電話", "網址", "操作"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(resources ?? []).map((r, i) => {
+                const subcat = subcatMap[r.subcategory_id ?? ""];
+                const regionName = regionMap[r.region_id ?? ""] ?? null;
+                const isEven = i % 2 === 0;
+
+                return (
+                  <tr
+                    key={r.id}
+                    style={{
+                      background: isEven ? "var(--bg-elevated)" : "var(--bg-page)",
+                      borderBottom: "1px solid var(--border)",
+                    }}
+                  >
+                    {/* 分類 */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {subcat ? (
+                        <div>
+                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                            {subcat.category_name}
+                          </span>
+                          <div className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                            {subcat.name}
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)" }}>—</span>
                       )}
+                    </td>
+
+                    {/* 範圍 */}
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span
-                        className="rounded-full px-3 py-1 text-sm"
+                        className="rounded-full px-2 py-0.5 text-xs font-semibold"
                         style={
                           r.scope === "national"
                             ? { background: "#FEF3C7", color: "#92400E" }
@@ -126,67 +214,117 @@ export default async function AdminResourcesPage({
                       >
                         {r.scope === "national" ? "全國" : "在地"}
                       </span>
-                    </div>
-                    <h2 className="mt-2 text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+                      {regionName && (
+                        <div className="mt-0.5 text-xs" style={{ color: "var(--text-muted)" }}>
+                          {regionName}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* 名稱 */}
+                    <td className="px-4 py-3 font-semibold" style={{ color: "var(--text-primary)", minWidth: 160 }}>
                       {r.name}
-                    </h2>
-                    {r.summary && (
-                      <p className="mt-1 text-lg" style={{ color: "var(--text-secondary)" }}>
-                        {r.summary}
-                      </p>
-                    )}
-                    <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
-                      投稿者：{submitterName} ·{" "}
-                      {new Date(r.created_at).toLocaleDateString("zh-TW")}
-                    </p>
-                  </div>
+                    </td>
 
-                  {/* Quick actions (non-pending) */}
-                  <div className="flex flex-wrap gap-2 shrink-0">
-                    {r.status === "active" && (
-                      <form action={markResourceEnded.bind(null, r.id)}>
-                        <button
-                          type="submit"
-                          className="rounded-full px-4 py-2 text-base font-semibold"
-                          style={{ background: "#FEF3C7", color: "#92400E", border: "1.5px solid #FDE68A" }}
-                        >
-                          標記結束
-                        </button>
-                      </form>
-                    )}
-                    {(r.status === "ended" || r.status === "archived") && (
-                      <form action={approveResource.bind(null, r.id)}>
-                        <button
-                          type="submit"
-                          className="rounded-full px-4 py-2 text-base font-semibold"
-                          style={{ background: "#ECFDF5", color: "#065F46", border: "1.5px solid #6EE7B7" }}
-                        >
-                          重新上架
-                        </button>
-                      </form>
-                    )}
-                    {r.status === "pending" && (
-                      <form action={rejectResource.bind(null, r.id)}>
-                        <button
-                          type="submit"
-                          className="rounded-full px-4 py-2 text-base font-semibold"
-                          style={{ background: "#FEE2E2", color: "#DC2626", border: "1.5px solid #FCA5A5" }}
-                        >
-                          ✗ 直接拒絕
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                </div>
+                    {/* 摘要 */}
+                    <td className="px-4 py-3" style={{ color: "var(--text-secondary)", minWidth: 200 }}>
+                      {r.summary ? (
+                        <span title={r.summary}>
+                          {r.summary.length > 50 ? r.summary.slice(0, 50) + "…" : r.summary}
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)" }}>—</span>
+                      )}
+                    </td>
 
-                {/* AI review panel — pending only */}
-                {r.status === "pending" && (
-                  <ResourceReviewPanel resource={r as Parameters<typeof ResourceReviewPanel>[0]["resource"]} />
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                    {/* 電話 */}
+                    <td className="px-4 py-3 whitespace-nowrap font-mono text-sm" style={{ color: "var(--text-primary)" }}>
+                      {r.phone ?? <span style={{ color: "var(--text-muted)" }}>—</span>}
+                    </td>
+
+                    {/* 網址 */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {r.website_url ? (
+                        <a
+                          href={r.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm underline"
+                          style={{ color: "var(--cta)" }}
+                        >
+                          連結 ↗
+                        </a>
+                      ) : (
+                        <span style={{ color: "var(--text-muted)" }}>—</span>
+                      )}
+                    </td>
+
+                    {/* 操作 */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/resources/${r.id}/edit`}
+                          className="rounded-lg px-3 py-1.5 text-sm font-semibold transition"
+                          style={{ background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #BFDBFE" }}
+                        >
+                          編輯
+                        </Link>
+
+                        {/* Status quick-actions */}
+                        {r.status === "active" && (
+                          <form action={markResourceEnded.bind(null, r.id)}>
+                            <button
+                              type="submit"
+                              className="rounded-lg px-3 py-1.5 text-sm font-semibold"
+                              style={{ background: "#FEF3C7", color: "#92400E", border: "1px solid #FDE68A" }}
+                            >
+                              結束
+                            </button>
+                          </form>
+                        )}
+                        {r.status === "pending" && (
+                          <>
+                            <form action={approveResource.bind(null, r.id)}>
+                              <button
+                                type="submit"
+                                className="rounded-lg px-3 py-1.5 text-sm font-semibold"
+                                style={{ background: "#ECFDF5", color: "#065F46", border: "1px solid #6EE7B7" }}
+                              >
+                                上架
+                              </button>
+                            </form>
+                            <form action={rejectResource.bind(null, r.id)}>
+                              <button
+                                type="submit"
+                                className="rounded-lg px-3 py-1.5 text-sm font-semibold"
+                                style={{ background: "#FEE2E2", color: "#DC2626", border: "1px solid #FCA5A5" }}
+                              >
+                                拒絕
+                              </button>
+                            </form>
+                          </>
+                        )}
+                        {(r.status === "ended" || r.status === "archived") && (
+                          <form action={approveResource.bind(null, r.id)}>
+                            <button
+                              type="submit"
+                              className="rounded-lg px-3 py-1.5 text-sm font-semibold"
+                              style={{ background: "#ECFDF5", color: "#065F46", border: "1px solid #6EE7B7" }}
+                            >
+                              重新上架
+                            </button>
+                          </form>
+                        )}
+
+                        <DeleteResourceButton resourceId={r.id} resourceName={r.name} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
