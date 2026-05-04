@@ -6,6 +6,7 @@ import { MapButton } from "@/components/resources/MapButton";
 import { ShareCardButton } from "@/components/resources/ShareCardButton";
 import { LikeButton } from "@/components/resources/LikeButton";
 import { FeedbackForm } from "@/components/resources/FeedbackForm";
+import { LineShareButton } from "@/components/liff/LineShareButton";
 import { getResourceById } from "@/lib/resources/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -119,6 +120,10 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
               address: resource.address,
               website_url: resource.website_url,
             }}
+          />
+          <LineShareButton
+            resourceName={resource.name}
+            resourceUrl={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://elderly-resource-toolkit.vercel.app"}/resources/${category}/${id}`}
           />
         </section>
 

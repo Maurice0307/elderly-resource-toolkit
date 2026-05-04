@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/siteConfig";
 import { NavBar } from "@/components/auth/NavBar";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { LiffProvider } from "@/components/liff/LiffProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,9 +27,11 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant" className="h-full antialiased" style={{ colorScheme: "light only" }}>
       <body className="min-h-full flex flex-col">
-        <NavBar />
-        {children}
-        <ScrollToTop />
+        <LiffProvider liffId={process.env.NEXT_PUBLIC_LIFF_ID ?? "YOUR_LIFF_ID"}>
+          <NavBar />
+          {children}
+          <ScrollToTop />
+        </LiffProvider>
       </body>
     </html>
   );
