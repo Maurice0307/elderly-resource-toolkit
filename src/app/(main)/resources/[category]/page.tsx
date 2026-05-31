@@ -3,9 +3,12 @@ import { notFound } from "next/navigation";
 import { categories } from "@/config/categories";
 import { ResourceCard } from "@/components/resources/ResourceCard";
 import { listResourcesByCategory } from "@/lib/resources/queries";
+import { getUserRegionCode } from "@/lib/location/cookies";
+import { getRegionByCode, getRegionAndParentIds } from "@/lib/location/regions";
+import { RegionPicker } from "@/components/location/RegionPicker";
 
 type Params = { category: string };
-type Search = { sub?: string; scope?: "all" | "national" | "local" };
+type Search = { sub?: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { category } = await params;
@@ -21,12 +24,22 @@ export default async function CategoryPage({
   searchParams: Promise<Search>;
 }) {
   const { category } = await params;
-  const { sub, scope = "all" } = await searchParams;
+  const { sub } = await searchParams;
 
   const cat = categories.find((c) => c.slug === category);
   if (!cat) notFound();
 
-  const resources = await listResourcesByCategory({ categorySlug: category, subcategorySlug: sub, scope });
+  const regionCode = await getUserRegionCode();
+  const [regionInfo, regionIds] = await Promise.all([
+    regionCode ? getRegionByCode(regionCode) : Promise.resolve(null),
+    regionCode ? getRegionAndParentIds(regionCode) : Promise.resolve([]),
+  ]);
+
+  const resources = await listResourcesByCategory({
+    categorySlug: category,
+    subcategorySlug: sub,
+    regionIds: regionIds.length > 0 ? regionIds : undefined,
+  });
 
   return (
     <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
@@ -42,44 +55,41 @@ export default async function CategoryPage({
         </Link>
 
         {/* 標題 */}
-        <header className="mt-5">
-          <h1 className="text-4xl font-bold" style={{ color: cat.color }}>
-            {cat.name}
-          </h1>
-          <p className="mt-1 text-xl" style={{ color: "var(--text-secondary)" }}>
-            找到 {resources.length} 項服務
-          </p>
+        <header className="mt-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-4xl font-bold" style={{ color: cat.color }}>
+              {cat.emoji} {cat.name}
+            </h1>
+            <p className="mt-1 text-xl" style={{ color: "var(--text-secondary)" }}>
+              找到 {resources.length} 項服務
+            </p>
+          </div>
+
+          {/* 地區顯示 + 切換 */}
+          <div
+            className="flex items-center gap-3 rounded-2xl px-4 py-3"
+            style={{
+              background: regionInfo ? "#ECFDF5" : "var(--bg-accent)",
+              border: regionInfo ? "1.5px solid #6EE7B7" : "1.5px dashed #FDE68A",
+            }}
+          >
+            {regionInfo ? (
+              <span className="text-base font-semibold" style={{ color: "#065F46" }}>
+                📍 {regionInfo.name}
+              </span>
+            ) : (
+              <span className="text-base font-semibold" style={{ color: "#92400E" }}>
+                📍 設定地區看在地服務
+              </span>
+            )}
+            <RegionPicker currentCode={regionInfo?.code ?? null} currentName={regionInfo?.name ?? null} />
+          </div>
         </header>
 
-        {/* 全國 / 在地 切換 */}
-        <nav aria-label="範圍" className="mt-6 flex gap-3">
-          {(["all", "national", "local"] as const).map((s) => {
-            const p = new URLSearchParams();
-            if (sub) p.set("sub", sub);
-            if (s !== "all") p.set("scope", s);
-            const href = `/resources/${cat.slug}${p.toString() ? `?${p}` : ""}`;
-            const active = scope === s;
-            return (
-              <Link
-                key={s}
-                href={href}
-                className="rounded-full px-6 py-3 text-lg font-semibold transition"
-                style={
-                  active
-                    ? { background: cat.color, color: "var(--cta-on)", minHeight: "var(--hit)" }
-                    : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1px solid var(--border)", minHeight: "var(--hit)" }
-                }
-              >
-                {s === "all" ? "全部" : s === "national" ? "全國" : "在地"}
-              </Link>
-            );
-          })}
-        </nav>
-
         {/* 子分類晶片 */}
-        <nav aria-label="子分類" className="mt-4 flex flex-wrap gap-2">
+        <nav aria-label="子分類" className="mt-5 flex flex-wrap gap-2">
           <Link
-            href={`/resources/${cat.slug}${scope !== "all" ? `?scope=${scope}` : ""}`}
+            href={`/resources/${cat.slug}`}
             className="rounded-full px-4 py-2 text-base font-semibold transition"
             style={
               !sub
@@ -89,29 +99,34 @@ export default async function CategoryPage({
           >
             全部
           </Link>
-          {cat.subcategories.map((s) => {
-            const p = new URLSearchParams();
-            p.set("sub", s.slug);
-            if (scope !== "all") p.set("scope", scope);
-            return (
-              <Link
-                key={s.slug}
-                href={`/resources/${cat.slug}?${p.toString()}`}
-                className="rounded-full px-4 py-2 text-base font-medium transition"
-                style={
-                  sub === s.slug
-                    ? { background: "var(--text-primary)", color: "var(--cta-on)" }
-                    : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1px solid var(--border)" }
-                }
-              >
-                {s.name}
-              </Link>
-            );
-          })}
+          {cat.subcategories.map((s) => (
+            <Link
+              key={s.slug}
+              href={`/resources/${cat.slug}?sub=${s.slug}`}
+              className="rounded-full px-4 py-2 text-base font-medium transition"
+              style={
+                sub === s.slug
+                  ? { background: "var(--text-primary)", color: "var(--cta-on)" }
+                  : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1px solid var(--border)" }
+              }
+            >
+              {s.name}
+            </Link>
+          ))}
         </nav>
 
+        {/* 無地區提示 */}
+        {!regionInfo && (
+          <div
+            className="mt-5 rounded-2xl px-5 py-4 text-base"
+            style={{ background: "var(--bg-accent)", color: "#92400E" }}
+          >
+            目前顯示全國服務。設定你的地區後，可以看到附近的在地資源，排在最前面。
+          </div>
+        )}
+
         {/* 資源列表 */}
-        <section className="mt-8">
+        <section className="mt-6">
           {resources.length === 0 ? (
             <div
               className="rounded-2xl p-12 text-center text-xl"

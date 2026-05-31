@@ -8,16 +8,20 @@ export default async function NewResourcePage() {
   await requireRole("moderator");
   const admin = createAdminClient();
 
-  const [{ data: cats }, { data: subcats }, { data: regions }] = await Promise.all([
+  const [{ data: cats }, { data: subcats }, { data: allRegions }] = await Promise.all([
     admin.from("categories").select("id, name, slug").order("sort_order"),
     admin.from("subcategories").select("id, name, slug, category_id").order("sort_order"),
-    admin.from("regions").select("id, name, code").eq("level", "county").order("code"),
+    admin.from("regions").select("id, name, code, level, parent_id")
+      .in("level", ["county", "district"]).order("code"),
   ]);
 
   const categories = (cats ?? []).map((c) => ({
     ...c,
     subcategories: (subcats ?? []).filter((s) => s.category_id === c.id),
   }));
+  const counties = (allRegions ?? []).filter((r) => r.level === "county");
+  const districts = (allRegions ?? []).filter((r) => r.level === "district")
+    .map((r) => ({ id: r.id, name: r.name, code: r.code, parent_id: r.parent_id ?? "" }));
 
   return (
     <div>
@@ -41,7 +45,8 @@ export default async function NewResourcePage() {
       >
         <ResourceFormClient
           categories={categories}
-          regions={regions ?? []}
+          counties={counties}
+          districts={districts}
           action={createResourceAdmin}
           submitLabel="新增資源"
         />

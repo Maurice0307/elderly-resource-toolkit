@@ -3,7 +3,8 @@ import { useState } from "react";
 
 type Subcategory = { id: string; name: string };
 type Category = { id: string; name: string; slug: string; subcategories: Subcategory[] };
-type Region = { id: string; name: string; code: string };
+type County = { id: string; name: string; code: string };
+type District = { id: string; name: string; code: string; parent_id: string };
 
 type InitialValues = {
   subcategory_id?: string | null;
@@ -62,13 +63,15 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
 
 export function ResourceFormClient({
   categories,
-  regions,
+  counties,
+  districts,
   initialValues,
   action,
   submitLabel,
 }: {
   categories: Category[];
-  regions: Region[];
+  counties: County[];
+  districts: District[];
   initialValues?: InitialValues;
   action: (formData: FormData) => Promise<void>;
   submitLabel: string;
@@ -76,8 +79,37 @@ export function ResourceFormClient({
   const iv = initialValues ?? {};
   const [scope, setScope] = useState<string>(iv.scope ?? "local");
 
+  // Determine initial county / district from region_id
+  const initDistrict = districts.find((d) => d.id === iv.region_id);
+  const initCountyId = initDistrict
+    ? initDistrict.parent_id
+    : (counties.find((c) => c.id === iv.region_id) ? (iv.region_id ?? "") : "");
+
+  const [countyId, setCountyId] = useState<string>(initCountyId ?? "");
+  // regionId is what gets submitted — either a county ID or a district ID
+  const [regionId, setRegionId] = useState<string>(iv.region_id ?? "");
+
+  const countyDistricts = districts.filter((d) => d.parent_id === countyId);
+
+  function handleCountyChange(newCountyId: string) {
+    setCountyId(newCountyId);
+    setRegionId(newCountyId); // default to county-level; user may narrow to district
+  }
+
+  function handleDistrictChange(newDistrictId: string) {
+    // Empty string means "county-wide" → fall back to county ID
+    setRegionId(newDistrictId || countyId);
+  }
+
+  // Display helper: get region label for current selection
+  const selectedDistrict = districts.find((d) => d.id === regionId);
+  const selectedCounty = counties.find((c) => c.id === countyId);
+
   return (
     <form action={action} className="space-y-1">
+      {/* hidden: actual region_id to submit */}
+      <input type="hidden" name="region_id" value={scope === "local" ? regionId : ""} />
+
       {/* ── 分類設定 ─────────────────────────────────── */}
       <SectionTitle>分類設定</SectionTitle>
 
@@ -108,9 +140,13 @@ export function ResourceFormClient({
         <div className="flex gap-6">
           {[
             { value: "national", label: "全國" },
-            { value: "local", label: "在地（縣市）" },
+            { value: "local",    label: "在地" },
           ].map((opt) => (
-            <label key={opt.value} className="flex cursor-pointer items-center gap-2 text-base" style={{ color: "var(--text-primary)" }}>
+            <label
+              key={opt.value}
+              className="flex cursor-pointer items-center gap-2 text-base"
+              style={{ color: "var(--text-primary)" }}
+            >
               <input
                 type="radio"
                 name="scope"
@@ -126,22 +162,52 @@ export function ResourceFormClient({
       </div>
 
       {scope === "local" && (
-        <div className="mt-3">
-          <Label required>縣市地區</Label>
-          <select
-            name="region_id"
-            required={scope === "local"}
-            defaultValue={iv.region_id ?? ""}
-            className={inputCls}
-            style={inputStyle}
-          >
-            <option value="" disabled>請選擇縣市</option>
-            {regions.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}（{r.code}）
-              </option>
-            ))}
-          </select>
+        <div className="mt-3 space-y-3">
+          {/* 第一層：縣市 */}
+          <div>
+            <Label required>縣市</Label>
+            <select
+              value={countyId}
+              onChange={(e) => handleCountyChange(e.target.value)}
+              required
+              className={inputCls}
+              style={inputStyle}
+            >
+              <option value="" disabled>請選擇縣市</option>
+              {counties.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 第二層：行政區（縣市選定後才顯示） */}
+          {countyId && countyDistricts.length > 0 && (
+            <div>
+              <Label>行政區（選填，不選表示整個縣市通用）</Label>
+              <select
+                value={selectedDistrict?.id ?? ""}
+                onChange={(e) => handleDistrictChange(e.target.value)}
+                className={inputCls}
+                style={inputStyle}
+              >
+                <option value="">— 整個{selectedCounty?.name ?? "縣市"}通用 —</option>
+                {countyDistricts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* 目前選擇的範圍提示 */}
+              <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+                {selectedDistrict
+                  ? `✅ 此資源只對「${selectedCounty?.name} ${selectedDistrict.name}」的使用者顯示`
+                  : `✅ 此資源對「${selectedCounty?.name}」所有行政區的使用者顯示`}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -244,7 +310,11 @@ export function ResourceFormClient({
         <Label>適用對象</Label>
         <div className="flex flex-wrap gap-4">
           {IDENTITY_TAG_OPTIONS.map((opt) => (
-            <label key={opt.value} className="flex cursor-pointer items-center gap-2 text-base" style={{ color: "var(--text-primary)" }}>
+            <label
+              key={opt.value}
+              className="flex cursor-pointer items-center gap-2 text-base"
+              style={{ color: "var(--text-primary)" }}
+            >
               <input
                 type="checkbox"
                 name="identity_tags"

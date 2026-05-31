@@ -15,7 +15,7 @@ export default async function EditResourcePage({
   const { id } = await params;
   const admin = createAdminClient();
 
-  const [{ data: resource }, { data: cats }, { data: subcats }, { data: regions }] =
+  const [{ data: resource }, { data: cats }, { data: subcats }, { data: allRegions }] =
     await Promise.all([
       admin
         .from("resources")
@@ -26,7 +26,8 @@ export default async function EditResourcePage({
         .single(),
       admin.from("categories").select("id, name, slug").order("sort_order"),
       admin.from("subcategories").select("id, name, slug, category_id").order("sort_order"),
-      admin.from("regions").select("id, name, code").eq("level", "county").order("code"),
+      admin.from("regions").select("id, name, code, level, parent_id")
+        .in("level", ["county", "district"]).order("code"),
     ]);
 
   if (!resource) notFound();
@@ -35,6 +36,9 @@ export default async function EditResourcePage({
     ...c,
     subcategories: (subcats ?? []).filter((s) => s.category_id === c.id),
   }));
+  const counties = (allRegions ?? []).filter((r) => r.level === "county");
+  const districts = (allRegions ?? []).filter((r) => r.level === "district")
+    .map((r) => ({ id: r.id, name: r.name, code: r.code, parent_id: r.parent_id ?? "" }));
 
   const boundAction = updateResourceAdmin.bind(null, id);
 
@@ -67,7 +71,8 @@ export default async function EditResourcePage({
       >
         <ResourceFormClient
           categories={categories}
-          regions={regions ?? []}
+          counties={counties}
+          districts={districts}
           initialValues={resource}
           action={boundAction}
           submitLabel="儲存變更"
