@@ -65,6 +65,19 @@ export async function getRegionByCode(code: string): Promise<Region | null> {
   return (data as Region) ?? null;
 }
 
+export async function getRegionAndParentIds(code: string): Promise<string[]> {
+  const admin = createAdminClient();
+  const { data: region } = await admin
+    .from("regions")
+    .select("id, parent_id")
+    .eq("code", code)
+    .single();
+  if (!region) return [];
+  const ids: string[] = [region.id];
+  if (region.parent_id) ids.push(region.parent_id);
+  return ids;
+}
+
 export async function getRegionAncestors(regionId: string): Promise<Region[]> {
   const admin = createAdminClient();
   const chain: Region[] = [];

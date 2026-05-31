@@ -3,6 +3,7 @@ export const categories = [
     slug: "health",
     name: "醫療健康",
     icon: "heart",
+    emoji: "🏥",
     color: "#B45309",
     sortOrder: 1,
     subcategories: [
@@ -26,6 +27,7 @@ export const categories = [
     slug: "transport",
     name: "交通接駁",
     icon: "bus",
+    emoji: "🚌",
     color: "#0369A1",
     sortOrder: 2,
     subcategories: [
@@ -43,6 +45,7 @@ export const categories = [
     slug: "housing",
     name: "居住安全",
     icon: "home",
+    emoji: "🏠",
     color: "#15803D",
     sortOrder: 3,
     subcategories: [
@@ -64,6 +67,7 @@ export const categories = [
     slug: "finance",
     name: "經濟財務",
     icon: "wallet",
+    emoji: "💰",
     color: "#C2410C",
     sortOrder: 4,
     subcategories: [
@@ -81,6 +85,7 @@ export const categories = [
     slug: "social",
     name: "社會資源",
     icon: "users",
+    emoji: "🤝",
     color: "#7E22CE",
     sortOrder: 5,
     subcategories: [
@@ -98,6 +103,7 @@ export const categories = [
     slug: "leisure",
     name: "休閒活動",
     icon: "smile",
+    emoji: "🌸",
     color: "#BE185D",
     sortOrder: 6,
     subcategories: [
@@ -113,6 +119,7 @@ export const categories = [
     slug: "education",
     name: "教育進修",
     icon: "book",
+    emoji: "📚",
     color: "#0E7490",
     sortOrder: 7,
     subcategories: [

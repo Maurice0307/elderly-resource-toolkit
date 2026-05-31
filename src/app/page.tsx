@@ -200,7 +200,7 @@ export default async function HomePage() {
               <li key={cat.slug}>
                 <Link
                   href={`/resources/${cat.slug}`}
-                  className="group flex items-center gap-5 rounded-2xl p-6 shadow-sm transition hover:shadow-md"
+                  className="group flex items-center gap-4 rounded-2xl p-6 shadow-sm transition hover:shadow-md"
                   style={{
                     background: "var(--bg-elevated)",
                     border: "2px solid var(--border)",
@@ -209,6 +209,7 @@ export default async function HomePage() {
                     minHeight: "var(--hit)",
                   }}
                 >
+                  <span className="shrink-0 text-5xl" aria-hidden>{cat.emoji}</span>
                   <div className="flex-1">
                     <div
                       className="text-2xl font-bold leading-snug"
