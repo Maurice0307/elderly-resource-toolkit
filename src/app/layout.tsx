@@ -1,9 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { siteConfig } from "@/config/siteConfig";
-import { NavBar } from "@/components/auth/NavBar";
-import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { LiffProvider } from "@/components/liff/LiffProvider";
+import { DailySearchProvider } from "@/contexts/DailySearchContext";
+import { WebShell } from "@/components/layout/WebShell";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#E0552E",
+};
 
 export const metadata: Metadata = {
   title: {
@@ -15,7 +22,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: siteConfig.shortName,
   },
   formatDetection: { telephone: false },
@@ -26,11 +33,13 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-Hant" className="h-full antialiased" style={{ colorScheme: "light only" }}>
-      <body className="min-h-full flex flex-col">
+      <body style={{ margin: 0, padding: 0 }}>
         <LiffProvider liffId={process.env.NEXT_PUBLIC_LIFF_ID ?? "YOUR_LIFF_ID"}>
-          <NavBar />
-          {children}
-          <ScrollToTop />
+          <DailySearchProvider>
+            <WebShell>
+              {children}
+            </WebShell>
+          </DailySearchProvider>
         </LiffProvider>
       </body>
     </html>

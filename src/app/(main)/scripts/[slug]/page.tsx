@@ -39,51 +39,57 @@ export default async function ScriptDetailPage({ params }: { params: Promise<Par
   const script = data as CommunicationScript;
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
-      <div className="mx-auto max-w-2xl">
-        <Link href="/scripts" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
-          ← 溝通錦囊
+    <main style={{ background: "var(--bg-page)", minHeight: "100%", paddingBottom: 24 }}>
+      {/* 返回列 */}
+      <div style={{ background: "#fff", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
+        <Link
+          href="/scripts"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.9375rem", fontWeight: 600, color: "var(--cta-ink)", textDecoration: "none" }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden>
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          溝通錦囊
         </Link>
+      </div>
 
-        <header className="mt-5">
-          <span
-            className="rounded-full px-4 py-1 text-base font-semibold"
-            style={{ background: "var(--bg-accent)", color: "#92400E" }}
-          >
-            {audienceLabel[script.audience] ?? script.audience}
-          </span>
+      {/* Hero 區 */}
+      <div style={{ background: "linear-gradient(180deg, var(--bg-peach) 0%, var(--bg-page) 100%)", padding: "16px 18px 20px" }}>
+        <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--cta-ink)", background: "var(--cta-soft)", borderRadius: 999, padding: "3px 10px" }}>
+          {audienceLabel[script.audience] ?? script.audience}
+        </span>
+        <h1 style={{ margin: "10px 0 0", fontSize: "1.375rem", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.4 }}>
+          {script.title}
+        </h1>
+        {script.context && (
+          <p style={{ margin: "10px 0 0", fontSize: "1rem", color: "var(--text-secondary)", lineHeight: 1.65 }}>
+            {script.context}
+          </p>
+        )}
+      </div>
 
-          <h1 className="mt-4 text-4xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
-            {script.title}
-          </h1>
-
-          {script.context ? (
-            <p className="mt-3 text-xl leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-              {script.context}
-            </p>
-          ) : null}
-        </header>
-
+      {/* 對話內容 */}
+      <div style={{ padding: "0 18px" }}>
         <ScriptDialog
           okExamples={script.ok_examples}
           ngExamples={script.ng_examples}
           tips={script.tips}
         />
-
-        {script.tags.length > 0 ? (
-          <div className="mt-10 flex flex-wrap gap-2">
-            {script.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full px-3 py-1 text-base font-medium"
-                style={{ background: "var(--bg-accent)", color: "#92400E" }}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
       </div>
+
+      {/* 標籤 */}
+      {script.tags.length > 0 && (
+        <div style={{ padding: "12px 18px 0", display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {script.tags.map((tag) => (
+            <span
+              key={tag}
+              style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--cta-ink)", background: "var(--cta-soft)", borderRadius: 999, padding: "4px 12px" }}
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
     </main>
   );
 }

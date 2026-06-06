@@ -81,7 +81,10 @@ export function CallButton({ phone, phoneHint, resourceName }: Props) {
               </button>
               <a
                 href={telHref}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setOpen(false);
+                  window.dispatchEvent(new Event("resource:interact"));
+                }}
                 className="inline-flex items-center justify-center rounded-2xl py-5 text-xl font-bold"
                 style={{ background: "var(--success)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
               >

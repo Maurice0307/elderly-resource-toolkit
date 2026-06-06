@@ -24,6 +24,45 @@ export async function signInWithGoogle() {
   if (data.url) redirect(data.url);
 }
 
+export async function signInWithLine() {
+  const supabase = await createClient();
+  const headersList = await headers();
+  const origin = headersList.get("origin") ?? "http://localhost:3000";
+
+  // LINE OAuth provider — must be enabled in Supabase Auth dashboard
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    provider: "line" as any,
+    options: { redirectTo: `${origin}/auth/callback` },
+  });
+
+  if (error) redirect("/login?error=" + encodeURIComponent(error.message));
+  if (data.url) redirect(data.url);
+}
+
+export async function sendPhoneOtp(
+  _prev: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | { sent: true; phone: string }> {
+  const phone = (formData.get("phone") as string).trim();
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({ phone });
+  if (error) return { error: error.message };
+  return { sent: true, phone };
+}
+
+export async function verifyPhoneOtp(
+  _prev: { error: string } | null,
+  formData: FormData,
+): Promise<{ error: string } | null> {
+  const phone = (formData.get("phone") as string).trim();
+  const token = (formData.get("token") as string).trim();
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
+  if (error) return { error: error.message };
+  redirect("/");
+}
+
 export async function loginWithEmail(
   _prev: { error: string } | null,
   formData: FormData,

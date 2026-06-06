@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { NavActions } from "./NavActions";
 import { NavSearch } from "./NavSearch";
-import { siteConfig } from "@/config/siteConfig";
+import { ElderLinkLogo } from "@/components/ui/ElderLinkLogo";
 
 export async function NavBar() {
   const supabase = await createClient();
@@ -20,16 +20,21 @@ export async function NavBar() {
 
   return (
     <header
-      className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3"
+      className="hidden"
       style={{
-        background: "rgba(250,248,245,0.92)",
-        backdropFilter: "blur(8px)",
+        background: "rgba(251,247,244,0.94)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--border)",
+        minHeight: 56,
       }}
     >
-      {/* Logo */}
-      <Link href="/" className="shrink-0 text-xl font-bold" style={{ color: "var(--cta)" }}>
-        {siteConfig.shortName}
+      <Link
+        href="/"
+        aria-label="幸福好厝邊 回首頁"
+        style={{ flexShrink: 0, textDecoration: "none" }}
+      >
+        <ElderLinkLogo size={34} showText={true} />
       </Link>
 
       <NavSearch />

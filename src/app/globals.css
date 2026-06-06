@@ -4,71 +4,348 @@
 :root {
   color-scheme: light only;
 
-  /* 表面 */
-  --bg-page: #FAF8F5;          /* 主背景：溫暖米白 */
-  --bg-elevated: #FFFFFF;      /* 卡片底色 */
-  --bg-soft: #F1ECE3;          /* 次級區塊底 */
-  --bg-accent: #FEF3C7;        /* 提示／徽章底 */
+  /* ── 品牌珊瑚橘（來自 Claude Design 設計稿） ── */
+  --coral:        #F26B43;   /* 裝飾 / icon 點綴 */
+  --cta:          #E0552E;   /* 主要按鈕底（coralBtn） */
+  --cta-hover:    #C8451E;
+  --cta-ink:      #B23F1E;   /* 白底上的文字/連結（AA） */
+  --cta-on:       #FFFFFF;
+  --cta-soft:     #FFF4EF;   /* peach-50：輕底色 */
 
-  /* 文字 */
-  --text-primary: #2C3E50;     /* 主要文字：深藍灰，高對比 */
-  --text-secondary: #5D6D7E;   /* 次要文字 */
-  --text-muted: #95A5A6;       /* 弱化文字 */
-  --text-inverse: #FFFFFF;
+  /* ── 表面 ── */
+  --bg-page:      #FBF7F4;   /* 主背景：極淺暖白 */
+  --bg-elevated:  #FFFFFF;   /* 卡片底色 */
+  --bg-soft:      #FFF4EF;   /* 次級區塊底（peach-50） */
+  --bg-peach:     #FFE7DD;   /* peach-100：漸層搜尋區 */
+  --bg-peach-mid: #FFD6C7;   /* peach-200 */
+  --bg-accent:    #FFF1E8;   /* 警示/徽章底 */
 
-  /* 主要 CTA */
-  --cta: #8D6E63;              /* 溫暖棕：主要按鈕 */
-  --cta-hover: #6D4C41;
-  --cta-soft: #EFEBE9;
-  --cta-on: #FFFFFF;
+  /* ── 文字（暖中性） ── */
+  --text-primary:   #241F1B;  /* 主要文字 ink */
+  --text-secondary: #574E47;  /* 次要文字 ink2 */
+  --text-muted:     #6E645C;  /* 備註/caption ink3（AA） */
+  --text-inverse:   #FFFFFF;
 
-  /* 語意色 */
-  --success: #4CAF50;
-  --success-soft: #E8F5E9;
-  --warning: #F57C00;
-  --warning-soft: #FFF3E0;
-  --alert: #B71C1C;
-  --alert-soft: #FFEBEE;
+  /* ── 語意色 ── */
+  --success:      #2E7D52;
+  --success-soft: #E7F4EC;
+  --warning:      #C2410C;
+  --warning-soft: #FFF1E8;
+  --alert:        #9B1C1C;
+  --alert-soft:   #FEE2E2;
 
-  /* 邊框 */
-  --border: #E5DFD3;
-  --border-strong: #C9C0AD;
+  /* ── 邊框 ── */
+  --border:       #F0E6DE;   /* line */
+  --border-strong: #E4D7CC;  /* line2 */
 
-  /* 互動 */
-  --hit: 48px;                 /* 最小點擊區 */
-  --radius-card: 1rem;
-  --radius-pill: 999px;
+  /* ── 互動尺寸 ── */
+  --hit:          48px;      /* 最小點擊區 */
+  --radius-card:  18px;
+  --radius-chip:  14px;
+  --radius-pill:  999px;
 }
 
 /* ── 全域排版 ── */
 body {
   background-color: var(--bg-page);
   color: var(--text-primary);
-  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
-               "Helvetica Neue", Arial, sans-serif;
-  font-size: 18px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC",
+               "Noto Sans CJK TC", "Noto Sans TC", Roboto, "Microsoft JhengHei",
+               "Segoe UI", system-ui, sans-serif;
+  font-size: 16px;       /* 1rem → 支援系統動態放大 */
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* 動態字級安全：不裁切，字自動換行 */
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
-/* 標題行高略緊湊 */
-h1, h2, h3, h4 { line-height: 1.35; }
+/* 標題行高緊湊 */
+h1, h2, h3, h4 { line-height: 1.35; font-weight: 800; }
 
-/* ── 連結預設不加底線，hover 才加 ── */
-a { text-decoration: none; }
+/* ── 連結 ── */
+a { color: var(--cta-ink); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* ── 按鈕／連結最小點擊區 ── */
+/* ── 最小點擊區 ── */
 button, [role="button"], a.btn, .btn {
   min-height: var(--hit);
 }
 
-/* ── 焦點環：明顯，符合無障礙 ── */
+/* ── 焦點環（WCAG AA） ── */
 :focus-visible {
-  outline: 4px solid var(--cta);
-  outline-offset: 3px;
+  outline: 3px solid var(--cta);
+  outline-offset: 2px;
   border-radius: 6px;
 }
 
-/* ── 輔助：圖示放大 1.5x（在元素上加 .icon-lg） ── */
-.icon-lg { font-size: 1.5em; line-height: 1; }
+/* ── App 外殼相容（已由 .wv 網頁版取代，保留空殼供 admin/auth 頁面） ── */
+.app-stage {
+  min-height: 100dvh;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+}
+.app-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bg-page);
+}
+.app-content {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ── 舊式底部留白（相容保留） ── */
+.has-bottom-nav {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+
+/* ══════════════════════════════════════════
+   網頁版外殼（.wv 作用域）
+   參考設計稿 design_handoff_elderlink
+   ══════════════════════════════════════════ */
+
+.wv {
+  background:
+    radial-gradient(140% 60% at 50% -10%, #FBEFE7 0%, rgba(251,247,244,0) 58%),
+    #FBF7F4;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 內容容器（max-width 置中） */
+.wv-wrap {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ── 頂部導覽 ── */
+.wv-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(255,255,255,0.92);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid #F0E6DE;
+  transition: box-shadow .2s ease;
+}
+.wv-header.scrolled { box-shadow: 0 6px 22px rgba(80,45,25,0.07); }
+.wv-headrow {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.wv-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 14px;
+  min-width: 0;
+}
+.wv-navlink {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: #574E47;
+  padding: 10px 15px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  transition: background .15s ease, color .15s ease;
+}
+.wv-navlink:hover { background: #FFF4EF; color: #B23F1E; }
+.wv-navlink.on  { background: #FFE7DD; color: #B23F1E; }
+
+.wv-headright {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.wv-headright > * { flex-shrink: 0; }
+
+/* 膠囊輔助按鈕 */
+.wv-pill {
+  appearance: none;
+  border: 1.5px solid #E4D7CC;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  height: 46px;
+  padding: 0 15px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #574E47;
+  white-space: nowrap;
+  transition: border-color .15s, background .15s;
+}
+.wv-pill:hover { border-color: #E0552E; background: #FFF4EF; }
+
+/* 主要 CTA 按鈕 */
+.wv-cta {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  height: 46px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #E0552E;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(224,85,46,0.28);
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+.wv-cta:hover  { transform: translateY(-1px); box-shadow: 0 9px 22px rgba(224,85,46,0.34); }
+.wv-cta:active { transform: translateY(0); }
+
+/* 漢堡 / 行動選單按鈕（桌面隱藏，手機顯示） */
+.wv-burger { display: none; }
+
+/* ── 卡片 hover 抬升 ── */
+.wv-card { transition: transform .16s ease, box-shadow .2s ease, border-color .16s ease; }
+.wv-card.click { cursor: pointer; }
+.wv-card.click:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(80,45,25,0.12);
+  border-color: #FFD6C7;
+}
+
+/* ── 首頁快速功能：一排 5 個 ── */
+.wv-quick {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+}
+@media (max-width: 1000px) { .wv-quick { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px)  { .wv-quick { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── 8 大分類：4×2（窄螢幕降欄） ── */
+.wv-catgrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 940px) { .wv-catgrid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px) { .wv-catgrid { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── 動畫 ── */
+.wv-fade {
+  animation: wvFade .4s ease both;
+}
+@keyframes wvFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 下拉選單彈出動畫 */
+.wv-menu {
+  animation: wvPop .16s ease both;
+  transform-origin: top right;
+}
+@keyframes wvPop {
+  from { opacity: 0; transform: scale(.96) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Toast 提示 ── */
+.wv-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: 300;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: #211C18;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 13px 22px;
+  border-radius: 999px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.28);
+  max-width: calc(100vw - 40px);
+  animation: wvToast .26s ease both;
+}
+@keyframes wvToast {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ── 地圖框 ── */
+.wv-map {
+  width: 100%;
+  height: 260px;
+  border: 1px solid #F0E6DE;
+  border-radius: 16px;
+  display: block;
+}
+
+/* ── 文字連結 ── */
+.wv-link { color: #B23F1E; font-weight: 700; cursor: pointer; }
+.wv-link:hover { text-decoration: underline; }
+
+/* ── 細分類：同頁顯示、自動換行 ── */
+.wv-subwrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+
+/* ── 語音輸入錄音中脈動 ── */
+.wv-mic-on {
+  animation: wvMic 1.1s ease-in-out infinite;
+}
+@keyframes wvMic {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,85,46,0.32); }
+  50%       { box-shadow: 0 0 0 9px rgba(224,85,46,0); }
+}
+
+/* ── 響應式：窄螢幕隱藏桌面元素 ── */
+@media (max-width: 940px) {
+  .wv-nav     { display: none; }
+  .wv-burger  { display: inline-flex; }
+  .wv-hideSm  { display: none !important; }
+}
+@media (max-width: 600px) {
+  .wv-wrap    { padding: 0 18px; }
+  .wv-headrow { height: 64px; }
+}
+
+/* 捲動條樣式 */
+.wv ::-webkit-scrollbar { width: 12px; height: 12px; }
+.wv ::-webkit-scrollbar-thumb {
+  background: #E4D7CC;
+  border-radius: 999px;
+  border: 3px solid #FBF7F4;
+}

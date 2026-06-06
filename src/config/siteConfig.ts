@@ -1,21 +1,23 @@
 export const siteConfig = {
-  name: "長者資源工具包",
-  shortName: "長者工具包",
-  description: "中高齡者、家屬與志工的全方位陪伴與資源導航平台",
+  name: "幸福好厝邊",
+  shortName: "好厝邊",
+  englishName: "ELDERLINK",
+  description: "中高齡者、家屬與志工的全方位資源導航平台",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://elderly-resource-toolkit.vercel.app",
   defaultRegionCode: process.env.NEXT_PUBLIC_DEFAULT_REGION_CODE ?? "TW-TYC-ZL",
   brand: {
-    primary: "#2563EB",
-    accent: "#F97316",
-    bg: "#FFFFFF",
-    text: "#0F172A",
+    primary: "#E0552E",
+    accent:  "#F26B43",
+    bg:      "#FBF7F4",
+    text:    "#241F1B",
   },
   typography: {
-    minFontPx: 20,
+    minFontPx: 16,
   },
   contact: {
     email: "itchiang2025@gmail.com",
-    maintainer: "Morris Chiang",
+    phone: "0968786545",
+    maintainer: "堉璘團隊 MC",
   },
   social: {
     github: "",

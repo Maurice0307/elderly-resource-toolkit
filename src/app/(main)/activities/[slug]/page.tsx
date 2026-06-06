@@ -4,168 +4,229 @@ import { createClient } from "@/lib/supabase/server";
 import { StepViewer } from "@/components/activities/StepViewer";
 import { YouTubeEmbed } from "@/components/activities/YouTubeEmbed";
 import type { ActivityCard } from "@/types/domain";
+import { ELIcon } from "@/components/layout/ELIcon";
 
 type Params = { slug: string };
 
+const THEMES: Record<string, { label: string; icon: string; sub: string; color: string; bg: string }> = {
+  life:  { label: "生活技能",     icon: "recycle", sub: "急救、防災、居家安全", color: "#0F766E", bg: "#F0FDFA" },
+  body:  { label: "動動身體",     icon: "run",     sub: "護膝、防跌、椅子運動", color: "#0369A1", bg: "#EFF6FF" },
+  smart: { label: "智慧生活",     icon: "bulb",    sub: "營養飲食、數位工具",   color: "#7E22CE", bg: "#FAF5FF" },
+  craft: { label: "手工美勞",     icon: "craft",   sub: "黏土、摺紙、書籤",    color: "#DC2626", bg: "#FEF2F2" },
+  plant: { label: "花草植栽",     icon: "sprout",  sub: "種植、苔球、療癒",    color: "#15803D", bg: "#F0FDF4" },
+  draw:  { label: "創意繪畫",     icon: "brush",   sub: "生命故事、禪繞畫",    color: "#EA580C", bg: "#FFF7ED" },
+  fraud: { label: "防詐・假訊息", icon: "shield",  sub: "識破詐騙、假新聞辨識", color: "#B45309", bg: "#FFFBEB" },
+};
+
+const THEME_BY_SLUG: Record<string, string> = {
+  "interact-clay": "craft", "interact-origami-heart": "craft", "interact-origami-carnation": "craft",
+  "interact-origami-bear": "craft", "interact-origami-bird": "craft", "interact-leaf-bookmark": "craft",
+  "interact-moss-ball": "plant", "interact-bean-sprout": "plant", "balcony-garden": "plant",
+  "interact-life-story": "draw", "interact-zentangle": "draw", "interact-memory-puzzle": "draw",
+  "interact-knee-care": "body", "chair-exercise": "body", "fall-prevention": "body", "morning-stretch": "body",
+  "my-plate": "smart", "line-video-call": "smart",
+  "interact-recycling-game": "life",
+};
+
+function themeKeyFor(card: ActivityCard): string {
+  if (THEME_BY_SLUG[card.slug]) return THEME_BY_SLUG[card.slug];
+  if ((card.tags ?? []).some((t: string) => t.includes("防詐") || t.includes("詐騙"))) return "fraud";
+  switch (card.group_slug) {
+    case "smart": return "smart";
+    case "move":  return "body";
+    case "life":  return "life";
+    case "health": return "body";
+    default: return "craft";
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
+  if (THEMES[slug]) return { title: THEMES[slug].label + " — 互動學習" };
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("activity_cards")
-    .select("title")
-    .eq("slug", slug)
-    .maybeSingle();
+  const { data } = await supabase.from("activity_cards").select("title").eq("slug", slug).maybeSingle();
   return { title: data?.title ?? "互動圖卡" };
 }
 
-const groupLabel: Record<string, string> = {
-  move: "動動生活",
-  create: "創意生活",
-  smart: "智慧生活",
-  health: "健康知識",
-  life: "生活技能",
-};
-
-export default async function ActivityDetailPage({ params }: { params: Promise<Params> }) {
-  const { slug } = await params;
+/* ── 主題列表頁 ── */
+async function ThemeListPage({ themeKey }: { themeKey: string }) {
+  const theme = THEMES[themeKey]!;
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("activity_cards")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "active")
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) notFound();
-
-  const card = data as ActivityCard;
+  const { data } = await supabase.from("activity_cards").select("*").eq("status", "active").order("created_at");
+  const all = (data ?? []) as ActivityCard[];
+  const cards = all.filter((c) => themeKeyFor(c) === themeKey);
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
-      <div className="mx-auto max-w-2xl">
-        <Link href="/activities" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
-          ← 互動圖卡
-        </Link>
-
-        <header className="mt-5">
-          <div className="flex flex-wrap gap-2">
-            <span
-              className="rounded-full px-4 py-1 text-base font-semibold"
-              style={{ background: "var(--bg-accent)", color: "#92400E" }}
-            >
-              {groupLabel[card.group_slug] ?? card.group_slug}
-            </span>
-            <span
-              className="rounded-full px-4 py-1 text-base"
-              style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
-            >
-              {card.steps.length} 個步驟
-            </span>
-            {card.duration_min ? (
-              <span
-                className="rounded-full px-4 py-1 text-base"
-                style={{ background: "var(--bg-soft)", color: "var(--text-secondary)" }}
-              >
-                ⏱ 約 {card.duration_min} 分鐘
-              </span>
-            ) : null}
-          </div>
-
-          {/* Hero 區：右上角放成品圖（手機改為上方） */}
-          <div className="mt-4 grid gap-5 sm:grid-cols-[1fr_auto] sm:items-start">
+    <div className="wv-fade">
+      <div style={{ background: theme.bg, borderBottom: "1px solid #F0E6DE", padding: "28px 0 24px" }}>
+        <div className="wv-wrap">
+          <Link href="/activities" className="wv-pill" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 16 }}>
+            <ELIcon name="chevron" size={16} color="#574E47" style={{ transform: "rotate(180deg)" }} /> 互動學習
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+              <ELIcon name={theme.icon} size={28} color="#F26B43" />
+            </div>
             <div>
-              <div className="flex items-center gap-4">
-                <span className="text-7xl">{card.cover_emoji ?? "📋"}</span>
-                <h1 className="text-4xl font-bold leading-tight" style={{ color: "var(--text-primary)" }}>
-                  {card.title}
-                </h1>
-              </div>
-              {card.summary ? (
-                <p className="mt-3 text-xl leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                  {card.summary}
-                </p>
-              ) : null}
+              <h1 style={{ margin: "0 0 2px", fontSize: 26, fontWeight: 800, color: theme.color }}>{theme.label}</h1>
+              <div style={{ fontSize: 15, color: "#574E47" }}>{theme.sub} · {cards.length} 張圖卡</div>
             </div>
-
-            {card.hero_image_url ? (
-              <div
-                className="overflow-hidden rounded-2xl shadow-sm sm:w-44"
-                style={{ border: "2px solid var(--border)" }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={card.hero_image_url}
-                  alt={`${card.title} — 成品預覽`}
-                  className="block h-44 w-full object-cover"
-                  loading="lazy"
-                />
-                <div
-                  className="px-3 py-1 text-center text-sm font-medium"
-                  style={{ background: "var(--bg-accent)", color: "#92400E" }}
-                >
-                  成品預覽
-                </div>
-              </div>
-            ) : null}
           </div>
-        </header>
-
-        {/* 整體教學影片（若有；步驟內也可有更細的影片） */}
-        {card.video_url ? (
-          <section className="mt-8">
-            <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
-              <span className="icon-lg mr-2">🎬</span>完整教學影片
-            </h2>
-            <div className="mt-3">
-              <YouTubeEmbed url={card.video_url} title={card.title} />
-            </div>
-          </section>
-        ) : null}
-
-        <StepViewer steps={card.steps} cardTitle={card.title} />
-
-        {card.tags.length > 0 ? (
-          <div className="mt-8 flex flex-wrap gap-2">
-            {card.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full px-3 py-1 text-base font-medium"
-                style={{ background: "var(--bg-accent)", color: "#92400E" }}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        {/* 資料來源 */}
-        {card.source_url || card.source_org ? (
-          <footer
-            className="mt-10 rounded-2xl px-5 py-4"
-            style={{ background: "var(--bg-soft)", border: "1px solid var(--border)" }}
-          >
-            <p className="text-base" style={{ color: "var(--text-secondary)" }}>
-              <span className="icon-lg mr-1">📚</span>資料來源：
-              {card.source_url ? (
-                <a
-                  href={card.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold underline"
-                  style={{ color: "var(--cta)" }}
-                >
-                  {card.source_org ?? card.source_url}
-                </a>
-              ) : (
-                <span className="font-semibold" style={{ color: "var(--cta)" }}>
-                  {card.source_org}
-                </span>
-              )}
-            </p>
-          </footer>
-        ) : null}
+        </div>
       </div>
-    </main>
+
+      <div className="wv-wrap" style={{ paddingTop: 28, paddingBottom: 56 }}>
+        {cards.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "64px 0" }}>
+            <ELIcon name={theme.icon} size={48} color="#E4D7CC" style={{ margin: "0 auto 16px" }} />
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#574E47" }}>這個主題的圖卡即將上線</div>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(248px, 1fr))", gap: 18 }}>
+            {cards.map((card) => {
+              const steps = Array.isArray(card.steps) ? card.steps : [];
+              return (
+                <Link
+                  key={card.slug}
+                  href={`/activities/${card.slug}`}
+                  className="wv-card click"
+                  style={{ background: "#fff", borderRadius: 18, border: "1px solid #F0E6DE", overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column" }}
+                >
+                  <div style={{ height: 132, background: `linear-gradient(135deg,${theme.bg},#FFF4EF)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative" }}>
+                    <ELIcon name={theme.icon} size={48} color="#F26B43" />
+                    {(card.tags ?? []).includes("陪伴互動") && (
+                      <span style={{ position: "absolute", top: 12, right: 12, fontSize: 12.5, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "3px 11px", borderRadius: 999 }}>陪伴</span>
+                    )}
+                  </div>
+                  <div style={{ padding: "16px 18px 18px", flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B" }}>{card.title}</div>
+                    {card.summary && (
+                      <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#9B8E85", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {card.summary}
+                      </p>
+                    )}
+                    <div style={{ marginTop: "auto", paddingTop: 14, display: "flex", gap: 8 }}>
+                      {card.duration_min && (
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <ELIcon name="clock" size={13} color="#9B8E85" /> {card.duration_min} 分鐘
+                        </span>
+                      )}
+                      {steps.length > 0 && (
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999 }}>
+                          {steps.length} 步驟
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   );
+}
+
+/* ── 圖卡詳情頁（LearnReader 設計） ── */
+async function CardDetailPage({ slug }: { slug: string }) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("activity_cards").select("*").eq("slug", slug).eq("status", "active").maybeSingle();
+  if (error) throw error;
+  if (!data) notFound();
+  const card = data as ActivityCard;
+  const themeKey = themeKeyFor(card);
+  const theme = THEMES[themeKey];
+  const steps = Array.isArray(card.steps) ? card.steps : [];
+
+  return (
+    <div className="wv-fade">
+      <div className="wv-wrap" style={{ paddingTop: 26, paddingBottom: 56 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "340px minmax(0,1fr)", gap: 30, alignItems: "start" }}>
+          {/* 左：封面 + 材料（sticky） */}
+          <aside style={{ position: "sticky", top: 96 }}>
+            <Link href="/activities" className="wv-pill" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 16 }}>
+              <ELIcon name="chevron" size={18} color="#574E47" style={{ transform: "rotate(180deg)" }} /> 互動學習
+            </Link>
+            <div style={{ background: "#fff", borderRadius: 22, border: "1px solid #F0E6DE", overflow: "hidden" }}>
+              {/* 封面媒體 */}
+              {card.hero_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={card.hero_image_url} alt={card.title + " 成品預覽"} style={{ width: "100%", height: 196, objectFit: "cover", display: "block" }} loading="lazy" />
+              ) : (
+                <div style={{ height: 196, background: "linear-gradient(135deg,#FFE0D2,#FFF4EF)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <ELIcon name={theme?.icon ?? "cards"} size={Math.round(196 * 0.32)} color="#F26B43" />
+                </div>
+              )}
+              {/* 圖卡資訊 */}
+              <div style={{ padding: "22px 22px 24px" }}>
+                <h1 style={{ margin: 0, fontSize: 25, fontWeight: 800, color: "#241F1B" }}>{card.title}</h1>
+                {card.summary && (
+                  <p style={{ margin: "10px 0 0", fontSize: 16, color: "#574E47", lineHeight: 1.7 }}>{card.summary}</p>
+                )}
+                <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  {card.duration_min && (
+                    <span style={{ fontSize: 14, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "6px 13px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <ELIcon name="clock" size={15} color="#F26B43" /> {card.duration_min} 分鐘
+                    </span>
+                  )}
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "6px 13px", borderRadius: 999 }}>
+                    {steps.length} 個步驟
+                  </span>
+                </div>
+
+                {/* 影片 */}
+                {card.video_url && (
+                  <div style={{ marginTop: 18 }}>
+                    <YouTubeEmbed url={card.video_url} title={card.title} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </aside>
+
+          {/* 右：步驟 */}
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#9B8E85", letterSpacing: 1, marginBottom: 16 }}>跟著做 · 一步一步</div>
+            <StepViewer steps={card.steps} cardTitle={card.title} />
+
+            {/* 完成卡 */}
+            <div style={{ marginTop: 18, background: "#E7F4EC", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", gap: 14 }}>
+              <ELIcon name="check" size={28} color="#2E7D52" stroke={2.4} />
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: "#1F6E45" }}>完成了！做得很好。</div>
+                <div style={{ marginTop: 3, fontSize: 15, color: "#574E47" }}>把成果拍張照傳給家人，是很棒的話題。</div>
+              </div>
+            </div>
+
+            {/* 標籤 */}
+            {card.tags && card.tags.length > 0 && (
+              <div style={{ marginTop: 18, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {card.tags.map((tag: string) => (
+                  <span key={tag} style={{ fontSize: 14, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "6px 13px", borderRadius: 999 }}>#{tag}</span>
+                ))}
+              </div>
+            )}
+
+            {/* 來源 */}
+            {(card.source_url || card.source_org) && (
+              <div style={{ marginTop: 20, borderRadius: 14, padding: "14px 18px", background: "#FAF7F5", border: "1px solid #F0E6DE", fontSize: 14, color: "#9B8E85", lineHeight: 1.6 }}>
+                資料來源：{card.source_url
+                  ? <a href={card.source_url} target="_blank" rel="noopener noreferrer" style={{ color: "#B23F1E", fontWeight: 700 }}>{card.source_org ?? card.source_url}</a>
+                  : <span style={{ color: "#574E47", fontWeight: 700 }}>{card.source_org}</span>}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 路由分派器 ── */
+export default async function ActivitySlugPage({ params }: { params: Promise<Params> }) {
+  const { slug } = await params;
+  if (THEMES[slug]) return <ThemeListPage themeKey={slug} />;
+  return <CardDetailPage slug={slug} />;
 }

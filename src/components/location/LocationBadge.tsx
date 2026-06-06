@@ -9,9 +9,11 @@ const SKIP_HOURS = 24;
 export function LocationBadge({
   currentName,
   currentCode,
+  compact = false,
 }: {
   currentName: string | null;
   currentCode: string | null;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -102,25 +104,32 @@ export function LocationBadge({
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3">
+    <div className="flex flex-wrap items-center gap-2">
       {currentName ? (
         <>
-          <span
-            className="rounded-full px-4 py-2 text-base font-semibold"
-            style={{
-              background: "rgba(255,255,255,0.15)",
-              color: "#FFFFFF",
-              border: "1.5px solid rgba(255,255,255,0.5)",
-            }}
-          >
-            📍 目前位置：{currentName}
-          </span>
+          {!compact && (
+            <span
+              className="rounded-full px-4 py-2 text-base font-semibold"
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                color: "#FFFFFF",
+                border: "1.5px solid rgba(255,255,255,0.5)",
+              }}
+            >
+              📍 目前位置：{currentName}
+            </span>
+          )}
           <button
             type="button"
             onClick={() => detect(false)}
             disabled={busy}
-            className="rounded-full px-4 py-2 text-base font-semibold"
-            style={{
+            className="rounded-full px-3 py-1 text-sm font-semibold"
+            style={compact ? {
+              background: "var(--bg-soft)",
+              color: "var(--cta-ink)",
+              border: "1.5px solid var(--border-strong)",
+              minHeight: 32,
+            } : {
               background: "rgba(255,255,255,0.1)",
               color: "#FFFFFF",
               border: "1.5px solid rgba(255,255,255,0.4)",
@@ -132,8 +141,13 @@ export function LocationBadge({
             type="button"
             onClick={clear}
             disabled={busy}
-            className="rounded-full px-4 py-2 text-base font-semibold"
-            style={{
+            className="rounded-full px-3 py-1 text-sm font-semibold"
+            style={compact ? {
+              background: "var(--bg-soft)",
+              color: "var(--text-muted)",
+              border: "1.5px solid var(--border)",
+              minHeight: 32,
+            } : {
               background: "rgba(255,255,255,0.1)",
               color: "#FFFFFF",
               border: "1.5px solid rgba(255,255,255,0.4)",

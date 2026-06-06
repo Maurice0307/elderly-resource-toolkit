@@ -1,194 +1,162 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { ELIcon } from "@/components/layout/ELIcon";
 
 export const metadata = { title: "互助問答" };
 
 type QuestionRow = {
   id: string;
   title: string;
-  body: string | null;
   tags: string[];
   status: string;
   answer_count: number;
   created_at: string;
   region: { name: string } | null;
-  author: { display_name: string | null } | null;
 };
+
+function getAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(hours / 24);
+  if (days >= 2) return `${days} 天前`;
+  if (days === 1) return "昨天";
+  if (hours >= 1) return `${hours} 小時前`;
+  const mins = Math.floor(diff / 60000);
+  return mins >= 1 ? `${mins} 分鐘前` : "剛剛";
+}
 
 export default async function QAPage({
   searchParams,
 }: {
-  searchParams: Promise<{ region?: string }>;
+  searchParams: Promise<{ f?: string }>;
 }) {
-  const { region = "" } = await searchParams;
+  const { f = "all" } = await searchParams;
   const supabase = await createClient();
 
   let query = supabase
     .from("questions")
-    .select(
-      "id, title, body, tags, status, answer_count, created_at, region:regions(name), author:profiles(display_name)",
-    )
+    .select("id, title, tags, status, answer_count, created_at, region:regions(name)")
     .in("status", ["open", "resolved"])
     .order("created_at", { ascending: false })
     .limit(40);
-
-  if (region) {
-    const { data: reg } = await supabase
-      .from("regions")
-      .select("id")
-      .eq("code", region)
-      .single();
-    if (reg) query = query.eq("region_id", reg.id);
-  }
+  if (f === "open") query = query.eq("status", "open");
 
   const { data } = await query;
   const questions = (data ?? []) as unknown as QuestionRow[];
 
-  const { data: regionRows } = await supabase
-    .from("regions")
-    .select("id, name, code")
-    .eq("level", "county")
-    .order("code");
-
-  const regions = regionRows ?? [];
+  const filters = [
+    { key: "all",   label: "全部問題", href: "/qa" },
+    { key: "open",  label: "待回答",   href: "/qa?f=open" },
+    { key: "local", label: "我的地區", href: "/qa?f=local" },
+  ];
 
   return (
-    <main className="min-h-screen px-5 py-10" style={{ background: "var(--bg-page)" }}>
-      <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-lg font-medium" style={{ color: "var(--cta)" }}>
-          ← 回首頁
-        </Link>
-
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+    <div className="wv-fade">
+      {/* 標題帶 */}
+      <div style={{
+        background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)",
+        borderBottom: "1px solid #FFE7DD", padding: "44px 0 36px",
+      }}>
+        <div className="wv-wrap" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
           <div>
-            <h1 className="text-4xl font-bold" style={{ color: "var(--text-primary)" }}>
-              互助問答
-            </h1>
-            <p className="mt-2 text-xl" style={{ color: "var(--text-secondary)" }}>
-              有疑問就問，在地志工來解答
-            </p>
+            <h1 style={{ margin: "0 0 10px", fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, color: "#241F1B" }}>互助問答</h1>
+            <p style={{ margin: "0 0 24px", fontSize: 17, color: "#574E47" }}>在地志工為您解答生活中的照顧問題。</p>
+            <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+              {filters.map(({ key, label, href }) => (
+                <Link key={key} href={href} style={{
+                  padding: "9px 20px", borderRadius: 999, fontSize: 15, fontWeight: 700,
+                  background: f === key ? "#E0552E" : "rgba(255,255,255,0.8)",
+                  color: f === key ? "#fff" : "#574E47",
+                  border: `1.5px solid ${f === key ? "#E0552E" : "#E4D7CC"}`,
+                  textDecoration: "none",
+                }}>{label}</Link>
+              ))}
+            </div>
           </div>
-          <Link
-            href="/qa/ask"
-            className="rounded-2xl px-7 py-4 text-xl font-bold transition hover:opacity-90"
-            style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
-          >
-            ＋ 發問
+          <Link href="/qa/ask" style={{
+            height: 50, padding: "0 24px", borderRadius: 999, background: "#E0552E",
+            color: "#fff", fontSize: 16, fontWeight: 800, display: "inline-flex",
+            alignItems: "center", gap: 9, textDecoration: "none",
+            boxShadow: "0 6px 16px rgba(224,85,46,0.26)", flexShrink: 0,
+          }}>
+            <ELIcon name="add" size={20} color="#fff" /> 我要提問
           </Link>
         </div>
+      </div>
 
-        {/* 地區篩選 */}
-        <div className="mt-6 flex flex-wrap gap-2">
-          <a
-            href="/qa"
-            className="rounded-full px-4 py-2 text-base font-semibold"
-            style={
-              !region
-                ? { background: "var(--cta)", color: "var(--cta-on)" }
-                : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)" }
-            }
-          >
-            全部地區
-          </a>
-          {regions.map((r) => (
-            <a
-              key={r.code}
-              href={`/qa?region=${r.code}`}
-              className="rounded-full px-4 py-2 text-base font-semibold"
-              style={
-                region === r.code
-                  ? { background: "var(--cta)", color: "var(--cta-on)" }
-                  : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)" }
-              }
-            >
-              {r.name}
-            </a>
-          ))}
-        </div>
-
-        {/* 問題列表 */}
-        {questions.length === 0 ? (
-          <div
-            className="mt-10 rounded-2xl p-10 text-center text-xl"
-            style={{ background: "var(--bg-accent)", color: "#92400E", border: "2px dashed #FDE68A" }}
-          >
-            <div className="text-7xl">💬</div>
-            <p className="mt-4">還沒有問題，成為第一個發問的人吧！</p>
-            <Link
-              href="/qa/ask"
-              className="mt-6 inline-block rounded-full px-6 py-3 text-lg font-semibold"
-              style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
-            >
-              立即發問
-            </Link>
-          </div>
-        ) : (
-          <ul className="mt-6 space-y-4">
-            {questions.map((q) => {
-              const author = Array.isArray(q.author) ? q.author[0] : q.author;
-              const reg = Array.isArray(q.region) ? q.region[0] : q.region;
-              return (
-                <li key={q.id}>
+      {/* 問題列表 — max-width 880px, centered */}
+      <div className="wv-wrap" style={{ paddingTop: 36, paddingBottom: 56 }}>
+        <div style={{ maxWidth: 880, margin: "0 auto" }}>
+          {questions.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "64px 0", color: "#6E645C" }}>
+              <ELIcon name="qa" size={48} color="#E4D7CC" style={{ margin: "0 auto 16px" }} />
+              <p style={{ fontSize: 18, fontWeight: 700 }}>暫無問題</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {questions.map((q) => {
+                const region = Array.isArray(q.region) ? q.region[0] : q.region;
+                const solved = q.status === "resolved";
+                return (
                   <Link
+                    key={q.id}
                     href={`/qa/${q.id}`}
-                    className="group flex flex-col rounded-2xl p-6 shadow-sm transition hover:shadow-md"
+                    className="wv-card click"
                     style={{
-                      background: "var(--bg-elevated)",
-                      border: "2px solid var(--border)",
-                      borderLeftWidth: 6,
-                      borderLeftColor: q.status === "resolved" ? "var(--success)" : "var(--cta)",
-                      minHeight: "var(--hit)",
+                      display: "flex", alignItems: "flex-start", gap: 14,
+                      background: "#fff", borderRadius: 18,
+                      border: "1px solid #F0E6DE", padding: "22px 24px",
+                      textDecoration: "none",
                     }}
                   >
-                    <div className="flex flex-wrap items-center gap-2">
-                      {q.status === "resolved" && (
-                        <span
-                          className="rounded-full px-3 py-1 text-sm font-semibold"
-                          style={{ background: "var(--success-soft)", color: "#065F46" }}
-                        >
-                          ✅ 已解決
+                    {/* QA icon 直接放，不包 chip */}
+                    <ELIcon name="qa" size={26} color="#F26B43" style={{ marginTop: 2, flexShrink: 0 }} />
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{ margin: "0 0 12px", fontSize: 20, fontWeight: 700, color: "#241F1B", lineHeight: 1.5 }}>
+                        {q.title}
+                      </h3>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                        <span style={{
+                          fontSize: 13, fontWeight: 800, padding: "3px 10px", borderRadius: 999,
+                          background: solved ? "#E7F4EC" : "#FFF1E8",
+                          color: solved ? "#2E7D52" : "#C2410C",
+                        }}>
+                          {solved ? "✓ 已解決" : "待回答"}
                         </span>
-                      )}
-                      {reg && (
-                        <span
-                          className="rounded-full px-3 py-1 text-sm"
-                          style={{ background: "var(--bg-soft)", color: "var(--text-muted)" }}
-                        >
-                          📍 {reg.name}
-                        </span>
-                      )}
-                      {q.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full px-3 py-1 text-sm"
-                          style={{ background: "var(--bg-accent)", color: "#92400E" }}
-                        >
-                          #{tag}
-                        </span>
-                      ))}
+                        {region?.name && (
+                          <span style={{ fontSize: 13.5, color: "#6E645C", display: "flex", alignItems: "center", gap: 4 }}>
+                            <ELIcon name="pin" size={13} color="#F26B43" /> {region.name}
+                          </span>
+                        )}
+                        <span style={{ fontSize: 13.5, color: "#6E645C" }}>{q.answer_count} 則回答</span>
+                        <span style={{ fontSize: 13.5, color: "#6E645C", marginLeft: "auto" }}>{getAgo(q.created_at)}</span>
+                      </div>
                     </div>
-                    <h2
-                      className="mt-3 text-2xl font-bold leading-snug"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {q.title}
-                    </h2>
-                    <div className="mt-3 flex items-center justify-between text-base" style={{ color: "var(--text-muted)" }}>
-                      <span>
-                        {author?.display_name ?? "匿名"} ·{" "}
-                        {new Date(q.created_at).toLocaleDateString("zh-TW")}
-                      </span>
-                      <span className="font-semibold" style={{ color: q.answer_count > 0 ? "var(--success)" : "var(--text-muted)" }}>
-                        💬 {q.answer_count} 則回答
-                      </span>
-                    </div>
+
+                    {/* 右側 chevron */}
+                    <ELIcon name="chevron" size={22} color="#9B8E85" style={{ marginTop: 4, flexShrink: 0 }} />
                   </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                );
+              })}
+            </div>
+          )}
+
+          {/* 提問入口 */}
+          <div style={{ marginTop: 40, textAlign: "center", padding: "40px 28px", background: "linear-gradient(120deg,#FFF4EF,#FFE7DD)", borderRadius: 22, border: "1px solid #FFE7DD" }}>
+            <h2 style={{ margin: "0 0 8px", fontSize: 22, fontWeight: 800, color: "#241F1B" }}>找不到答案？直接問！</h2>
+            <p style={{ margin: "0 0 22px", fontSize: 16, color: "#574E47" }}>在地志工會在 24 小時內為您解答。</p>
+            <Link href="/qa/ask" style={{
+              height: 52, padding: "0 32px", borderRadius: 999, background: "#E0552E",
+              color: "#fff", fontSize: 18, fontWeight: 800, display: "inline-flex",
+              alignItems: "center", gap: 10, textDecoration: "none",
+              boxShadow: "0 6px 16px rgba(224,85,46,0.26)",
+            }}>
+              + 我要提問
+            </Link>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
