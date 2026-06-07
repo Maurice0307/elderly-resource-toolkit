@@ -139,7 +139,7 @@ async function CardDetailPage({ slug }: { slug: string }) {
   const themeKey = themeKeyFor(card);
   const theme = THEMES[themeKey];
   const steps = Array.isArray(card.steps) ? card.steps : [];
-  const materials: string[] = (card as unknown as Record<string, string[]>).materials ?? [];
+  const materials: string[] = card.materials ?? [];
 
   return (
     <div className="wv-fade">

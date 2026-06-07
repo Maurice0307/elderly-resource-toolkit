@@ -69,6 +69,7 @@ export type ActivityCard = {
   duration_min: number | null;
   identity_tags: IdentitySlug[];
   steps: ActivityStep[];
+  materials: string[];
   tags: string[];
   like_count: number;
   status: string;

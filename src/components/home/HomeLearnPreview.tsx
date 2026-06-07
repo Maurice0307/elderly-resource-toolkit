@@ -57,11 +57,21 @@ function themeOf(card: Card): CatKey {
   }
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export function HomeLearnPreview({ cards }: { cards: Card[] }) {
   const [catKey, setCatKey] = useState<CatKey>("craft");
 
-  const picks = cards.filter((c) => themeOf(c) === catKey).slice(0, 4);
-  const showCards = picks.length > 0 ? picks : cards.slice(0, 4);
+  const filtered = cards.filter((c) => themeOf(c) === catKey);
+  const picks = shuffle(filtered.length > 0 ? filtered : cards).slice(0, 4);
+  const showCards = picks;
   const cat = CATS.find((c) => c.key === catKey)!;
   const theme = THEME_BG[catKey];
 
@@ -90,8 +100,8 @@ export function HomeLearnPreview({ cards }: { cards: Card[] }) {
         })}
       </div>
 
-      {/* 圖卡格 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+      {/* 圖卡格：固定 4 欄，2-3 張卡也保持相同格寬 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 16 }}>
         {showCards.map((card) => (
           <Link
             key={card.slug}
@@ -135,22 +145,6 @@ export function HomeLearnPreview({ cards }: { cards: Card[] }) {
             </div>
           </Link>
         ))}
-        {showCards.length === 0 && (
-          <Link
-            href="/activities"
-            className="wv-card click"
-            style={{
-              background: `linear-gradient(135deg,${theme.bg},#FFF4EF)`,
-              borderRadius: 18, border: "1px solid #F0E6DE",
-              padding: "32px 24px", textDecoration: "none",
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              gap: 12, minHeight: 160,
-            }}
-          >
-            <ELIcon name={cat.icon} size={44} color="#F26B43" />
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#574E47" }}>前往瀏覽更多</div>
-          </Link>
-        )}
       </div>
     </div>
   );
