@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ELIcon } from "@/components/layout/ELIcon";
 
 type Props = {
   resourceId: string;
@@ -51,22 +52,28 @@ export function LikeButton({ resourceId, initialCount, initialLiked, userId }: P
       type="button"
       onClick={toggle}
       disabled={loading}
-      className="flex items-center gap-2 rounded-2xl px-6 py-4 text-xl font-semibold transition disabled:opacity-60"
-      style={
-        liked
-          ? { background: "var(--bg-accent)", color: "#92400E", border: "2px solid #FDE68A", minHeight: "var(--hit)" }
-          : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "2px solid var(--border)", minHeight: "var(--hit)" }
-      }
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        height: 46, borderRadius: 999,
+        border: `1.5px solid ${liked ? "#F26B43" : "#E4D7CC"}`,
+        background: liked ? "#FFF4EF" : "#fff",
+        fontSize: 15, fontWeight: 700,
+        color: liked ? "#B23F1E" : "#574E47",
+        cursor: loading ? "not-allowed" : "pointer",
+        opacity: loading ? 0.6 : 1,
+        font: "inherit",
+      }}
       aria-pressed={liked}
-      title={userId ? undefined : "請先登入才能按讚"}
     >
-      <span className="icon-lg">👍</span>
-      <span>有幫助</span>
+      <ELIcon name="like" size={19} color={liked ? "#F26B43" : "#9B8E85"} />
+      有幫助
       {count > 0 && (
-        <span
-          className="rounded-full px-2 py-0.5 text-base font-bold"
-          style={liked ? { background: "var(--cta)", color: "var(--cta-on)" } : { background: "var(--border)", color: "var(--text-secondary)" }}
-        >
+        <span style={{
+          fontSize: 13, fontWeight: 800,
+          background: liked ? "#F26B43" : "#F0E6DE",
+          color: liked ? "#fff" : "#574E47",
+          borderRadius: 999, padding: "1px 7px",
+        }}>
           {count}
         </span>
       )}

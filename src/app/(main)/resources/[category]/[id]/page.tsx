@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { categories } from "@/config/categories";
 import { LikeButton } from "@/components/resources/LikeButton";
+import { BookmarkButton } from "@/components/resources/BookmarkButton";
+import { ShareButton } from "@/components/resources/ShareButton";
 import { DwellTracker } from "@/components/resources/DwellTracker";
 import { getResourceById } from "@/lib/resources/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -163,6 +165,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
                   initialLiked={initialLiked}
                   userId={user?.id ?? null}
                 />
+                <BookmarkButton resourceId={resource.id} />
                 {resource.website_url && (
                   <a
                     href={resource.website_url} target="_blank" rel="noopener noreferrer"
@@ -171,12 +174,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
                     <ELIcon name="link" size={19} color="#9B8E85" /> 前往官網
                   </a>
                 )}
-                <button
-                  onClick={undefined}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 46, borderRadius: 999, border: "1.5px solid #E4D7CC", background: "#fff", fontSize: 15, fontWeight: 700, color: "#574E47", cursor: "pointer", font: "inherit" }}
-                >
-                  <ELIcon name="share" size={19} color="#9B8E85" /> 分享給家人
-                </button>
+                <ShareButton title={resource.name} />
                 <a
                   href={`mailto:itchiang2025@gmail.com?subject=資料回報：${encodeURIComponent(resource.name)}&body=資源名稱：${encodeURIComponent(resource.name)}%0A有誤的資訊：`}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 46, borderRadius: 999, border: "1.5px solid #E4D7CC", background: "#fff", fontSize: 15, fontWeight: 700, color: "#574E47", textDecoration: "none" }}
