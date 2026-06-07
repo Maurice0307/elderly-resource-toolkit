@@ -105,25 +105,42 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
                 </div>
               )}
 
-              {/* 地址 + 地圖 */}
-              {resource.address && (
+              {/* 地址 + 地圖（有地址或有座標就顯示） */}
+              {(resource.address || (resource.latitude && resource.longitude)) && (
                 <>
-                  <div style={{ marginTop: 18, display: "flex", gap: 14, alignItems: "flex-start", padding: "16px 0", borderTop: "1px solid #F0E6DE" }}>
-                    <ELIcon name="pin" size={24} color="#F26B43" style={{ marginTop: 2 }} />
-                    <div>
-                      <div style={{ fontSize: 17, fontWeight: 700, color: "#241F1B" }}>{resource.address}</div>
+                  {resource.address && (
+                    <div style={{ marginTop: 18, display: "flex", gap: 14, alignItems: "flex-start", padding: "16px 0", borderTop: "1px solid #F0E6DE" }}>
+                      <ELIcon name="pin" size={24} color="#F26B43" style={{ marginTop: 2 }} />
+                      <div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: "#241F1B" }}>{resource.address}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ marginTop: 4 }}>
-                    <iframe
-                      className="wv-map"
-                      title={"地圖：" + resource.name}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      src={"https://maps.google.com/maps?q=" + encodeURIComponent(resource.address) + "&z=15&hl=zh-TW&output=embed"}
-                    />
+                  )}
+                  <div style={{ marginTop: resource.address ? 4 : 18 }}>
+                    {resource.latitude && resource.longitude ? (
+                      /* OpenStreetMap embed — 免費、穩定、無需 API key */
+                      <iframe
+                        className="wv-map"
+                        title={"地圖：" + resource.name}
+                        loading="lazy"
+                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${resource.longitude - 0.009},${resource.latitude - 0.006},${resource.longitude + 0.009},${resource.latitude + 0.006}&layer=mapnik&marker=${resource.latitude},${resource.longitude}`}
+                      />
+                    ) : (
+                      /* Google Maps embed fallback（有地址無座標） */
+                      <iframe
+                        className="wv-map"
+                        title={"地圖：" + resource.name}
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        src={"https://maps.google.com/maps?q=" + encodeURIComponent(resource.address!) + "&z=15&hl=zh-TW&output=embed"}
+                      />
+                    )}
                     <a
-                      href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(resource.address)}
+                      href={
+                        resource.latitude && resource.longitude
+                          ? `https://www.google.com/maps?q=${resource.latitude},${resource.longitude}`
+                          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(resource.address!)}`
+                      }
                       target="_blank" rel="noopener noreferrer"
                       style={{ marginTop: 11, display: "inline-flex", alignItems: "center", gap: 8, fontSize: 15.5, fontWeight: 700, color: "#B23F1E", textDecoration: "none" }}
                     >
