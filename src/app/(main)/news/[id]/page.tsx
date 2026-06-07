@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ELIcon } from "@/components/layout/ELIcon";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -32,6 +33,7 @@ const TAG_PALETTES: Record<string, { bg: string; color: string }> = {
   睡眠:     { bg: "#EFF6FF", color: "#0369A1" },
   慢性病:   { bg: "#FFF4EF", color: "#B23F1E" },
   生活:     { bg: "#F0FDF4", color: "#15803D" },
+  老化:     { bg: "#FAF7F5", color: "#574E47" },
 };
 function tagStyle(tag: string) {
   return TAG_PALETTES[tag] ?? { bg: "#F0E6DE", color: "#6E645C" };
@@ -45,25 +47,25 @@ function extractBullets(md: string): string[] {
     .slice(0, 5);
 }
 
-function renderMd(md: string): string {
+function extractLead(md: string): string | null {
+  for (const raw of md.split("\n")) {
+    const line = raw.trim();
+    if (!line || /^[-*]\s/.test(line) || /^#{1,4}\s/.test(line)) continue;
+    return line.replace(/\*\*(.*?)\*\*/g, "$1");
+  }
+  return null;
+}
+
+/* Renders only non-bullet paragraphs (bullets already shown in 重點整理) */
+function renderMdBody(md: string): string {
   const lines = md.split("\n");
   const parts: string[] = [];
-  let inList = false;
   for (const raw of lines) {
     const line = raw.trim();
-    if (!line) { if (inList) { parts.push("</ul>"); inList = false; } continue; }
-    const isBullet = /^[-*]\s/.test(line);
-    if (isBullet) {
-      const text = line.replace(/^[-*]\s+/, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      if (!inList) { parts.push('<ul style="list-style:disc;padding-left:1.5rem;margin-top:0.75rem">'); inList = true; }
-      parts.push(`<li style="margin:0.6rem 0;line-height:1.7">${text}</li>`);
-    } else {
-      if (inList) { parts.push("</ul>"); inList = false; }
-      const text = line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      parts.push(`<p style="margin-top:0.9rem;line-height:1.75;font-size:17px">${text}</p>`);
-    }
+    if (!line || /^[-*]\s/.test(line) || /^#{1,4}\s/.test(line)) continue;
+    const text = line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    parts.push(`<p style="margin-top:0.9rem;line-height:1.75;font-size:17px">${text}</p>`);
   }
-  if (inList) parts.push("</ul>");
   return parts.join("\n");
 }
 
@@ -77,7 +79,8 @@ export default async function NewsDetailPage({ params }: Props) {
   const tags: string[] = data.tags ?? [];
   const dateStr = getAgo(data.published_at ?? data.fetched_at);
   const bullets = extractBullets(data.summary_md);
-  const htmlContent = renderMd(data.summary_md);
+  const lead = extractLead(data.summary_md);
+  const htmlBody = renderMdBody(data.summary_md);
 
   /* 相關文章 */
   let related: Array<{ id: string; title: string; source_org: string; tags: string[] }> = [];
@@ -108,21 +111,16 @@ export default async function NewsDetailPage({ params }: Props) {
 
   return (
     <div className="wv-fade">
-      {/* 頂部麵包屑 */}
+      {/* 頂部列 */}
       <div style={{ background: "#fff", borderBottom: "1px solid #F0E6DE", padding: "13px 0" }}>
         <div className="wv-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/news" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 15, fontWeight: 700, color: "#574E47", textDecoration: "none" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden>
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
+            <ELIcon name="chevron" size={18} color="#574E47" style={{ transform: "rotate(180deg)" }} />
             返回新知
           </Link>
           {data.source_url && (
             <a href={data.source_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 700, color: "#B23F1E", textDecoration: "none" }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden>
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-              </svg>
-              分享給家人
+              <ELIcon name="share" size={16} color="#F26B43" /> 分享給家人
             </a>
           )}
         </div>
@@ -130,7 +128,8 @@ export default async function NewsDetailPage({ params }: Props) {
 
       <div className="wv-wrap" style={{ paddingTop: 36, paddingBottom: 64 }}>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: 40, alignItems: "start" }}>
-          {/* 左欄：文章內容 */}
+
+          {/* ── 左欄：文章內容 ── */}
           <article>
             {/* 標籤 + 來源 */}
             <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
@@ -150,13 +149,36 @@ export default async function NewsDetailPage({ params }: Props) {
               {data.title}
             </h1>
 
+            {/* Hero 圖片 */}
+            <div style={{ marginBottom: 22, borderRadius: 16, overflow: "hidden", background: "#F5F1EE", minHeight: 180, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {data.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={data.image_url}
+                  alt={data.title}
+                  loading="lazy"
+                  style={{ width: "100%", display: "block", objectFit: "cover", maxHeight: 320 }}
+                />
+              ) : (
+                <div style={{ padding: "48px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                  <ELIcon name="news" size={48} color="#C8B8AE" />
+                  <span style={{ fontSize: 14, color: "#9B8E85" }}>{data.source_org}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Lead 段落（第一句非 bullet 的段落） */}
+            {lead && (
+              <p style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 600, color: "#241F1B", lineHeight: 1.75 }}>
+                {lead}
+              </p>
+            )}
+
             {/* 重點整理 */}
             {bullets.length > 0 && (
               <div style={{ background: "#FFF4EF", border: "1px solid #FFE7DD", borderRadius: 18, padding: "20px 22px", marginBottom: 24 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 800, color: "#241F1B", marginBottom: 14 }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#F26B43" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" aria-hidden>
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                  </svg>
+                  <ELIcon name="sparkle" size={20} color="#F26B43" />
                   重點整理
                 </div>
                 <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -170,37 +192,32 @@ export default async function NewsDetailPage({ params }: Props) {
               </div>
             )}
 
-            {/* 全文 (Markdown) */}
-            <div style={{ fontSize: 17, color: "#574E47", lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: htmlContent }} />
+            {/* 非 bullet 的正文段落（避免與重點整理重複） */}
+            {htmlBody && (
+              <div style={{ fontSize: 17, color: "#574E47", lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: htmlBody }} />
+            )}
 
             {/* 原始來源 */}
             {data.source_url && (
               <div style={{ marginTop: 28 }}>
                 <a
                   href={data.source_url} target="_blank" rel="noopener noreferrer"
-                  style={{
-                    display: "flex", alignItems: "center", gap: 14, textDecoration: "none",
-                    background: "#fff", border: "1.5px solid #F0E6DE", borderRadius: 16, padding: "18px 20px",
-                  }}
+                  style={{ display: "flex", alignItems: "center", gap: 14, textDecoration: "none", background: "#fff", border: "1.5px solid #F0E6DE", borderRadius: 16, padding: "18px 20px" }}
                 >
                   <div style={{ width: 46, height: 46, borderRadius: 12, background: "#FFF4EF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#F26B43" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22" aria-hidden>
-                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                    </svg>
+                    <ELIcon name="link" size={22} color="#F26B43" />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 16, fontWeight: 800, color: "#241F1B" }}>前往原始來源</div>
                     <div style={{ marginTop: 2, fontSize: 13.5, color: "#9B8E85" }}>{data.source_org}（開啟原始網站）</div>
                   </div>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#9B8E85" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="20" height="20" aria-hidden>
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
+                  <ELIcon name="chevron" size={20} color="#9B8E85" />
                 </a>
               </div>
             )}
           </article>
 
-          {/* 右欄：延伸閱讀（sticky sidebar） */}
+          {/* ── 右欄：延伸閱讀（sticky） ── */}
           <aside style={{ position: "sticky", top: 96 }}>
             {related.length > 0 && (
               <div>

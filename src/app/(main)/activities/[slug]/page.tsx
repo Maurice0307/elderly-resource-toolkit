@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { StepViewer } from "@/components/activities/StepViewer";
 import { YouTubeEmbed } from "@/components/activities/YouTubeEmbed";
-import type { ActivityCard } from "@/types/domain";
+import type { ActivityCard, ActivityStep } from "@/types/domain";
 import { ELIcon } from "@/components/layout/ELIcon";
 
 type Params = { slug: string };
@@ -128,55 +127,85 @@ async function ThemeListPage({ themeKey }: { themeKey: string }) {
   );
 }
 
-/* ── 圖卡詳情頁（LearnReader 設計） ── */
+/* ── 圖卡詳情頁（所有步驟一次展示） ── */
 async function CardDetailPage({ slug }: { slug: string }) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("activity_cards").select("*").eq("slug", slug).eq("status", "active").maybeSingle();
   if (error) throw error;
   if (!data) notFound();
+
   const card = data as ActivityCard;
   const themeKey = themeKeyFor(card);
   const theme = THEMES[themeKey];
   const steps = Array.isArray(card.steps) ? card.steps : [];
+  const materials: string[] = (card as unknown as Record<string, string[]>).materials ?? [];
 
   return (
     <div className="wv-fade">
-      <div className="wv-wrap" style={{ paddingTop: 26, paddingBottom: 56 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "340px minmax(0,1fr)", gap: 30, alignItems: "start" }}>
-          {/* 左：封面 + 材料（sticky） */}
+      <div className="wv-wrap" style={{ paddingTop: 26, paddingBottom: 64 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "296px minmax(0,1fr)", gap: 28, alignItems: "start" }}>
+
+          {/* ── 左：封面 + 資訊（sticky） ── */}
           <aside style={{ position: "sticky", top: 96 }}>
             <Link href="/activities" className="wv-pill" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 16 }}>
               <ELIcon name="chevron" size={18} color="#574E47" style={{ transform: "rotate(180deg)" }} /> 互動學習
             </Link>
+
             <div style={{ background: "#fff", borderRadius: 22, border: "1px solid #F0E6DE", overflow: "hidden" }}>
               {/* 封面媒體 */}
-              {card.hero_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={card.hero_image_url} alt={card.title + " 成品預覽"} style={{ width: "100%", height: 196, objectFit: "cover", display: "block" }} loading="lazy" />
-              ) : (
-                <div style={{ height: 196, background: "linear-gradient(135deg,#FFE0D2,#FFF4EF)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <ELIcon name={theme?.icon ?? "cards"} size={Math.round(196 * 0.32)} color="#F26B43" />
-                </div>
-              )}
-              {/* 圖卡資訊 */}
-              <div style={{ padding: "22px 22px 24px" }}>
-                <h1 style={{ margin: 0, fontSize: 25, fontWeight: 800, color: "#241F1B" }}>{card.title}</h1>
-                {card.summary && (
-                  <p style={{ margin: "10px 0 0", fontSize: 16, color: "#574E47", lineHeight: 1.7 }}>{card.summary}</p>
+              <div style={{ position: "relative" }}>
+                {card.hero_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={card.hero_image_url}
+                    alt={card.title + " 成品預覽"}
+                    style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div style={{ height: 200, background: "linear-gradient(135deg,#FFE0D2,#FFF4EF)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ELIcon name={theme?.icon ?? "cards"} size={64} color="#F26B43" />
+                  </div>
                 )}
-                <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <span style={{ position: "absolute", bottom: 10, right: 10, fontSize: 11.5, fontWeight: 800, color: "#fff", background: "rgba(0,0,0,0.55)", padding: "3px 10px", borderRadius: 6 }}>成品展示</span>
+              </div>
+
+              <div style={{ padding: "20px 20px 22px" }}>
+                <h1 style={{ margin: 0, fontSize: 23, fontWeight: 800, color: "#241F1B" }}>{card.title}</h1>
+                {card.summary && (
+                  <p style={{ margin: "10px 0 0", fontSize: 15, color: "#574E47", lineHeight: 1.7 }}>{card.summary}</p>
+                )}
+
+                <div style={{ marginTop: 14, display: "flex", gap: 9, flexWrap: "wrap" }}>
                   {card.duration_min && (
-                    <span style={{ fontSize: 14, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "6px 13px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                      <ELIcon name="clock" size={15} color="#F26B43" /> {card.duration_min} 分鐘
+                    <span style={{ fontSize: 13.5, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "5px 12px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <ELIcon name="clock" size={14} color="#F26B43" /> {card.duration_min} 分鐘
                     </span>
                   )}
-                  <span style={{ fontSize: 14, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "6px 13px", borderRadius: 999 }}>
-                    {steps.length} 個步驟
-                  </span>
+                  {steps.length > 0 && (
+                    <span style={{ fontSize: 13.5, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "5px 12px", borderRadius: 999 }}>
+                      {steps.length} 個步驟
+                    </span>
+                  )}
                 </div>
 
-                {/* 影片 */}
+                {/* 需要準備 */}
+                {materials.length > 0 && (
+                  <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid #F0E6DE" }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 800, color: "#241F1B", marginBottom: 10 }}>需要準備</div>
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                      {materials.map((m: string, i: number) => (
+                        <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 15, color: "#574E47", lineHeight: 1.55 }}>
+                          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#F26B43", flexShrink: 0, marginTop: 6 }} />
+                          {m}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 完整影片（卡片主影片） */}
                 {card.video_url && (
                   <div style={{ marginTop: 18 }}>
                     <YouTubeEmbed url={card.video_url} title={card.title} />
@@ -186,13 +215,58 @@ async function CardDetailPage({ slug }: { slug: string }) {
             </div>
           </aside>
 
-          {/* 右：步驟 */}
+          {/* ── 右：所有步驟一次展示 ── */}
           <div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#9B8E85", letterSpacing: 1, marginBottom: 16 }}>跟著做 · 一步一步</div>
-            <StepViewer steps={card.steps} cardTitle={card.title} />
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#9B8E85", letterSpacing: 1, marginBottom: 20 }}>跟著做・一步一步</div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {steps.map((step: ActivityStep) => (
+                <div key={step.order} style={{ background: "#fff", borderRadius: 20, border: "1px solid #F0E6DE", padding: "22px 24px" }}>
+                  {/* 步驟編號 + 標題 */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+                    <span style={{ width: 36, height: 36, borderRadius: "50%", background: "#E0552E", color: "#fff", fontSize: 18, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {step.order}
+                    </span>
+                    <h3 style={{ margin: 0, fontSize: 21, fontWeight: 800, color: "#241F1B" }}>{step.title}</h3>
+                  </div>
+
+                  {/* 說明文字 */}
+                  <p style={{ margin: "0 0 0 50px", fontSize: 17, color: "#574E47", lineHeight: 1.75 }}>{step.description}</p>
+
+                  {/* 步驟圖片 */}
+                  {step.image_url && (
+                    <div style={{ marginTop: 14, marginLeft: 50, borderRadius: 14, overflow: "hidden" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={step.image_url} alt={step.title} loading="lazy" style={{ width: "100%", display: "block", objectFit: "cover" }} />
+                    </div>
+                  )}
+
+                  {/* 步驟影片 */}
+                  {step.video_url && (
+                    <div style={{ marginTop: 14, marginLeft: 50 }}>
+                      <YouTubeEmbed url={step.video_url} title={`${card.title} — ${step.title}`} startSeconds={step.video_start} />
+                      <a
+                        href={step.video_url} target="_blank" rel="noopener noreferrer"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 8, fontSize: 14, fontWeight: 700, color: "#B23F1E", textDecoration: "none" }}
+                      >
+                        <ELIcon name="arrow" size={15} color="#F26B43" /> 一步有影片，點 ▶ 觀看影像
+                      </a>
+                    </div>
+                  )}
+
+                  {/* 小撇步 */}
+                  {step.tip && (
+                    <div style={{ margin: "14px 0 0 50px", background: "#FFF4EF", border: "1px solid #FFE7DD", borderRadius: 12, padding: "11px 15px", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <ELIcon name="pin" size={16} color="#F26B43" style={{ marginTop: 2, flexShrink: 0 }} />
+                      <p style={{ margin: 0, fontSize: 15, color: "#B23F1E", lineHeight: 1.65 }}>小撇步：{step.tip}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
 
             {/* 完成卡 */}
-            <div style={{ marginTop: 18, background: "#E7F4EC", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ marginTop: 20, background: "#E7F4EC", borderRadius: 16, padding: "20px 24px", display: "flex", alignItems: "center", gap: 14 }}>
               <ELIcon name="check" size={28} color="#2E7D52" stroke={2.4} />
               <div>
                 <div style={{ fontSize: 18, fontWeight: 800, color: "#1F6E45" }}>完成了！做得很好。</div>
@@ -211,7 +285,7 @@ async function CardDetailPage({ slug }: { slug: string }) {
 
             {/* 來源 */}
             {(card.source_url || card.source_org) && (
-              <div style={{ marginTop: 20, borderRadius: 14, padding: "14px 18px", background: "#FAF7F5", border: "1px solid #F0E6DE", fontSize: 14, color: "#9B8E85", lineHeight: 1.6 }}>
+              <div style={{ marginTop: 18, borderRadius: 14, padding: "14px 18px", background: "#FAF7F5", border: "1px solid #F0E6DE", fontSize: 14, color: "#9B8E85", lineHeight: 1.6 }}>
                 資料來源：{card.source_url
                   ? <a href={card.source_url} target="_blank" rel="noopener noreferrer" style={{ color: "#B23F1E", fontWeight: 700 }}>{card.source_org ?? card.source_url}</a>
                   : <span style={{ color: "#574E47", fontWeight: 700 }}>{card.source_org}</span>}

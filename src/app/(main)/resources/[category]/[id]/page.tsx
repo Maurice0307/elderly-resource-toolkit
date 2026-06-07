@@ -87,12 +87,14 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
               )}
 
               {/* 撥打前可以這樣說 */}
-              {resource.phone_hint && (
+              {resource.phone && (
                 <div style={{ marginTop: 18, background: "#FFF4EF", border: "1px solid #FFE7DD", borderRadius: 16, padding: "18px 20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 16, fontWeight: 800, color: "#B23F1E", marginBottom: 8 }}>
                     <ELIcon name="chat" size={20} color="#F26B43" /> 撥打前可以這樣說
                   </div>
-                  <p style={{ margin: 0, fontSize: 16.5, color: "#574E47", lineHeight: 1.75 }}>{resource.phone_hint}</p>
+                  <p style={{ margin: 0, fontSize: 16.5, color: "#574E47", lineHeight: 1.75 }}>
+                    {resource.phone_hint ?? "說明您的需求與家人狀況，並先記下想問的問題，有助於快速獲得正確協助。"}
+                  </p>
                 </div>
               )}
 
