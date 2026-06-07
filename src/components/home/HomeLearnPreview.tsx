@@ -42,7 +42,10 @@ const SLUG_MAP: Record<string, CatKey> = {
   "interact-life-story": "draw", "interact-zentangle": "draw", "interact-memory-puzzle": "draw",
   "interact-knee-care": "body", "chair-exercise": "body", "fall-prevention": "body", "morning-stretch": "body",
   "my-plate": "smart", "line-video-call": "smart",
-  "interact-recycling-game": "life",
+  "interact-recycling-game": "life", "interact-cpr": "life", "interact-aed": "life",
+  "interact-heimlich": "life", "interact-fire-safety": "life", "interact-fire-escape": "life",
+  "interact-earthquake": "life", "interact-earthquake-prep": "life",
+  "interact-fraud-impersonation": "fraud", "interact-fraud-rumor": "fraud",
 };
 
 function themeOf(card: Card): CatKey {
