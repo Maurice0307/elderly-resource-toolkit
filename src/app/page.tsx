@@ -185,22 +185,30 @@ const QA_FALLBACK = [
   { id: "f4", title: "低收入戶的假牙補助怎麼申請？", is_solved: true, region_name: "桃園市", answer_count: 4 },
 ];
 
+type QAItem = { id: string; title: string; solved: boolean; region: string | null; answers: number; real: boolean };
+
 async function QAPreview() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("questions")
-    .select("id, title, answer_count, is_solved, region_name")
+    .select("id, title, answer_count, status, region:regions(name)")
+    .in("status", ["open", "resolved"])
     .order("created_at", { ascending: false })
     .limit(4);
 
-  const items = (data?.length ? data : QA_FALLBACK);
+  const items: QAItem[] = data?.length
+    ? data.map((q: { id: string; title: string; answer_count: number | null; status: string; region: { name: string } | { name: string }[] | null }) => {
+        const region = Array.isArray(q.region) ? q.region[0] : q.region;
+        return { id: q.id, title: q.title, solved: q.status === "resolved", region: region?.name ?? null, answers: q.answer_count ?? 0, real: true };
+      })
+    : QA_FALLBACK.map((q) => ({ id: q.id, title: q.title, solved: q.is_solved, region: q.region_name, answers: q.answer_count, real: false }));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {items.map((q: { id: string; title: string; is_solved: boolean | null; region_name: string | null; answer_count: number | null }) => (
+      {items.map((q) => (
         <Link
           key={q.id}
-          href={data?.length ? `/qa/${q.id}` : "/qa"}
+          href={q.real ? `/qa/${q.id}` : "/qa"}
           className="wv-card click"
           style={{
             background: "#fff", borderRadius: 16, border: "1px solid #F0E6DE",
@@ -214,15 +222,15 @@ async function QAPreview() {
             </div>
           </div>
           <div style={{ marginTop: 10, marginLeft: 33, display: "flex", alignItems: "center", gap: 8 }}>
-            {q.is_solved
+            {q.solved
               ? <span style={{ fontSize: 12.5, fontWeight: 800, color: "#2E7D52", background: "#E7F4EC", padding: "3px 10px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
                   <ELIcon name="check" size={13} color="#2E7D52" /> 已解決
                 </span>
               : <span style={{ fontSize: 12.5, fontWeight: 800, color: "#C2410C", background: "#FFF1E8", padding: "3px 10px", borderRadius: 999 }}>待回答</span>
             }
             <span style={{ fontSize: 13.5, color: "#6E645C" }}>
-              {q.region_name && <><ELIcon name="pin" size={13} color="#F26B43" style={{ display: "inline", verticalAlign: "-2px" }} /> {q.region_name} · </>}
-              {q.answer_count ?? 0} 則回答
+              {q.region && <><ELIcon name="pin" size={13} color="#F26B43" style={{ display: "inline", verticalAlign: "-2px" }} /> {q.region} · </>}
+              {q.answers} 則回答
             </span>
           </div>
         </Link>
