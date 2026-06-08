@@ -193,7 +193,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
                     <ELIcon name="link" size={19} color="#9B8E85" /> 前往官網
                   </a>
                 )}
-                <ShareButton title={resource.name} />
+                <ShareButton title={resource.name} phone={resource.phone} address={resource.address} />
                 <a
                   href={`mailto:itchiang2025@gmail.com?subject=資料回報：${encodeURIComponent(resource.name)}&body=資源名稱：${encodeURIComponent(resource.name)}%0A有誤的資訊：`}
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 46, borderRadius: 999, border: "1.5px solid #E4D7CC", background: "#fff", fontSize: 15, fontWeight: 700, color: "#574E47", textDecoration: "none" }}
