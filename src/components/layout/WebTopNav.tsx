@@ -321,6 +321,13 @@ export function WebTopNav() {
     if (saved) setRegionLabel(saved);
   }, []);
 
+  // 手機 hero 的「變更地區」透過事件開啟同一個地區彈窗
+  useEffect(() => {
+    const open = () => setRegionOpen(true);
+    window.addEventListener("el:open-region", open);
+    return () => window.removeEventListener("el:open-region", open);
+  }, []);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll, { passive: true });

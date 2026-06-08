@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { categories } from "@/config/categories";
 import { HeroSearch } from "@/components/home/HeroSearch";
 import { HomeLearnPreview } from "@/components/home/HomeLearnPreview";
+import { MobileHome } from "@/components/home/MobileHome";
 import { ELIcon } from "@/components/layout/ELIcon";
 
 /* ─── 快速功能 5 格 ─── */
@@ -254,7 +255,14 @@ export default async function HomePage() {
     .limit(28);
 
   return (
-    <div className="wv-fade">
+    <>
+    {/* ── 手機版（iOS App 風）── */}
+    <div className="wv-mobile-only">
+      <MobileHome />
+    </div>
+
+    {/* ── 桌面版（網頁版）── */}
+    <div className="wv-fade wv-desktop-only">
 
       {/* Hero 搜尋 */}
       <div className="wv-wrap" style={{ paddingTop: 28 }}>
@@ -382,5 +390,6 @@ export default async function HomePage() {
       </div>
 
     </div>
+    </>
   );
 }
