@@ -73,7 +73,7 @@ async function main() {
   for (const q of QUESTIONS) {
     const { data: qRow, error: qErr } = await s.from("questions").insert({
       user_id: USER, region_id: q.region_id, title: q.title, body: q.body,
-      tags: q.tags, status: q.status, answer_count: q.answers.length,
+      tags: q.tags, status: q.status, // answer_count 由 trg_bump_answer_count 觸發器自動維護
     }).select("id").single();
     if (qErr) { console.error("❌ question:", q.title, qErr.message); continue; }
 

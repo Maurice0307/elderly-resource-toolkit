@@ -331,6 +331,11 @@ button, [role="button"], a.btn, .btn {
   50%       { box-shadow: 0 0 0 9px rgba(224,85,46,0); }
 }
 
+/* ── 詳情頁雙欄：手機收合為單欄（避免主欄被擠成直排）── */
+@media (max-width: 940px) {
+  .wv-split { grid-template-columns: 1fr !important; gap: 22px !important; }
+}
+
 /* ── 桌面 / 手機版型切換（同一網址、server 端皆渲染）── */
 .wv-mobile-only { display: none; }
 .wv-desktop-only { display: block; }

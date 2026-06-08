@@ -187,7 +187,7 @@ async function CardDetailPage({ slug }: { slug: string }) {
   return (
     <div className="wv-fade">
       <div className="wv-wrap" style={{ paddingTop: 26, paddingBottom: 64 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "296px minmax(0,1fr)", gap: 28, alignItems: "start" }}>
+        <div className="wv-split" style={{ display: "grid", gridTemplateColumns: "296px minmax(0,1fr)", gap: 28, alignItems: "start" }}>
 
           {/* ── 左：封面 + 資訊（sticky） ── */}
           <aside style={{ position: "sticky", top: 96 }}>

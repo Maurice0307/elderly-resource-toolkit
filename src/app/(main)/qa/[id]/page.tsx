@@ -40,7 +40,7 @@ export default async function QuestionPage({ params }: { params: Promise<Params>
 
   const { data: answerRows } = await supabase
     .from("answers")
-    .select("*, author:profiles(display_name)")
+    .select("*, author:profiles!answers_user_id_fkey(display_name)")
     .eq("question_id", id)
     .order("is_accepted", { ascending: false })
     .order("vote_count", { ascending: false })

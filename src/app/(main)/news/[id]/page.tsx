@@ -127,7 +127,7 @@ export default async function NewsDetailPage({ params }: Props) {
       </div>
 
       <div className="wv-wrap" style={{ paddingTop: 36, paddingBottom: 64 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: 40, alignItems: "start" }}>
+        <div className="wv-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 300px", gap: 40, alignItems: "start" }}>
 
           {/* ── 左欄：文章內容 ── */}
           <article>

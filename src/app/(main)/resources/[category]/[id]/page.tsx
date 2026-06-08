@@ -46,7 +46,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
     <div className="wv-fade">
       <DwellTracker />
       <div className="wv-wrap" style={{ paddingTop: 26, paddingBottom: 56 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 340px", gap: 28, alignItems: "start" }}>
+        <div className="wv-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 340px", gap: 28, alignItems: "start" }}>
           {/* 左欄：主內容 */}
           <div>
             <Link

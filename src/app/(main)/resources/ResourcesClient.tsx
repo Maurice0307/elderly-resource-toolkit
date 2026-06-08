@@ -240,7 +240,7 @@ export function ResourcesClient({
 
   return (
     <div>
-      <div className="wv-wrap" style={{ paddingTop: 26, paddingBottom: 56, display: "grid", gridTemplateColumns: "236px minmax(0,1fr)", gap: 30, alignItems: "start" }}>
+      <div className="wv-wrap wv-split" style={{ paddingTop: 26, paddingBottom: 56, display: "grid", gridTemplateColumns: "236px minmax(0,1fr)", gap: 30, alignItems: "start" }}>
         {/* 側欄 */}
         <aside className="wv-hideSm" style={{ position: "sticky", top: 96 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: "#9B8E85", letterSpacing: 1, margin: "4px 0 10px" }}>分類</div>
