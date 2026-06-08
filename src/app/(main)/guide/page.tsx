@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { FontSizeCTA } from "@/components/guide/FontSizeCTA";
 
 export const metadata = { title: "我們的理念" };
 
@@ -82,6 +83,9 @@ export default function GuidePage() {
             ))}
           </div>
         </div>
+
+        {/* 覺得字太小？一鍵放大字級 */}
+        <FontSizeCTA />
 
         {/* 起源 */}
         <div style={{ marginBottom: 56, background: "linear-gradient(120deg,#FFF4EF,#FFE7DD)", borderRadius: 22, padding: "32px 36px", border: "1px solid #FFE7DD" }}>

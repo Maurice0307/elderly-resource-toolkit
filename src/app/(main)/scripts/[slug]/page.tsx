@@ -39,7 +39,7 @@ export default async function ScriptDetailPage({ params }: { params: Promise<Par
   const script = data as CommunicationScript;
 
   return (
-    <main style={{ background: "var(--bg-page)", minHeight: "100%", paddingBottom: 24 }}>
+    <main style={{ background: "var(--bg-page)", minHeight: "100%", paddingBottom: 24, maxWidth: 880, margin: "0 auto" }}>
       {/* 返回列 */}
       <div style={{ background: "#fff", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
         <Link
