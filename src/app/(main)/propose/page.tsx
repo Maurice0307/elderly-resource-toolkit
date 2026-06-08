@@ -1,12 +1,24 @@
 import { ELIcon } from "@/components/layout/ELIcon";
 import { createClient } from "@/lib/supabase/server";
 import { ShareResourceTrigger } from "@/components/resources/ShareResourceModal";
-import { ProposalList } from "@/components/propose/ProposalList";
+import { ProposalList, type Proposal } from "@/components/propose/ProposalList";
 
 export const metadata = { title: "點子提案專區" };
 
+/* 尚未執行 0009 migration 前的展示用清單（與 seed 一致） */
+const FALLBACK_PROPOSALS: Proposal[] = [
+  { id: "f1", title: "教用手機掛號看診",     category: "智慧生活",    proposer: "里長・文山區", votes: 48, status: "open",     hot: true },
+  { id: "f2", title: "台語版健康操影片",     category: "動動身體",    proposer: "志工 阿美",   votes: 36, status: "open" },
+  { id: "f3", title: "如何分辨投資群組詐騙", category: "防詐・假訊息", proposer: "長者 陳先生", votes: 31, status: "open" },
+  { id: "f4", title: "社區共餐料理教學",     category: "生活技能",    proposer: "志工 小林",   votes: 22, status: "open" },
+  { id: "f5", title: "懷舊歌曲手語帶動唱",   category: "創意繪畫",    proposer: "長者 林阿嬤", votes: 15, status: "adopted" },
+  { id: "f6", title: "陽台小菜園種植入門",   category: "花草植栽",    proposer: "家屬 王先生", votes: 11, status: "open" },
+  { id: "f7", title: "剪紙藝術年節裝飾",     category: "手工美勞",    proposer: "志工 秀娟",   votes: 8,  status: "planning" },
+];
+
 export default async function ProposePage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const [{ data: subRows }, { data: regionRows }] = await Promise.all([
     supabase.from("subcategories").select("id, slug, name, categories!inner(slug)").order("name"),
     supabase.from("regions").select("id, name, parent_id").order("name"),
@@ -16,6 +28,31 @@ export default async function ProposePage() {
     category_slug: (r.categories as { slug: string }).slug,
   }));
   const regions = (regionRows ?? []) as { id: string; name: string; parent_id: string | null }[];
+
+  // 提案：讀真實資料表；尚未建表則用 FALLBACK（純展示）
+  let proposals: Proposal[] = FALLBACK_PROPOSALS;
+  let persist = false;
+  const { data: propRows, error: propErr } = await supabase
+    .from("proposals")
+    .select("id, title, category, proposer_name, status, is_hot, vote_count")
+    .order("vote_count", { ascending: false });
+  if (!propErr && propRows && propRows.length > 0) {
+    persist = true;
+    let votedSet = new Set<string>();
+    if (user) {
+      const { data: votes } = await supabase
+        .from("proposal_votes")
+        .select("proposal_id")
+        .eq("user_id", user.id);
+      votedSet = new Set((votes ?? []).map((v: { proposal_id: string }) => v.proposal_id));
+    }
+    proposals = propRows.map((p: any) => ({
+      id: p.id, title: p.title, category: p.category ?? "", proposer: p.proposer_name ?? "厝邊",
+      votes: p.vote_count ?? 0, status: (p.status ?? "open") as Proposal["status"],
+      hot: !!p.is_hot, voted: votedSet.has(p.id),
+    }));
+  }
+
   return (
     <div className="wv-fade">
       {/* 標題帶 */}
@@ -43,7 +80,7 @@ export default async function ProposePage() {
       </div>
 
       <div className="wv-wrap" style={{ paddingTop: 36, paddingBottom: 64 }}>
-        <ProposalList />
+        <ProposalList proposals={proposals} loggedIn={!!user} persist={persist} />
 
         {/* 分享好資源 CTA */}
         <div style={{
