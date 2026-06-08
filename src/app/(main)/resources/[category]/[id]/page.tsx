@@ -58,7 +58,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
               <ELIcon name="chevron" size={18} color="#574E47" style={{ transform: "rotate(180deg)" }} /> 返回列表
             </Link>
 
-            <div style={{ background: "#fff", borderRadius: 24, border: "1px solid #F0E6DE", padding: "32px 34px" }}>
+            <div style={{ background: "#fff", borderRadius: 24, border: "1px solid #F0E6DE", padding: "28px 30px" }}>
               {/* 標籤列 */}
               <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginBottom: 14 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: isNational ? "#EDF2FF" : "#FFF4EF", color: isNational ? "#2952B3" : "#B23F1E" }}>
@@ -68,9 +68,9 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
                 <span style={{ fontSize: 12.5, fontWeight: 800, color: "#2E7D52", background: "#E7F4EC", padding: "3px 10px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
                   <ELIcon name="check" size={13} color="#2E7D52" /> 政府／官方
                 </span>
-                <span style={{ fontSize: 13, color: "#9B8E85" }}>資料已驗證</span>
+                <span style={{ fontSize: 13, color: "#6E645C" }}>資料已驗證</span>
                 {(resource as any).like_count > 0 && (
-                  <span style={{ fontSize: 13, color: "#9B8E85" }}>· {(resource as any).like_count} 位厝邊說有用</span>
+                  <span style={{ fontSize: 13, color: "#6E645C" }}>· {(resource as any).like_count} 位厝邊說有用</span>
                 )}
               </div>
 
@@ -167,7 +167,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
               {resource.tags && (resource.tags as string[]).length > 0 && (
                 <div style={{ marginTop: 18, display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {(resource.tags as string[]).map((tag) => (
-                    <span key={tag} style={{ fontSize: 14, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "6px 13px", borderRadius: 999 }}>#{tag}</span>
+                    <span key={tag} style={{ fontSize: 14, fontWeight: 700, color: "#6E645C", background: "#FAF7F5", padding: "6px 13px", borderRadius: 999 }}>#{tag}</span>
                   ))}
                 </div>
               )}
@@ -191,14 +191,14 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
                     href={resource.website_url} target="_blank" rel="noopener noreferrer"
                     style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 46, borderRadius: 999, border: "1.5px solid #E4D7CC", background: "#fff", fontSize: 15, fontWeight: 700, color: "#574E47", textDecoration: "none" }}
                   >
-                    <ELIcon name="link" size={19} color="#9B8E85" /> 前往官網
+                    <ELIcon name="link" size={19} color="#6E645C" /> 前往官網
                   </a>
                 )}
                 <ShareButton title={resource.name} phone={resource.phone} address={resource.address} />
                 <ReportButton resourceName={resource.name} />
               </div>
               {resource.source_org && (
-                <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid #F0E6DE", fontSize: 13.5, color: "#9B8E85", lineHeight: 1.6 }}>
+                <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid #F0E6DE", fontSize: 13.5, color: "#6E645C", lineHeight: 1.6 }}>
                   資料來源<br /><span style={{ color: "#574E47", fontWeight: 700 }}>{resource.source_org}</span>
                 </div>
               )}

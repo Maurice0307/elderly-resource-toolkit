@@ -22,9 +22,9 @@ export default async function ScriptsPage() {
   return (
     <div className="wv-fade">
       {/* 標題帶 */}
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)", borderBottom: "1px solid #FFE7DD", padding: "44px 0 36px" }}>
+      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD", padding: "34px 0 30px" }}>
         <div className="wv-wrap">
-          <h1 style={{ margin: "0 0 8px", fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, color: "#241F1B" }}>溝通錦囊</h1>
+          <h1 style={{ margin: "0 0 8px", fontSize: "clamp(26px, 3.2vw, 32px)", fontWeight: 800, color: "#241F1B" }}>溝通錦囊</h1>
           <p style={{ margin: 0, fontSize: 17, color: "#574E47" }}>真實對話示範，讓每一次互動都更有溫度。卡關的時候，照著說就對了。</p>
         </div>
       </div>

@@ -81,12 +81,12 @@ function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
   return (
     <div
       onClick={() => onClose()}
-      style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(28,18,12,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(28,18,12,0.55)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 22, boxShadow: "0 24px 60px rgba(0,0,0,0.22)",
+          background: "#fff", borderRadius: 26, boxShadow: "0 30px 70px rgba(0,0,0,0.35)",
           width: "min(480px, 94vw)", maxHeight: "78vh", display: "flex", flexDirection: "column", overflow: "hidden",
         }}
       >
@@ -103,9 +103,9 @@ function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
         {/* 列表 */}
         <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
           {loading ? (
-            <div style={{ textAlign: "center", padding: "32px 0", color: "#9B8E85", fontSize: 15 }}>載入地區資料⋯</div>
+            <div style={{ textAlign: "center", padding: "32px 0", color: "#6E645C", fontSize: 15 }}>載入地區資料⋯</div>
           ) : counties.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "32px 0", color: "#9B8E85", fontSize: 15 }}>無法取得地區資料</div>
+            <div style={{ textAlign: "center", padding: "32px 0", color: "#6E645C", fontSize: 15 }}>無法取得地區資料</div>
           ) : (
             counties.map((county) => (
               <div key={county.code}>
@@ -120,7 +120,7 @@ function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   {county.name}
-                  <ELIcon name="chevron" size={16} color="#9B8E85" style={{ transform: openCounty === county.code ? "rotate(270deg)" : "rotate(90deg)", transition: "transform 0.2s" }} />
+                  <ELIcon name="chevron" size={16} color="#6E645C" style={{ transform: openCounty === county.code ? "rotate(270deg)" : "rotate(90deg)", transition: "transform 0.2s" }} />
                 </button>
                 {openCounty === county.code && (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 5, padding: "4px 8px 10px" }}>

@@ -20,7 +20,7 @@ function MobSectionHead({ title, sub, more, href }: { title: string; sub?: strin
     <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, marginBottom: 13 }}>
       <div>
         <h2 style={{ margin: 0, fontSize: 21, fontWeight: 800, color: "#241F1B" }}>{title}</h2>
-        {sub && <p style={{ margin: "3px 0 0", fontSize: 14, color: "#9B8E85" }}>{sub}</p>}
+        {sub && <p style={{ margin: "3px 0 0", fontSize: 14, color: "#6E645C" }}>{sub}</p>}
       </div>
       {more && href && (
         <Link href={href} style={{ fontSize: 14.5, fontWeight: 700, color: "#B23F1E", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}>
@@ -182,7 +182,7 @@ export async function MobileHome() {
                   <span style={{ fontSize: 12, fontWeight: 800, color: "#2E7D52", background: "#E7F4EC", padding: "2px 9px", borderRadius: 999 }}>
                     {(feat.tags as string[])?.[0] || "新知"}
                   </span>
-                  <span style={{ fontSize: 12.5, color: "#9B8E85" }}>{feat.source_org}</span>
+                  <span style={{ fontSize: 12.5, color: "#6E645C" }}>{feat.source_org}</span>
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "#241F1B", lineHeight: 1.45 }}>{feat.title}</div>
               </div>

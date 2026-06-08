@@ -40,7 +40,7 @@ export function ProfileTabs({
               style={{
                 border: "none", background: "none", cursor: "pointer", font: "inherit",
                 padding: "14px 22px", fontSize: 16, fontWeight: 800,
-                color: on ? "#B23F1E" : "#9B8E85",
+                color: on ? "#B23F1E" : "#6E645C",
                 borderBottom: `2.5px solid ${on ? "#E0552E" : "transparent"}`,
                 marginBottom: -2,
                 transition: "color .15s, border-color .15s",
@@ -57,17 +57,17 @@ export function ProfileTabs({
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: 18 }}>
           {infoFields.map((f) => (
             <div key={f.label} style={{ background: "#fff", border: "1px solid #F0E6DE", borderRadius: 16, padding: "18px 20px" }}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#9B8E85", marginBottom: 6 }}>{f.label}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#6E645C", marginBottom: 6 }}>{f.label}</div>
               <div style={{ fontSize: 17, fontWeight: 700, color: "#241F1B" }}>{f.value}</div>
             </div>
           ))}
           <div style={{ background: "#fff", border: "1px solid #F0E6DE", borderRadius: 16, padding: "18px 20px" }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#9B8E85", marginBottom: 6 }}>活動數據</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#6E645C", marginBottom: 6 }}>活動數據</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
               {stats.map((s) => (
                 <div key={s.label} style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 24, fontWeight: 800, color: "#B23F1E" }}>{s.value}</div>
-                  <div style={{ fontSize: 13, color: "#9B8E85", fontWeight: 600, marginTop: 2 }}>{s.label}</div>
+                  <div style={{ fontSize: 13, color: "#6E645C", fontWeight: 600, marginTop: 2 }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -96,7 +96,7 @@ export function ProfileTabs({
             <div style={{ textAlign: "center", padding: "48px 0" }}>
               <ELIcon name="heart" size={48} color="#E4D7CC" style={{ margin: "0 auto 16px" }} />
               <p style={{ fontSize: 18, fontWeight: 700, color: "#574E47" }}>還沒有收藏</p>
-              <p style={{ fontSize: 15, color: "#9B8E85", margin: "8px 0 24px" }}>到資源查找頁，點愛心加入收藏。</p>
+              <p style={{ fontSize: 15, color: "#6E645C", margin: "8px 0 24px" }}>到資源查找頁，點愛心加入收藏。</p>
               <Link href="/resources" style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
                 background: "#E0552E", color: "#fff", borderRadius: 999, height: 48, padding: "0 28px",

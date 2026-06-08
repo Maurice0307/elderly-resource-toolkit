@@ -38,7 +38,7 @@ export function BookmarkButton({ resourceId }: { resourceId: string }) {
         cursor: "pointer", font: "inherit",
       }}
     >
-      <ELIcon name="heart" size={19} color={saved ? "#F26B43" : "#9B8E85"} />
+      <ELIcon name="heart" size={19} color={saved ? "#F26B43" : "#6E645C"} />
       {saved ? "已收藏" : "收藏"}
     </button>
   );

@@ -65,7 +65,7 @@ export function LikeButton({ resourceId, initialCount, initialLiked, userId }: P
       }}
       aria-pressed={liked}
     >
-      <ELIcon name="like" size={19} color={liked ? "#F26B43" : "#9B8E85"} />
+      <ELIcon name="like" size={19} color={liked ? "#F26B43" : "#6E645C"} />
       有幫助
       {count > 0 && (
         <span style={{

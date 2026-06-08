@@ -80,7 +80,7 @@ export default async function ProfilePage() {
   return (
     <div className="wv-fade">
       {/* 頂部 gradient 標題帶 */}
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)", borderBottom: "1px solid #FFE7DD", padding: "36px 0 32px" }}>
+      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD", padding: "36px 0 32px" }}>
         <div className="wv-wrap">
           <div style={{ display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap" }}>
             {/* 86px 頭像 */}
@@ -106,7 +106,7 @@ export default async function ProfilePage() {
                 {stats.map((s) => (
                   <div key={s.label} style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 22, fontWeight: 800, color: "#B23F1E" }}>{s.value}</div>
-                    <div style={{ fontSize: 12.5, color: "#9B8E85", fontWeight: 600, marginTop: 1 }}>{s.label}</div>
+                    <div style={{ fontSize: 12.5, color: "#6E645C", fontWeight: 600, marginTop: 1 }}>{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -118,7 +118,7 @@ export default async function ProfilePage() {
               background: "#fff", border: "1.5px solid #E4D7CC", borderRadius: 999,
               fontSize: 15, fontWeight: 700, color: "#574E47", textDecoration: "none", flexShrink: 0,
             }}>
-              <ELIcon name="logout" size={16} color="#9B8E85" /> 登出
+              <ELIcon name="logout" size={16} color="#6E645C" /> 登出
             </Link>
           </div>
         </div>

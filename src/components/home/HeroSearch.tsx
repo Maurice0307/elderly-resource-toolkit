@@ -68,7 +68,7 @@ export function HeroSearch() {
   return (
     <div style={{
       position: "relative", borderRadius: 28, overflow: "hidden",
-      background: "linear-gradient(135deg, #FFF1E9 0%, #FFE3D5 100%)",
+      background: "linear-gradient(135deg, #FFF1E9 0%, #FFE7DD 100%)",
       border: "1px solid #FFE7DD", padding: "46px 44px 44px",
     }}>
       {/* 裝飾光暈 */}

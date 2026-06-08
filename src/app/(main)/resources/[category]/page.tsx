@@ -50,7 +50,7 @@ export default async function CategoryPage({
   return (
     <div className="wv-fade">
       {/* 標題帶 */}
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)", borderBottom: "1px solid #FFE7DD", padding: "34px 0 28px" }}>
+      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD", padding: "34px 0 28px" }}>
         <div className="wv-wrap">
           <Link href="/resources" className="wv-pill" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 16 }}>
             <ELIcon name="chevron" size={16} color="#574E47" style={{ transform: "rotate(180deg)" }} /> 返回資源查找
@@ -139,7 +139,7 @@ export default async function CategoryPage({
                           <ELIcon name={local ? "pin" : "shield"} size={12} color={local ? "#F26B43" : "#2952B3"} />
                           {local ? "在地服務" : "全國專線"}
                         </span>
-                        <span style={{ fontSize: 12.5, color: "#9B8E85" }}>已驗證</span>
+                        <span style={{ fontSize: 12.5, color: "#6E645C" }}>已驗證</span>
                       </div>
                       <div style={{ fontSize: 20, fontWeight: 800, color: "#241F1B", lineHeight: 1.4 }}>{r.name}</div>
                       {r.summary && (

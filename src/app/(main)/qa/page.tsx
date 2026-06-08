@@ -54,12 +54,12 @@ export default async function QAPage({
     <div className="wv-fade">
       {/* 標題帶 */}
       <div style={{
-        background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)",
-        borderBottom: "1px solid #FFE7DD", padding: "44px 0 36px",
+        background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)",
+        borderBottom: "1px solid #FFE7DD", padding: "34px 0 30px",
       }}>
         <div className="wv-wrap" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: "0 0 10px", fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, color: "#241F1B" }}>互助問答</h1>
+            <h1 style={{ margin: "0 0 10px", fontSize: "clamp(26px, 3.2vw, 32px)", fontWeight: 800, color: "#241F1B" }}>互助問答</h1>
             <p style={{ margin: "0 0 24px", fontSize: 17, color: "#574E47" }}>在地志工為您解答生活中的照顧問題。</p>
             <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
               {filters.map(({ key, label, href }) => (
@@ -135,7 +135,7 @@ export default async function QAPage({
                     </div>
 
                     {/* 右側 chevron */}
-                    <ELIcon name="chevron" size={22} color="#9B8E85" style={{ marginTop: 4, flexShrink: 0 }} />
+                    <ELIcon name="chevron" size={22} color="#6E645C" style={{ marginTop: 4, flexShrink: 0 }} />
                   </Link>
                 );
               })}

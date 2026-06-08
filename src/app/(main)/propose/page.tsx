@@ -19,10 +19,10 @@ export default async function ProposePage() {
   return (
     <div className="wv-fade">
       {/* 標題帶 */}
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)", borderBottom: "1px solid #FFE7DD", padding: "44px 0 36px" }}>
+      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD", padding: "34px 0 30px" }}>
         <div className="wv-wrap" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: "0 0 8px", fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, color: "#241F1B" }}>點子提案專區</h1>
+            <h1 style={{ margin: "0 0 8px", fontSize: "clamp(26px, 3.2vw, 32px)", fontWeight: 800, color: "#241F1B" }}>點子提案專區</h1>
             <p style={{ margin: 0, fontSize: 17, color: "#574E47" }}>
               想學什麼、想教什麼都可以提案。
               <span style={{ color: "#E0552E", fontWeight: 700 }}>越多人按「想要」，越快做成新圖卡或活動。</span>

@@ -94,7 +94,7 @@ function ResourceCard({ res, catSlug }: { res: ResourceItem; catSlug: string }) 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
             <ScopeTag scope={res.scope} />
-            <span style={{ fontSize: 12.5, color: "#9B8E85" }}>已驗證</span>
+            <span style={{ fontSize: 12.5, color: "#6E645C" }}>已驗證</span>
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "#241F1B", lineHeight: 1.4 }}>{res.name}</div>
           {res.summary && (
@@ -112,7 +112,7 @@ function ResourceCard({ res, catSlug }: { res: ResourceItem; catSlug: string }) 
               </span>
             )}
             {res.like_count != null && res.like_count > 0 && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13.5, fontWeight: 700, color: "#9B8E85" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13.5, fontWeight: 700, color: "#6E645C" }}>
                 <ELIcon name="like" size={14} color="#F26B43" /> {res.like_count}
               </span>
             )}
@@ -243,7 +243,7 @@ export function ResourcesClient({
       <div className="wv-wrap wv-split" style={{ paddingTop: 26, paddingBottom: 56, display: "grid", gridTemplateColumns: "236px minmax(0,1fr)", gap: 30, alignItems: "start" }}>
         {/* 側欄 */}
         <aside className="wv-hideSm" style={{ position: "sticky", top: 96 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: "#9B8E85", letterSpacing: 1, margin: "4px 0 10px" }}>分類</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: "#6E645C", letterSpacing: 1, margin: "4px 0 10px" }}>分類</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {categories.map((c) => {
               const on = activeCat === c.slug;
@@ -261,7 +261,7 @@ export function ResourcesClient({
                   onMouseEnter={(e) => { if (!on) e.currentTarget.style.background = "#FAF7F5"; }}
                   onMouseLeave={(e) => { if (!on) e.currentTarget.style.background = "transparent"; }}
                 >
-                  <ELIcon name={CAT_ICON_MAP[c.slug] || "search"} size={20} color={on ? "#F26B43" : "#9B8E85"} />
+                  <ELIcon name={CAT_ICON_MAP[c.slug] || "search"} size={20} color={on ? "#F26B43" : "#6E645C"} />
                   {c.name}
                 </button>
               );
@@ -286,10 +286,10 @@ export function ResourcesClient({
               >
                 <ELIcon name="pin" size={15} color="#F26B43" />
                 {regionLabel || "全台灣"}
-                <ELIcon name="chevron" size={13} color="#9B8E85" style={{ transform: "rotate(90deg)" }} />
+                <ELIcon name="chevron" size={13} color="#6E645C" style={{ transform: "rotate(90deg)" }} />
               </button>
               {autoGeo && (
-                <span style={{ position: "absolute", bottom: -16, left: 14, fontSize: 11, color: "#9B8E85", whiteSpace: "nowrap" }}>(已自動定位)</span>
+                <span style={{ position: "absolute", bottom: -16, left: 14, fontSize: 11, color: "#6E645C", whiteSpace: "nowrap" }}>(已自動定位)</span>
               )}
               {dropOpen && (
                 <div style={{
@@ -330,7 +330,7 @@ export function ResourcesClient({
               />
               {q && (
                 <button onClick={() => setQ("")} style={{ border: "none", background: "#FAF7F5", width: 32, height: 32, borderRadius: 999, cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 4 }}>
-                  <ELIcon name="close" size={16} color="#9B8E85" />
+                  <ELIcon name="close" size={16} color="#6E645C" />
                 </button>
               )}
             </div>
@@ -365,12 +365,12 @@ export function ResourcesClient({
             {/* 左：分類名稱 + 計數 */}
             <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B", flexShrink: 0 }}>
               {cat?.name ?? "資源"}
-              <span style={{ marginLeft: 8, fontSize: 15, fontWeight: 700, color: "#9B8E85" }}>{filtered.length} 筆</span>
+              <span style={{ marginLeft: 8, fontSize: 15, fontWeight: 700, color: "#6E645C" }}>{filtered.length} 筆</span>
             </div>
 
             {/* 中：純文字狀態提示（不可點擊） */}
             {regionLabel && (
-              <span style={{ fontSize: 13.5, color: "#9B8E85", whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: 13.5, color: "#6E645C", whiteSpace: "nowrap" }}>
                 （目前範圍：{regionLabel}）
               </span>
             )}
@@ -414,7 +414,7 @@ export function ResourcesClient({
 
             {/* 排序下拉 */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-              <ELIcon name="filter" size={15} color="#9B8E85" />
+              <ELIcon name="filter" size={15} color="#6E645C" />
               <select
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value as SortKey)}
@@ -434,7 +434,7 @@ export function ResourcesClient({
 
           {/* 資源卡片列表 */}
           {loading ? (
-            <div style={{ textAlign: "center", padding: "48px 0", color: "#9B8E85" }}>
+            <div style={{ textAlign: "center", padding: "48px 0", color: "#6E645C" }}>
               <div style={{ fontSize: 16, fontWeight: 700 }}>載入中⋯</div>
             </div>
           ) : filtered.length === 0 ? (
@@ -443,7 +443,7 @@ export function ResourcesClient({
               <div style={{ fontSize: 18, fontWeight: 700, color: "#574E47" }}>
                 {q ? <>找不到「{q}」的資源</> : "這個分類目前暫無資料"}
               </div>
-              <div style={{ marginTop: 6, fontSize: 15, color: "#9B8E85" }}>換個關鍵字，或從左側選擇其他分類。</div>
+              <div style={{ marginTop: 6, fontSize: 15, color: "#6E645C" }}>換個關鍵字，或從左側選擇其他分類。</div>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

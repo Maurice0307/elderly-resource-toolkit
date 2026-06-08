@@ -143,18 +143,18 @@ async function ThemeListPage({ themeKey }: { themeKey: string }) {
                   <div style={{ padding: "16px 18px 18px", flex: 1, display: "flex", flexDirection: "column" }}>
                     <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B" }}>{card.title}</div>
                     {card.summary && (
-                      <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#9B8E85", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#6E645C", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                         {card.summary}
                       </p>
                     )}
                     <div style={{ marginTop: "auto", paddingTop: 14, display: "flex", gap: 8 }}>
                       {card.duration_min && (
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                          <ELIcon name="clock" size={13} color="#9B8E85" /> {card.duration_min} 分鐘
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#6E645C", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <ELIcon name="clock" size={13} color="#6E645C" /> {card.duration_min} 分鐘
                         </span>
                       )}
                       {steps.length > 0 && (
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999 }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#6E645C", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999 }}>
                           {steps.length} 步驟
                         </span>
                       )}
@@ -260,7 +260,7 @@ async function CardDetailPage({ slug }: { slug: string }) {
 
           {/* ── 右：所有步驟一次展示 ── */}
           <div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#9B8E85", letterSpacing: 1, marginBottom: 20 }}>跟著做・一步一步</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#6E645C", letterSpacing: 1, marginBottom: 20 }}>跟著做・一步一步</div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {steps.map((step: ActivityStep) => (
@@ -321,14 +321,14 @@ async function CardDetailPage({ slug }: { slug: string }) {
             {card.tags && card.tags.length > 0 && (
               <div style={{ marginTop: 18, display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {card.tags.map((tag: string) => (
-                  <span key={tag} style={{ fontSize: 14, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "6px 13px", borderRadius: 999 }}>#{tag}</span>
+                  <span key={tag} style={{ fontSize: 14, fontWeight: 700, color: "#6E645C", background: "#FAF7F5", padding: "6px 13px", borderRadius: 999 }}>#{tag}</span>
                 ))}
               </div>
             )}
 
             {/* 來源 */}
             {(card.source_url || card.source_org) && (
-              <div style={{ marginTop: 18, borderRadius: 14, padding: "14px 18px", background: "#FAF7F5", border: "1px solid #F0E6DE", fontSize: 14, color: "#9B8E85", lineHeight: 1.6 }}>
+              <div style={{ marginTop: 18, borderRadius: 14, padding: "14px 18px", background: "#FAF7F5", border: "1px solid #F0E6DE", fontSize: 14, color: "#6E645C", lineHeight: 1.6 }}>
                 資料來源：{card.source_url
                   ? <a href={card.source_url} target="_blank" rel="noopener noreferrer" style={{ color: "#B23F1E", fontWeight: 700 }}>{card.source_org ?? card.source_url}</a>
                   : <span style={{ color: "#574E47", fontWeight: 700 }}>{card.source_org}</span>}

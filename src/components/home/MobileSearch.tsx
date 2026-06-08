@@ -45,7 +45,7 @@ export function MobileSearch() {
 
   return (
     <div style={{
-      background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)",
+      background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)",
       borderBottom: "1px solid #FFE7DD",
       padding: "16px 18px 22px",
     }}>
@@ -63,7 +63,7 @@ export function MobileSearch() {
             fontSize: 13.5, fontWeight: 700, color: "#574E47", cursor: "pointer", font: "inherit",
           }}
         >
-          變更地區 <ELIcon name="chevron" size={13} color="#9B8E85" />
+          變更地區 <ELIcon name="chevron" size={13} color="#6E645C" />
         </button>
       </div>
 

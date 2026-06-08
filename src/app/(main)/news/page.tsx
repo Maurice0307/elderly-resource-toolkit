@@ -75,9 +75,9 @@ export default async function NewsPage({
   return (
     <div className="wv-fade">
       {/* 標題帶 */}
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)", borderBottom: "1px solid #FFE7DD", padding: "44px 0 32px" }}>
+      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD", padding: "44px 0 32px" }}>
         <div className="wv-wrap">
-          <h1 style={{ margin: "0 0 10px", fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, color: "#241F1B" }}>今日新知</h1>
+          <h1 style={{ margin: "0 0 10px", fontSize: "clamp(26px, 3.2vw, 32px)", fontWeight: 800, color: "#241F1B" }}>今日新知</h1>
           <p style={{ margin: "0 0 22px", fontSize: 17, color: "#574E47" }}>健康補助・防詐查證・在地活動，每天更新。</p>
           {/* 分類 chips — 橫向捲動、不換行 */}
           <div style={{ display: "flex", gap: 9, overflowX: "auto", paddingBottom: 4 }}>

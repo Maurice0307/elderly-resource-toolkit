@@ -91,7 +91,7 @@ export default async function ActivitiesPage({
   return (
     <div className="wv-fade">
       {/* 標題帶 */}
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)", borderBottom: "1px solid #FFE7DD", padding: "34px 0 30px" }}>
+      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD", padding: "34px 0 30px" }}>
         <div className="wv-wrap">
           <h1 style={{ margin: "0 0 6px", fontSize: 32, fontWeight: 800, color: "#241F1B", letterSpacing: -0.5 }}>互動學習</h1>
           <p style={{ margin: "0 0 14px", fontSize: 17, color: "#574E47" }}>大圖大字、一步一步帶您完成。救命技能、手作、運動、防詐，挑一個開始。</p>
@@ -127,7 +127,7 @@ export default async function ActivitiesPage({
         </div>
 
         {/* 分類描述 + 計數 */}
-        <div style={{ marginBottom: 20, fontSize: 16, color: "#9B8E85" }}>
+        <div style={{ marginBottom: 20, fontSize: 16, color: "#6E645C" }}>
           {activeCat.sub} · 共 <b style={{ color: "#574E47" }}>{items.length}</b> 張圖卡
         </div>
 
@@ -136,7 +136,7 @@ export default async function ActivitiesPage({
           <div style={{ background: "#fff", borderRadius: 18, border: "1px dashed #E4D7CC", padding: 48, textAlign: "center" }}>
             <ELIcon name={activeCat.icon} size={48} color="#E4D7CC" style={{ margin: "0 auto 16px" }} />
             <div style={{ fontSize: 18, fontWeight: 700, color: "#574E47" }}>這個分類的圖卡即將上線</div>
-            <div style={{ marginTop: 6, fontSize: 15, color: "#9B8E85" }}>先看看其他主題，或到提案專區建議想學的活動。</div>
+            <div style={{ marginTop: 6, fontSize: 15, color: "#6E645C" }}>先看看其他主題，或到提案專區建議想學的活動。</div>
             <Link href="/propose" style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 22, background: "#E0552E", color: "#fff", borderRadius: 999, height: 46, padding: "0 24px", fontSize: 15, fontWeight: 800, textDecoration: "none" }}>
               <ELIcon name="megaphone" size={17} color="#fff" /> 提案新活動
             </Link>
@@ -187,18 +187,18 @@ export default async function ActivitiesPage({
                   <div style={{ padding: "16px 18px 18px", flex: 1, display: "flex", flexDirection: "column" }}>
                     <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B" }}>{card.title}</div>
                     {card.summary && (
-                      <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#9B8E85", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      <p style={{ margin: "6px 0 0", fontSize: 14.5, color: "#6E645C", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                         {card.summary}
                       </p>
                     )}
                     <div style={{ marginTop: "auto", paddingTop: 14, display: "flex", gap: 8 }}>
                       {card.duration_min && (
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                          <ELIcon name="clock" size={13} color="#9B8E85" /> {card.duration_min} 分鐘
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#6E645C", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <ELIcon name="clock" size={13} color="#6E645C" /> {card.duration_min} 分鐘
                         </span>
                       )}
                       {steps.length > 0 && (
-                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#9B8E85", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999 }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "#6E645C", background: "#FAF7F5", padding: "4px 11px", borderRadius: 999 }}>
                           {steps.length} 步驟
                         </span>
                       )}

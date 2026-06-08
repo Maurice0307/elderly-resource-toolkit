@@ -191,7 +191,7 @@ function ShareResourceModal({
             {pending ? "送出中…" : "送出分享"}
           </button>
 
-          <p style={{ margin: 0, textAlign: "center", fontSize: 13, color: "#9B8E85" }}>
+          <p style={{ margin: 0, textAlign: "center", fontSize: 13, color: "#6E645C" }}>
             送出後由社區志工確認，不會公開您的個資。
           </p>
         </form>
@@ -259,7 +259,7 @@ function MField({
         {label}
         {required && <span style={{ color: "#F26B43", marginLeft: 3 }}>*</span>}
       </label>
-      {hint && <p style={{ margin: 0, fontSize: 12.5, color: "#9B8E85" }}>{hint}</p>}
+      {hint && <p style={{ margin: 0, fontSize: 12.5, color: "#6E645C" }}>{hint}</p>}
       {children}
     </div>
   );

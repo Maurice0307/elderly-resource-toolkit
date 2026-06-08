@@ -46,7 +46,7 @@ export function ReportButton({ resourceName }: { resourceName: string }) {
           fontSize: 15, fontWeight: 700, color: "#574E47", cursor: "pointer", font: "inherit",
         }}
       >
-        <ELIcon name="report" size={19} color="#9B8E85" /> 回報資料有誤
+        <ELIcon name="report" size={19} color="#6E645C" /> 回報資料有誤
       </button>
 
       {mounted && open && createPortal(

@@ -54,7 +54,7 @@ export function ShareButton({
           fontSize: 15, fontWeight: 700, color: "#574E47", cursor: "pointer", font: "inherit",
         }}
       >
-        <ELIcon name="share" size={19} color="#9B8E85" /> 分享給家人
+        <ELIcon name="share" size={19} color="#6E645C" /> 分享給家人
       </button>
 
       {mounted && open && createPortal(
@@ -100,7 +100,7 @@ export function ShareButton({
                 onClick={copy}
                 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 9, height: 52, borderRadius: 14, border: "1.5px solid #E4D7CC", background: "#fff", fontSize: 16.5, fontWeight: 800, color: copied ? "#2E7D52" : "#574E47", cursor: "pointer", fontFamily: "inherit" }}
               >
-                <ELIcon name={copied ? "check" : "copy"} size={20} color={copied ? "#2E7D52" : "#9B8E85"} />
+                <ELIcon name={copied ? "check" : "copy"} size={20} color={copied ? "#2E7D52" : "#6E645C"} />
                 {copied ? "已複製資訊" : "複製資訊"}
               </button>
             </div>

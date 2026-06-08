@@ -28,9 +28,9 @@ export function MobileTabBar() {
             href={t.href}
             className="wv-tabitem"
             aria-current={on ? "page" : undefined}
-            style={{ color: on ? "#E0552E" : "#9B8E85" }}
+            style={{ color: on ? "#E0552E" : "#6E645C" }}
           >
-            <ELIcon name={t.icon} size={25} color={on ? "#E0552E" : "#9B8E85"} />
+            <ELIcon name={t.icon} size={25} color={on ? "#E0552E" : "#6E645C"} />
             <span style={{ fontSize: 11.5, fontWeight: on ? 800 : 600 }}>{t.label}</span>
           </Link>
         );

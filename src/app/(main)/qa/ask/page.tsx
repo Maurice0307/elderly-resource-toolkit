@@ -40,7 +40,7 @@ export default function AskPage() {
             required
             placeholder="例：中壢哪裡有免費量血壓？"
             style={{
-              width: "100%", border: "1.5px solid var(--border-strong)", borderRadius: 12,
+              width: "100%", border: "2px solid var(--border-strong)", borderRadius: 13,
               padding: "12px 14px", fontSize: "1rem", color: "var(--text-primary)",
               background: "#fff", outline: "none", boxSizing: "border-box",
             }}
@@ -57,7 +57,7 @@ export default function AskPage() {
             rows={4}
             placeholder="可以補充更多背景，例如需求、時間、行動能力等"
             style={{
-              width: "100%", border: "1.5px solid var(--border-strong)", borderRadius: 12,
+              width: "100%", border: "2px solid var(--border-strong)", borderRadius: 13,
               padding: "12px 14px", fontSize: "1rem", color: "var(--text-primary)",
               background: "#fff", outline: "none", resize: "vertical", boxSizing: "border-box",
             }}
@@ -75,7 +75,7 @@ export default function AskPage() {
             type="text"
             placeholder="例：桃園市中壢區"
             style={{
-              width: "100%", border: "1.5px solid var(--border-strong)", borderRadius: 12,
+              width: "100%", border: "2px solid var(--border-strong)", borderRadius: 13,
               padding: "12px 14px", fontSize: "1rem", color: "var(--text-primary)",
               background: "#fff", outline: "none", boxSizing: "border-box",
             }}
@@ -92,7 +92,7 @@ export default function AskPage() {
             type="text"
             placeholder="量血壓, 免費, 中壢（用逗號分隔）"
             style={{
-              width: "100%", border: "1.5px solid var(--border-strong)", borderRadius: 12,
+              width: "100%", border: "2px solid var(--border-strong)", borderRadius: 13,
               padding: "12px 14px", fontSize: "1rem", color: "var(--text-primary)",
               background: "#fff", outline: "none", boxSizing: "border-box",
             }}

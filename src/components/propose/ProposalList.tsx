@@ -64,7 +64,7 @@ export function ProposalList() {
     <>
       {/* 排序 pills */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
-        <span style={{ fontSize: 14, fontWeight: 700, color: "#9B8E85", flexShrink: 0 }}>排序</span>
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#6E645C", flexShrink: 0 }}>排序</span>
         {SORTS.map(({ key, label }) => {
           const on = sort === key;
           return (
@@ -117,7 +117,7 @@ export function ProposalList() {
                   <ELIcon name="like" size={22} color={isLiked ? "#E0552E" : "#F26B43"} />
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 900, color: isLiked ? "#E0552E" : "#B23F1E", lineHeight: 1.1 }}>{votes}</div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: isLiked ? "#E0552E" : "#9B8E85" }}>想要</div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: isLiked ? "#E0552E" : "#6E645C" }}>想要</div>
               </button>
 
               {/* 內容 */}
@@ -138,8 +138,8 @@ export function ProposalList() {
                 <div style={{ fontSize: 18, fontWeight: 800, color: "#241F1B", lineHeight: 1.4, marginBottom: 8 }}>
                   {p.title}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13.5, color: "#9B8E85" }}>
-                  <ELIcon name="user" size={14} color="#9B8E85" />
+                <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13.5, color: "#6E645C" }}>
+                  <ELIcon name="user" size={14} color="#6E645C" />
                   由 {p.proposer} 提案
                 </div>
               </div>

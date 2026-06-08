@@ -141,7 +141,7 @@ export default async function NewsDetailPage({ params }: Props) {
                   </Link>
                 );
               })}
-              <span style={{ fontSize: 13.5, color: "#9B8E85" }}>{data.source_org} · {dateStr}</span>
+              <span style={{ fontSize: 13.5, color: "#6E645C" }}>{data.source_org} · {dateStr}</span>
             </div>
 
             {/* 標題 */}
@@ -162,7 +162,7 @@ export default async function NewsDetailPage({ params }: Props) {
               ) : (
                 <div style={{ padding: "48px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
                   <ELIcon name="news" size={48} color="#C8B8AE" />
-                  <span style={{ fontSize: 14, color: "#9B8E85" }}>{data.source_org}</span>
+                  <span style={{ fontSize: 14, color: "#6E645C" }}>{data.source_org}</span>
                 </div>
               )}
             </div>
@@ -209,9 +209,9 @@ export default async function NewsDetailPage({ params }: Props) {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 16, fontWeight: 800, color: "#241F1B" }}>前往原始來源</div>
-                    <div style={{ marginTop: 2, fontSize: 13.5, color: "#9B8E85" }}>{data.source_org}（開啟原始網站）</div>
+                    <div style={{ marginTop: 2, fontSize: 13.5, color: "#6E645C" }}>{data.source_org}（開啟原始網站）</div>
                   </div>
-                  <ELIcon name="chevron" size={20} color="#9B8E85" />
+                  <ELIcon name="chevron" size={20} color="#6E645C" />
                 </a>
               </div>
             )}
@@ -238,7 +238,7 @@ export default async function NewsDetailPage({ params }: Props) {
                           </span>
                         ))}
                         <div style={{ fontSize: 15.5, fontWeight: 700, color: "#241F1B", lineHeight: 1.45 }}>{r.title}</div>
-                        <div style={{ marginTop: 6, fontSize: 13, color: "#9B8E85" }}>{r.source_org}</div>
+                        <div style={{ marginTop: 6, fontSize: 13, color: "#6E645C" }}>{r.source_org}</div>
                       </Link>
                     );
                   })}

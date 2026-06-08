@@ -52,7 +52,7 @@ export default function LoginPage() {
   return (
     <div className="wv-login-shell" style={{
       display: "flex", flexDirection: "column",
-      background: "linear-gradient(160deg,#FFF1E9 0%,#FFE3D5 40%,#FFF4EF 100%)",
+      background: "linear-gradient(160deg,#FFF1E9 0%,#FFE7DD 40%,#FFF4EF 100%)",
     }}>
       {/* Hero */}
       <div style={{ padding: "52px 24px 36px", textAlign: "center" }}>
@@ -92,14 +92,14 @@ export default function LoginPage() {
                 <LineIcon size={26} /> 用 LINE 一鍵登入
               </button>
             </form>
-            <p style={{ margin: "10px 0 22px", textAlign: "center", fontSize: 14, color: "#9B8E85" }}>
+            <p style={{ margin: "10px 0 22px", textAlign: "center", fontSize: 14, color: "#6E645C" }}>
               最快、最方便 · 不用記密碼
             </p>
 
             {/* 或 divider */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
               <div style={{ flex: 1, height: 1, background: "#F0E6DE" }} />
-              <span style={{ fontSize: 14, color: "#9B8E85" }}>或</span>
+              <span style={{ fontSize: 14, color: "#6E645C" }}>或</span>
               <div style={{ flex: 1, height: 1, background: "#F0E6DE" }} />
             </div>
 
@@ -126,7 +126,7 @@ export default function LoginPage() {
               先逛逛，暫不登入 ›
             </Link>
 
-            <p style={{ margin: "auto 0 0", paddingTop: 32, textAlign: "center", fontSize: 13, color: "#9B8E85" }}>
+            <p style={{ margin: "auto 0 0", paddingTop: 32, textAlign: "center", fontSize: 13, color: "#6E645C" }}>
               登入即表示同意{" "}
               <a href="/terms" style={{ color: "#B23F1E" }}>服務條款</a>
               {" "}與{" "}
@@ -154,7 +154,7 @@ export default function LoginPage() {
                 placeholder="09XX-XXX-XXX"
                 required
                 style={{
-                  width: "100%", border: "1.5px solid #E4D7CC", borderRadius: 14, padding: "14px 16px",
+                  width: "100%", border: "2px solid #E4D7CC", borderRadius: 13, padding: "14px 16px",
                   fontSize: 18, fontWeight: 600, color: "#241F1B", background: "#fff",
                   outline: "none", boxSizing: "border-box", fontFamily: "inherit",
                 }}
@@ -200,7 +200,7 @@ export default function LoginPage() {
                 required
                 maxLength={6}
                 style={{
-                  width: "100%", border: "1.5px solid #E4D7CC", borderRadius: 14, padding: "14px 16px",
+                  width: "100%", border: "2px solid #E4D7CC", borderRadius: 13, padding: "14px 16px",
                   fontSize: 22, fontWeight: 800, letterSpacing: 8, textAlign: "center", color: "#241F1B",
                   background: "#fff", outline: "none", boxSizing: "border-box", fontFamily: "inherit",
                 }}

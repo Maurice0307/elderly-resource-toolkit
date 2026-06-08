@@ -40,7 +40,7 @@ export default function GuidePage() {
     <div className="wv-fade">
       {/* Hero 標題區 */}
       <div style={{
-        background: "linear-gradient(135deg,#FFF1E9 0%,#FFE3D5 60%,#FFF4EF 100%)",
+        background: "linear-gradient(135deg,#FFF1E9 0%,#FFE7DD 60%,#FFF4EF 100%)",
         borderBottom: "1px solid #FFE7DD",
         padding: "52px 0 44px",
         textAlign: "center",
