@@ -58,11 +58,6 @@ const DISTRICT_CODE: Record<string, string> = {
   "觀音區": "TW-TYC-GY",
 };
 
-/* parent county of a district code */
-function parentCode(code: string): string {
-  if (code.startsWith("TW-TYC-")) return "TW-TYC";
-  return "";
-}
 
 function ScopeTag({ scope }: { scope?: string | null }) {
   const local = scope === "local";
@@ -141,8 +136,8 @@ export function ResourcesClient({
   const [sortKey,   setSortKey]       = useState<SortKey>("recommend");
   const [q,         setQ]             = useState("");
   const [resources, setResources]     = useState<ResourceItem[]>([]);
-  const [loading,   setLoading]       = useState(false);
-  const [localMode, setLocalMode]     = useState(false);
+  const [loading,      setLoading]      = useState(false);
+  const [showNational, setShowNational] = useState(true); // ON = 同時顯示全國專線
 
   /* ── region state ── */
   const [regionLabel, setRegionLabel] = useState<string>("");
@@ -196,32 +191,25 @@ export function ResourcesClient({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  /* determine API regionCode: if localMode → specific district; else county */
-  function apiRegionCode(): string {
-    if (!regionCode) return "";
-    if (localMode) return regionCode;
-    return parentCode(regionCode) || regionCode;
-  }
-
   const cat  = categories.find((c) => c.slug === activeCat);
   const subs = cat ? ["全部", ...cat.subcategories.map((s) => s.name)] : ["全部"];
 
-  /* fetch when category or localMode changes */
+  /* fetch when category or region changes */
   useEffect(() => {
     setLoading(true);
     setActiveSub("全部");
     setQ("");
-    const rc = apiRegionCode();
-    const url = `/api/resources?category=${activeCat}${rc ? `&regionCode=${encodeURIComponent(rc)}` : ""}`;
+    const url = `/api/resources?category=${activeCat}${regionCode ? `&regionCode=${encodeURIComponent(regionCode)}` : ""}`;
     fetch(url)
       .then((r) => r.json())
       .then((data) => { setResources(data ?? []); setLoading(false); })
       .catch(() => { setResources([]); setLoading(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCat, localMode, regionCode]);
+  }, [activeCat, regionCode]);
 
   const filtered = resources
     .filter((r) => {
+      if (!showNational && r.scope === "national") return false;
       if (q.trim()) {
         const hay = [r.name, r.summary, ...(r.tags ?? [])].join(" ").toLowerCase();
         if (!hay.includes(q.toLowerCase())) return false;
@@ -245,13 +233,10 @@ export function ResourcesClient({
   }
 
   function pickRegion(label: string, code: string) {
-    setRegionLabel(label); setRegionCode(code); setAutoGeo(false); setDropOpen(false); setLocalMode(false);
+    setRegionLabel(label); setRegionCode(code); setAutoGeo(false); setDropOpen(false);
     localStorage.setItem("el_region_label", label);
     localStorage.setItem("el_region_code", code);
   }
-
-  /* local button label */
-  const localBtnLabel = regionLabel && regionCode ? regionLabel : "本地區";
 
   return (
     <div>
@@ -375,33 +360,60 @@ export function ResourcesClient({
             </div>
           )}
 
-          {/* 標題列 + 排序 + 本地區 */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
-            <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B", marginRight: "auto" }}>
+          {/* 標題列：[分類 N筆] ── (目前範圍) [Switch] [排序▽] */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+            {/* 左：分類名稱 + 計數 */}
+            <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B", flexShrink: 0 }}>
               {cat?.name ?? "資源"}
-              <span style={{ marginLeft: 10, fontSize: 15, fontWeight: 700, color: "#9B8E85" }}>{filtered.length} 筆</span>
+              <span style={{ marginLeft: 8, fontSize: 15, fontWeight: 700, color: "#9B8E85" }}>{filtered.length} 筆</span>
             </div>
 
-            {/* 本地區 toggle */}
-            {regionCode && (
-              <button
-                onClick={() => setLocalMode(!localMode)}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "7px 14px", borderRadius: 999, cursor: "pointer", font: "inherit",
-                  fontSize: 14, fontWeight: 700, border: "1.5px solid",
-                  borderColor: localMode ? "#E0552E" : "#E4D7CC",
-                  background: localMode ? "#FFF4EF" : "#fff",
-                  color: localMode ? "#B23F1E" : "#574E47",
-                }}
-              >
-                <ELIcon name="pin" size={14} color={localMode ? "#F26B43" : "#9B8E85"} />
-                {localBtnLabel}
-              </button>
+            {/* 中：純文字狀態提示（不可點擊） */}
+            {regionLabel && (
+              <span style={{ fontSize: 13.5, color: "#9B8E85", whiteSpace: "nowrap" }}>
+                （目前範圍：{regionLabel}）
+              </span>
             )}
 
+            {/* 彈性空間 */}
+            <div style={{ flex: 1 }} />
+
+            {/* Switch：全 <label> 都是點擊熱區 */}
+            <label style={{
+              display: "inline-flex", alignItems: "center", gap: 9,
+              cursor: "pointer", userSelect: "none",
+            }}>
+              <input
+                type="checkbox"
+                checked={showNational}
+                onChange={() => setShowNational((v) => !v)}
+                style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
+              />
+              {/* Switch 軌道 */}
+              <span style={{
+                display: "inline-flex", width: 46, height: 26, borderRadius: 13, flexShrink: 0,
+                background: showNational ? "#E0552E" : "#CBD5E1",
+                transition: "background 0.2s", alignItems: "center",
+                padding: "0 3px",
+              }}>
+                <span style={{
+                  width: 20, height: 20, borderRadius: "50%", background: "#fff",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.22)",
+                  transform: showNational ? "translateX(20px)" : "translateX(0)",
+                  transition: "transform 0.2s",
+                  display: "block",
+                }} />
+              </span>
+              {/* 說明文字 */}
+              <span style={{ fontSize: 14, fontWeight: 700, color: showNational ? "#241F1B" : "#574E47", whiteSpace: "nowrap" }}>
+                {showNational
+                  ? "同時顯示全國專線（如：1966、119）"
+                  : `只看${regionLabel || "本地區"}在地資源`}
+              </span>
+            </label>
+
             {/* 排序下拉 */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
               <ELIcon name="filter" size={15} color="#9B8E85" />
               <select
                 value={sortKey}

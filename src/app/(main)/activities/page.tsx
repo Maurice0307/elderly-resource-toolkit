@@ -18,6 +18,33 @@ const CARD_CATS = [
 
 type CatKey = (typeof CARD_CATS)[number]["key"];
 
+/* 從 YouTube URL 推算縮圖（data-cards.jsx CARD_IMG 對應） */
+function ytThumb(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
+}
+
+/* 無影片縮圖的圖卡，使用設計稿 CARD_ART 指定的 icon + 色調 */
+const CARD_ART: Record<string, { icon: string; bg: string; color: string }> = {
+  "interact-fraud-impersonation": { icon: "shield",  bg: "#FFF1E8", color: "#C2410C" },
+  "interact-fraud-rumor":         { icon: "chat",    bg: "#FFF1E8", color: "#C2410C" },
+  "interact-cpr":                 { icon: "heart",   bg: "#EAF1FB", color: "#2A63C0" },
+  "interact-aed":                 { icon: "heart",   bg: "#EAF1FB", color: "#2A63C0" },
+  "interact-heimlich":            { icon: "shield",  bg: "#EAF1FB", color: "#2A63C0" },
+  "interact-recycling-game":      { icon: "recycle", bg: "#E7F4EC", color: "#2E7D52" },
+  "interact-fire-safety":         { icon: "shield",  bg: "#FFF1E8", color: "#C2410C" },
+  "interact-fire-escape":         { icon: "run",     bg: "#FFF1E8", color: "#C2410C" },
+  "interact-earthquake":          { icon: "shield",  bg: "#EAF1FB", color: "#2A63C0" },
+  "interact-earthquake-prep":     { icon: "home",    bg: "#EAF1FB", color: "#2A63C0" },
+  "balcony-garden":               { icon: "sprout",  bg: "#E7F4EC", color: "#2E7D52" },
+  "line-video-call":              { icon: "chat",    bg: "#E7F4EC", color: "#2E7D52" },
+  "my-plate":                     { icon: "bulb",    bg: "#FFF4EF", color: "#B23F1E" },
+  "fall-prevention":              { icon: "shield",  bg: "#FFF4EF", color: "#B23F1E" },
+  "morning-stretch":              { icon: "run",     bg: "#FFF4EF", color: "#B23F1E" },
+  "chair-exercise":               { icon: "run",     bg: "#FFF4EF", color: "#B23F1E" },
+};
+
 const THEME_BY_SLUG: Record<string, CatKey> = {
   "interact-clay": "craft", "interact-origami-heart": "craft", "interact-origami-carnation": "craft",
   "interact-origami-bear": "craft", "interact-origami-bird": "craft", "interact-leaf-bookmark": "craft",
@@ -54,7 +81,7 @@ export default async function ActivitiesPage({
   const supabase = await createClient();
   const { data } = await supabase
     .from("activity_cards")
-    .select("id, slug, title, summary, duration_min, steps, tags, group_slug, status")
+    .select("id, slug, title, summary, duration_min, steps, tags, group_slug, status, video_url, hero_image_url")
     .eq("status", "active")
     .order("created_at");
   const allCards = (data ?? []) as ActivityCard[];
@@ -125,33 +152,37 @@ export default async function ActivitiesPage({
                   className="wv-card click"
                   style={{ background: "#fff", borderRadius: 18, border: "1px solid #F0E6DE", overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column" }}
                 >
-                  {/* 縮圖：有 hero_image_url 就顯示圖片 */}
-                  <div style={{ height: 148, background: "linear-gradient(135deg,#FFE7DD,#FFF4EF)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", overflow: "hidden" }}>
-                    {(card as ActivityCard & { hero_image_url?: string | null }).hero_image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={(card as ActivityCard & { hero_image_url?: string | null }).hero_image_url!}
-                        alt={card.title}
-                        loading="lazy"
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                      />
-                    ) : (
-                      <ELIcon name={activeCat.icon} size={52} color="#F26B43" />
-                    )}
-                    {/* 影片角標 */}
-                    {(card as ActivityCard & { video_url?: string | null }).video_url && (
-                      <div style={{ position: "absolute", bottom: 10, right: 10, background: "rgba(0,0,0,0.5)", borderRadius: 6, padding: "3px 8px", display: "flex", alignItems: "center", gap: 4 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden><path d="M6 4.5v15l13-7.5z" /></svg>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>影片</span>
+                  {/* 縮圖：hero_image_url → ytThumb(video_url) → CARD_ART icon → 分類 icon */}
+                  {(() => {
+                    const thumb = card.hero_image_url ?? ytThumb(card.video_url);
+                    const art = CARD_ART[card.slug];
+                    const bg = art ? art.bg : "linear-gradient(135deg,#FFE7DD,#FFF4EF)";
+                    return (
+                      <div style={{ height: 148, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+                        {thumb ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={thumb} alt={card.title} loading="lazy"
+                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        ) : art ? (
+                          <ELIcon name={art.icon} size={52} color={art.color} />
+                        ) : (
+                          <ELIcon name={activeCat.icon} size={52} color="#F26B43" />
+                        )}
+                        {thumb && card.video_url && (
+                          <div style={{ position: "absolute", bottom: 10, right: 10, background: "rgba(0,0,0,0.5)", borderRadius: 6, padding: "3px 8px", display: "flex", alignItems: "center", gap: 4 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden><path d="M6 4.5v15l13-7.5z" /></svg>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: "#fff" }}>影片</span>
+                          </div>
+                        )}
+                        {(card.tags ?? []).includes("救命技能") && (
+                          <span style={{ position: "absolute", top: 10, left: 10, fontSize: 12.5, fontWeight: 800, color: "#fff", background: "#E0552E", padding: "3px 11px", borderRadius: 999 }}>救命技能</span>
+                        )}
+                        {(card.tags ?? []).includes("陪伴互動") && (
+                          <span style={{ position: "absolute", top: 10, right: 10, fontSize: 12.5, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "3px 11px", borderRadius: 999 }}>陪伴</span>
+                        )}
                       </div>
-                    )}
-                    {(card.tags ?? []).includes("救命技能") && (
-                      <span style={{ position: "absolute", top: 10, left: 10, fontSize: 12.5, fontWeight: 800, color: "#fff", background: "#E0552E", padding: "3px 11px", borderRadius: 999 }}>救命技能</span>
-                    )}
-                    {(card.tags ?? []).includes("陪伴互動") && (
-                      <span style={{ position: "absolute", top: 10, right: 10, fontSize: 12.5, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "3px 11px", borderRadius: 999 }}>陪伴</span>
-                    )}
-                  </div>
+                    );
+                  })()}
                   {/* 內容 */}
                   <div style={{ padding: "16px 18px 18px", flex: 1, display: "flex", flexDirection: "column" }}>
                     <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B" }}>{card.title}</div>

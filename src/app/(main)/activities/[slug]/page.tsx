@@ -30,6 +30,31 @@ const THEME_BY_SLUG: Record<string, string> = {
   "interact-fraud-impersonation": "fraud", "interact-fraud-rumor": "fraud",
 };
 
+function ytThumb(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : null;
+}
+
+const CARD_ART: Record<string, { icon: string; bg: string; color: string }> = {
+  "interact-fraud-impersonation": { icon: "shield",  bg: "#FFF1E8", color: "#C2410C" },
+  "interact-fraud-rumor":         { icon: "chat",    bg: "#FFF1E8", color: "#C2410C" },
+  "interact-cpr":                 { icon: "heart",   bg: "#EAF1FB", color: "#2A63C0" },
+  "interact-aed":                 { icon: "heart",   bg: "#EAF1FB", color: "#2A63C0" },
+  "interact-heimlich":            { icon: "shield",  bg: "#EAF1FB", color: "#2A63C0" },
+  "interact-recycling-game":      { icon: "recycle", bg: "#E7F4EC", color: "#2E7D52" },
+  "interact-fire-safety":         { icon: "shield",  bg: "#FFF1E8", color: "#C2410C" },
+  "interact-fire-escape":         { icon: "run",     bg: "#FFF1E8", color: "#C2410C" },
+  "interact-earthquake":          { icon: "shield",  bg: "#EAF1FB", color: "#2A63C0" },
+  "interact-earthquake-prep":     { icon: "home",    bg: "#EAF1FB", color: "#2A63C0" },
+  "balcony-garden":               { icon: "sprout",  bg: "#E7F4EC", color: "#2E7D52" },
+  "line-video-call":              { icon: "chat",    bg: "#E7F4EC", color: "#2E7D52" },
+  "my-plate":                     { icon: "bulb",    bg: "#FFF4EF", color: "#B23F1E" },
+  "fall-prevention":              { icon: "shield",  bg: "#FFF4EF", color: "#B23F1E" },
+  "morning-stretch":              { icon: "run",     bg: "#FFF4EF", color: "#B23F1E" },
+  "chair-exercise":               { icon: "run",     bg: "#FFF4EF", color: "#B23F1E" },
+};
+
 function themeKeyFor(card: ActivityCard): string {
   if (THEME_BY_SLUG[card.slug]) return THEME_BY_SLUG[card.slug];
   if ((card.tags ?? []).some((t: string) => t.includes("防詐") || t.includes("詐騙"))) return "fraud";
@@ -94,12 +119,27 @@ async function ThemeListPage({ themeKey }: { themeKey: string }) {
                   className="wv-card click"
                   style={{ background: "#fff", borderRadius: 18, border: "1px solid #F0E6DE", overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column" }}
                 >
-                  <div style={{ height: 132, background: `linear-gradient(135deg,${theme.bg},#FFF4EF)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative" }}>
-                    <ELIcon name={theme.icon} size={48} color="#F26B43" />
-                    {(card.tags ?? []).includes("陪伴互動") && (
-                      <span style={{ position: "absolute", top: 12, right: 12, fontSize: 12.5, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "3px 11px", borderRadius: 999 }}>陪伴</span>
-                    )}
-                  </div>
+                  {(() => {
+                    const thumb = card.hero_image_url ?? ytThumb(card.video_url);
+                    const art = CARD_ART[card.slug];
+                    const bg = art ? art.bg : `linear-gradient(135deg,${theme.bg},#FFF4EF)`;
+                    return (
+                      <div style={{ height: 132, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+                        {thumb ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={thumb} alt={card.title} loading="lazy"
+                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        ) : art ? (
+                          <ELIcon name={art.icon} size={48} color={art.color} />
+                        ) : (
+                          <ELIcon name={theme.icon} size={48} color="#F26B43" />
+                        )}
+                        {(card.tags ?? []).includes("陪伴互動") && (
+                          <span style={{ position: "absolute", top: 12, right: 12, fontSize: 12.5, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", padding: "3px 11px", borderRadius: 999 }}>陪伴</span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div style={{ padding: "16px 18px 18px", flex: 1, display: "flex", flexDirection: "column" }}>
                     <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B" }}>{card.title}</div>
                     {card.summary && (

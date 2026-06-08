@@ -249,7 +249,7 @@ export default async function HomePage() {
   const supabase = await createClient();
   const { data: activityCards } = await supabase
     .from("activity_cards")
-    .select("slug, title, group_slug, tags, hero_image_url, duration_min")
+    .select("slug, title, group_slug, tags, hero_image_url, video_url, duration_min")
     .eq("status", "active")
     .limit(28);
 
