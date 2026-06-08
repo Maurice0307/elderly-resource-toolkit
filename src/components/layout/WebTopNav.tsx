@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -310,7 +311,10 @@ export function WebTopNav() {
   const [regionOpen, setRegionOpen] = useState(false);
   const [regionLabel, setRegionLabel] = useState<string | null>(null);
   const [user, setUser] = useState<{ email?: string; name?: string } | null>(null);
+  const [mounted, setMounted] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("el_region_label");
@@ -515,14 +519,18 @@ export function WebTopNav() {
         </div>
       </div>
 
-      {acctOpen && user && (
-        <AccountMenu user={user} onClose={() => setAcctOpen(false)} onLogout={handleLogout} />
+      {/* 覆蓋層用 Portal 渲染到 body，避開 .wv-header 的 backdrop-filter 造成的 containing block 陷阱 */}
+      {mounted && acctOpen && user && createPortal(
+        <AccountMenu user={user} onClose={() => setAcctOpen(false)} onLogout={handleLogout} />,
+        document.body
       )}
-      {regionOpen && (
-        <RegionModal onClose={handleRegionClose} />
+      {mounted && regionOpen && createPortal(
+        <RegionModal onClose={handleRegionClose} />,
+        document.body
       )}
-      {mobileOpen && (
-        <MobileMenu onClose={() => setMobileOpen(false)} currentPath={pathname} />
+      {mounted && mobileOpen && createPortal(
+        <MobileMenu onClose={() => setMobileOpen(false)} currentPath={pathname} />,
+        document.body
       )}
     </header>
   );

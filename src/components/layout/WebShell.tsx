@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { WebTopNav } from "./WebTopNav";
 import { WebFooter } from "./WebFooter";
+import { MobileTabBar } from "./MobileTabBar";
 
 const SKIP_PATHS = ["/admin", "/login", "/signup", "/callback"];
 
@@ -17,10 +18,11 @@ export function WebShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="wv">
       <WebTopNav />
-      <main style={{ flex: 1 }}>
+      <main className="wv-main" style={{ flex: 1 }}>
         {children}
       </main>
       <WebFooter />
+      <MobileTabBar />
     </div>
   );
 }

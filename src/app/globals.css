@@ -331,11 +331,41 @@ button, [role="button"], a.btn, .btn {
   50%       { box-shadow: 0 0 0 9px rgba(224,85,46,0); }
 }
 
+/* ── 手機底部 tab bar（iOS App 風主導覽）── */
+.wv-tabbar { display: none; }
+.wv-tabitem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 0 6px;
+  text-decoration: none;
+  min-height: 54px;
+  -webkit-tap-highlight-color: transparent;
+}
+.wv-tabitem:active { background: #FFF4EF; }
+
 /* ── 響應式：窄螢幕隱藏桌面元素 ── */
 @media (max-width: 940px) {
   .wv-nav     { display: none; }
   .wv-burger  { display: inline-flex; }
   .wv-hideSm  { display: none !important; }
+  .wv-tabbar {
+    display: flex;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 45;
+    background: rgba(255,255,255,0.96);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid #F0E6DE;
+    box-shadow: 0 -4px 20px rgba(80,45,25,0.06);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* 內容與頁尾底部留白，避免被固定 tab bar 蓋住 */
+  .wv { padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (max-width: 600px) {
   .wv-wrap    { padding: 0 18px; }
