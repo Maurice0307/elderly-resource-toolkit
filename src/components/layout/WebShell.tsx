@@ -5,7 +5,7 @@ import { WebTopNav } from "./WebTopNav";
 import { WebFooter } from "./WebFooter";
 import { MobileTabBar } from "./MobileTabBar";
 
-const SKIP_PATHS = ["/admin", "/login", "/signup", "/callback"];
+const SKIP_PATHS = ["/admin", "/login", "/signup", "/callback", "/welcome"];
 
 export function WebShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

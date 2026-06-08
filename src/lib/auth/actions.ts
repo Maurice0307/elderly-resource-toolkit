@@ -4,6 +4,37 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
+export type OnboardingState = { error: string } | null;
+
+/* 首次登入：設定身分（長輩/家人/志工）+ 所在地區，寫入 profiles */
+export async function completeOnboarding(
+  _prev: OnboardingState,
+  formData: FormData,
+): Promise<OnboardingState> {
+  const identity = formData.get("identity") as string;
+  const regionId = (formData.get("region_id") as string) || null;
+  const regionLabel = (formData.get("region_label") as string) || "";
+
+  if (!identity || !["elder", "family", "volunteer"].includes(identity)) {
+    return { error: "請選擇您的身分" };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ identity, home_region_id: regionId })
+    .eq("id", user.id);
+  if (error) return { error: error.message };
+
+  // 同步寫入 auth metadata，讓 UI 立即可讀（地區標籤、身分）
+  await supabase.auth.updateUser({ data: { identity, region: regionLabel } });
+
+  redirect("/");
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
@@ -60,7 +91,7 @@ export async function verifyPhoneOtp(
   const supabase = await createClient();
   const { error } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
   if (error) return { error: error.message };
-  redirect("/");
+  redirect("/welcome");
 }
 
 export async function loginWithEmail(

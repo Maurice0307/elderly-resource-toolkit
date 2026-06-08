@@ -56,25 +56,39 @@ export default async function ProfilePage() {
   const initial = displayName.slice(0, 1);
   const region = (user.user_metadata?.region as string | undefined) ?? "";
 
-  const [{ count: savedCount }, { count: submittedCount }, { count: qaCount }] =
+  const [{ count: savedCount }, { count: submittedCount }, { count: qaCount }, { data: profileRow }] =
     await Promise.all([
       supabase.from("resource_likes").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       supabase.from("resources").select("*", { count: "exact", head: true }).eq("submitted_by", user.id),
       supabase.from("questions").select("*", { count: "exact", head: true }).eq("author_id", user.id),
+      supabase.from("profiles").select("identity, points").eq("id", user.id).maybeSingle(),
     ]);
 
-  const stats = [
-    { label: "收藏", value: String(savedCount ?? 0) },
-    { label: "投稿", value: String(submittedCount ?? 0) },
-    { label: "問答", value: String(qaCount ?? 0) },
-    { label: "圖卡", value: "—" },
-  ];
+  const IDENTITY_LABEL: Record<string, string> = { elder: "長輩", family: "家人", volunteer: "志工", other: "會員" };
+  const identity = (profileRow?.identity as string | undefined) ?? "family";
+  const identityLabel = IDENTITY_LABEL[identity] ?? "家人";
+  const isVolunteer = identity === "volunteer";
+  const points = (profileRow?.points as number | undefined) ?? 0;
+
+  const stats = isVolunteer
+    ? [
+        { label: "服務點數", value: String(points) },
+        { label: "收藏", value: String(savedCount ?? 0) },
+        { label: "投稿", value: String(submittedCount ?? 0) },
+        { label: "問答", value: String(qaCount ?? 0) },
+      ]
+    : [
+        { label: "收藏", value: String(savedCount ?? 0) },
+        { label: "投稿", value: String(submittedCount ?? 0) },
+        { label: "問答", value: String(qaCount ?? 0) },
+        { label: "圖卡", value: "—" },
+      ];
 
   const infoFields = [
     { label: "顯示名稱", value: displayName },
     { label: "電子信箱", value: user.email ?? "—" },
     { label: "所在地區", value: region || "未設定" },
-    { label: "身份", value: "家人" },
+    { label: "身份", value: identityLabel },
   ];
 
   return (
@@ -94,7 +108,7 @@ export default async function ProfilePage() {
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontSize: 26, fontWeight: 800, color: "#241F1B", marginBottom: 6 }}>{displayName}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 13.5, fontWeight: 800, color: "#B23F1E", background: "#FFE7DD", borderRadius: 999, padding: "3px 12px" }}>家人</span>
+                <span style={{ fontSize: 13.5, fontWeight: 800, color: "#B23F1E", background: "#FFE7DD", borderRadius: 999, padding: "3px 12px" }}>{identityLabel}</span>
                 {region && (
                   <span style={{ fontSize: 14, color: "#574E47", display: "flex", alignItems: "center", gap: 5 }}>
                     <ELIcon name="pin" size={14} color="#F26B43" /> {region}
