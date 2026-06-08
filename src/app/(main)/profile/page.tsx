@@ -7,42 +7,38 @@ export const metadata = { title: "個人中心" };
 
 function NotLoggedIn() {
   return (
-    <div className="wv-fade">
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE3D5)", borderBottom: "1px solid #FFE7DD", padding: "44px 0 36px" }}>
-        <div className="wv-wrap">
-          <h1 style={{ margin: 0, fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 800, color: "#241F1B" }}>個人中心</h1>
+    <div className="wv-fade wv-wrap" style={{ paddingTop: 60, paddingBottom: 48, maxWidth: 620 }}>
+      <div style={{
+        background: "#fff", borderRadius: 26, border: "1px solid #F0E6DE",
+        padding: "44px 40px", textAlign: "center",
+      }}>
+        <div style={{ width: 84, height: 84, borderRadius: "50%", background: "#FFF4EF", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ELIcon name="user" size={44} color="#F26B43" />
         </div>
-      </div>
-      <div className="wv-wrap" style={{ paddingTop: 56, paddingBottom: 56 }}>
-        <div style={{
-          maxWidth: 620, margin: "0 auto", background: "#fff", borderRadius: 24,
-          border: "1px solid #F0E6DE", boxShadow: "0 2px 16px rgba(36,31,27,0.06)",
-          padding: "48px 36px", textAlign: "center",
+        <h1 style={{ margin: "20px 0 0", fontSize: 28, fontWeight: 800, color: "#241F1B" }}>登入後，這裡都是您的</h1>
+        <p style={{ margin: "12px 0 0", fontSize: 17, color: "#574E47", lineHeight: 1.7 }}>
+          收藏常用資源、追蹤學習進度、累積成就徽章。家人、長輩、志工各有專屬功能。
+        </p>
+        <div style={{ margin: "26px 0 0", display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
+          {[
+            { icon: "heart", t: "收藏與管理常用的服務電話" },
+            { icon: "medal", t: "完成學習自動點亮成就徽章" },
+            { icon: "like",  t: "志工累積服務點數，兌換物資" },
+          ].map((b) => (
+            <div key={b.t} style={{ display: "flex", alignItems: "center", gap: 13, background: "#FBF7F4", borderRadius: 14, padding: "14px 18px" }}>
+              <ELIcon name={b.icon} size={24} color="#F26B43" />
+              <span style={{ fontSize: 16.5, color: "#574E47", fontWeight: 600 }}>{b.t}</span>
+            </div>
+          ))}
+        </div>
+        <Link href="/login" style={{
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
+          background: "#E0552E", color: "#fff", borderRadius: 999, height: 56, marginTop: 26,
+          fontSize: 18, fontWeight: 800, textDecoration: "none",
+          boxShadow: "0 6px 16px rgba(224,85,46,0.26)",
         }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#FFF4EF", margin: "0 auto 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ELIcon name="user" size={36} color="#F26B43" />
-          </div>
-          <h2 style={{ margin: "0 0 10px", fontSize: 22, fontWeight: 800, color: "#241F1B" }}>尚未登入</h2>
-          <p style={{ margin: "0 0 22px", fontSize: 16, color: "#574E47", lineHeight: 1.6 }}>登入後可以：</p>
-          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px", textAlign: "left", display: "inline-block" }}>
-            {[
-              { icon: "heart", t: "儲存最喜歡的照顧資源" },
-              { icon: "cards", t: "追蹤學習進度與圖卡" },
-              { icon: "qa", t: "在問答區提問與回答" },
-              { icon: "send", t: "投稿分享好資源給社區" },
-            ].map((b) => (
-              <li key={b.t} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", fontSize: 16, color: "#574E47", fontWeight: 600 }}>
-                <ELIcon name={b.icon} size={18} color="#F26B43" /> {b.t}
-              </li>
-            ))}
-          </ul>
-          <Link href="/login" style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            background: "#E0552E", color: "#fff", borderRadius: 999, height: 52, padding: "0 36px",
-            fontSize: 17, fontWeight: 800, textDecoration: "none",
-            boxShadow: "0 6px 16px rgba(224,85,46,0.26)",
-          }}>登入 / 註冊</Link>
-        </div>
+          <ELIcon name="user" size={20} color="#fff" /> 登入 / 選擇身分
+        </Link>
       </div>
     </div>
   );

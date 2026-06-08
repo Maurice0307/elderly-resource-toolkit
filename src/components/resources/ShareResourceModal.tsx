@@ -40,34 +40,33 @@ function ShareResourceModal({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 20, width: "100%", maxWidth: 520,
+          background: "#fff", borderRadius: 26, width: "100%", maxWidth: 520,
           maxHeight: "90dvh", overflowY: "auto",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
+          boxShadow: "0 30px 70px rgba(0,0,0,0.35)",
           display: "flex", flexDirection: "column",
         }}
       >
         {/* header */}
-        <div style={{ padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ padding: "22px 26px 14px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 21, fontWeight: 800, color: "#241F1B" }}>分享好資源</h2>
-            <p style={{ margin: "4px 0 0", fontSize: 14, color: "#574E47" }}>
-              把您知道的服務提報給社區，幫到更多居民
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#241F1B" }}>分享好資源</h2>
+            <p style={{ margin: "4px 0 0", fontSize: 14.5, color: "#6E645C" }}>
+              把您知道的服務提報給社區，幫到更多厝邊
             </p>
           </div>
           <button
             onClick={onClose}
             aria-label="關閉"
             style={{
-              flexShrink: 0, width: 34, height: 34, borderRadius: "50%",
-              border: "none", background: "#FAF7F5", cursor: "pointer",
-              fontSize: 19, lineHeight: 1, color: "#574E47",
+              flexShrink: 0, width: 40, height: 40, borderRadius: "50%",
+              border: "none", background: "#FBF7F4", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
-          >×</button>
+          ><ELIcon name="close" size={20} color="#574E47" /></button>
         </div>
 
         {/* form */}
-        <form action={action} style={{ padding: "18px 24px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <form action={action} style={{ padding: "0 26px 26px", display: "flex", flexDirection: "column", gap: 16 }}>
 
           {/* 資源名稱 */}
           <MField label="資源名稱" required>
@@ -244,8 +243,8 @@ export function ShareResourceTrigger({
 
 /* ── helpers ── */
 const inp: React.CSSProperties = {
-  width: "100%", borderRadius: 10, border: "1.5px solid #E4D7CC",
-  padding: "10px 13px", fontSize: 15, color: "#241F1B", background: "#fff",
+  width: "100%", borderRadius: 13, border: "2px solid #E4D7CC",
+  padding: "13px 15px", fontSize: 16.5, fontWeight: 600, color: "#241F1B", background: "#fff",
   outline: "none", boxSizing: "border-box", fontFamily: "inherit",
 };
 
@@ -256,9 +255,9 @@ function MField({
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-      <label style={{ fontSize: 14, fontWeight: 700, color: "#241F1B" }}>
+      <label style={{ fontSize: 15.5, fontWeight: 800, color: "#574E47" }}>
         {label}
-        {required && <span style={{ color: "#E0552E", marginLeft: 3 }}>*</span>}
+        {required && <span style={{ color: "#F26B43", marginLeft: 3 }}>*</span>}
       </label>
       {hint && <p style={{ margin: 0, fontSize: 12.5, color: "#9B8E85" }}>{hint}</p>}
       {children}

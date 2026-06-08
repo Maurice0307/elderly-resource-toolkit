@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { BadgesWall } from "./BadgesWall";
 
 type Tab = "info" | "badges" | "saved";
 
@@ -86,31 +87,7 @@ export function ProfileTabs({
       )}
 
       {/* 成就徽章 */}
-      {tab === "badges" && (
-        <div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))", gap: 16 }}>
-            {[
-              { icon: "heart", label: "熱心助人", desc: "收藏 5 項資源" },
-              { icon: "send", label: "知識分享", desc: "投稿 1 筆資源" },
-              { icon: "qa", label: "互助夥伴", desc: "回答 3 則問題" },
-              { icon: "news", label: "每日新知", desc: "閱讀 10 篇文章" },
-              { icon: "cards", label: "動手達人", desc: "完成 5 個圖卡" },
-              { icon: "education", label: "學習之星", desc: "累積 20 學習時數" },
-            ].map((b) => (
-              <div key={b.label} style={{ background: "#fff", border: "1px solid #F0E6DE", borderRadius: 18, padding: "22px 16px", textAlign: "center" }}>
-                <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#FFF4EF", margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <ELIcon name={b.icon} size={28} color="#F26B43" />
-                </div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: "#241F1B" }}>{b.label}</div>
-                <div style={{ fontSize: 13, color: "#9B8E85", marginTop: 4 }}>{b.desc}</div>
-              </div>
-            ))}
-          </div>
-          {savedCount === 0 && (
-            <p style={{ textAlign: "center", marginTop: 24, fontSize: 15, color: "#9B8E85" }}>繼續使用平台即可解鎖更多徽章！</p>
-          )}
-        </div>
-      )}
+      {tab === "badges" && <BadgesWall />}
 
       {/* 我的收藏 */}
       {tab === "saved" && (
