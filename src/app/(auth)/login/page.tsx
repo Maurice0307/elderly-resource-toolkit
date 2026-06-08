@@ -50,8 +50,8 @@ export default function LoginPage() {
   const sentPhone = sendState && "sent" in sendState ? sendState.phone : phoneNum;
 
   return (
-    <div style={{
-      minHeight: "100dvh", display: "flex", flexDirection: "column",
+    <div className="wv-login-shell" style={{
+      display: "flex", flexDirection: "column",
       background: "linear-gradient(160deg,#FFF1E9 0%,#FFE3D5 40%,#FFF4EF 100%)",
     }}>
       {/* Hero */}
@@ -71,7 +71,7 @@ export default function LoginPage() {
       </div>
 
       {/* Card */}
-      <div style={{
+      <div className="wv-login-card" style={{
         flex: 1, background: "#fff", borderRadius: "28px 28px 0 0",
         padding: "32px 24px 40px", display: "flex", flexDirection: "column", gap: 0,
       }}>

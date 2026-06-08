@@ -217,8 +217,8 @@ export default async function NewsDetailPage({ params }: Props) {
             )}
           </article>
 
-          {/* ── 右欄：延伸閱讀（sticky） ── */}
-          <aside style={{ position: "sticky", top: 96 }}>
+          {/* ── 右欄：延伸閱讀（sticky；手機取消） ── */}
+          <aside className="wv-unsticky-sm" style={{ position: "sticky", top: 96 }}>
             {related.length > 0 && (
               <div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: "#241F1B", marginBottom: 14 }}>延伸閱讀</div>

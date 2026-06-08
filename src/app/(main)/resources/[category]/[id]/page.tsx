@@ -173,8 +173,8 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
             </div>
           </div>
 
-          {/* 右欄：行動面板（sticky） */}
-          <aside style={{ position: "sticky", top: 96, display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* 右欄：行動面板（sticky；手機取消） */}
+          <aside className="wv-unsticky-sm" style={{ position: "sticky", top: 96, display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #F0E6DE", padding: 22 }}>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#241F1B", marginBottom: 14 }}>這筆資源</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

@@ -189,8 +189,8 @@ async function CardDetailPage({ slug }: { slug: string }) {
       <div className="wv-wrap" style={{ paddingTop: 26, paddingBottom: 64 }}>
         <div className="wv-split" style={{ display: "grid", gridTemplateColumns: "296px minmax(0,1fr)", gap: 28, alignItems: "start" }}>
 
-          {/* ── 左：封面 + 資訊（sticky） ── */}
-          <aside style={{ position: "sticky", top: 96 }}>
+          {/* ── 左：封面 + 資訊（sticky；手機取消） ── */}
+          <aside className="wv-unsticky-sm" style={{ position: "sticky", top: 96 }}>
             <Link href="/activities" className="wv-pill" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 16 }}>
               <ELIcon name="chevron" size={18} color="#574E47" style={{ transform: "rotate(180deg)" }} /> 互動學習
             </Link>
