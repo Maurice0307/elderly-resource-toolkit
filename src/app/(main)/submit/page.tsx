@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitForm } from "@/components/submit/SubmitForm";
+import { MobileSubHeader } from "@/components/layout/MobileSubHeader";
 
 export const metadata = { title: "投稿資源" };
 
@@ -36,18 +36,8 @@ export default async function SubmitPage() {
 
   return (
     <main style={{ background: "var(--bg-page)", minHeight: "100%", paddingBottom: 24 }}>
-      {/* 返回列 */}
-      <div style={{ background: "#fff", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
-        <Link
-          href="/"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.9375rem", fontWeight: 600, color: "var(--cta-ink)", textDecoration: "none" }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden>
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          回首頁
-        </Link>
-      </div>
+      {/* 手機版返回列 */}
+      <MobileSubHeader title="投稿資源" search={false} />
 
       {/* 標頭 */}
       <div style={{ background: "#fff", padding: "14px 18px 16px", borderBottom: "1px solid var(--border)" }}>

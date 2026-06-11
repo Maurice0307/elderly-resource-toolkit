@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { MobileSubHeader } from "@/components/layout/MobileSubHeader";
+import { MobileNewsList, type NewsItem } from "@/components/news/MobileNewsList";
 
 export const metadata = { title: "今日新知" };
 
@@ -10,6 +12,7 @@ type NewsRow = {
   title: string;
   summary_md: string;
   tags: string[];
+  image_url: string | null;
   published_at: string | null;
   fetched_at: string;
 };
@@ -56,26 +59,39 @@ export default async function NewsPage({
   }
   const allTags = [...tagCount.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t);
 
-  let query = supabase
+  const { data } = await supabase
     .from("daily_news")
-    .select("id, source_org, title, summary_md, tags, published_at, fetched_at")
+    .select("id, source_org, title, summary_md, tags, image_url, published_at, fetched_at")
     .eq("status", "active")
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(60);
-  if (cat) query = query.contains("tags", [cat]);
+  const allNews = (data ?? []) as NewsRow[];
 
-  const { data } = await query;
-  const news = (data ?? []) as NewsRow[];
+  // 桌機沿用 URL 分類；手機用 client chip（拿全部資料）
+  const news = cat ? allNews.filter((n) => (n.tags ?? []).includes(cat)) : allNews;
   const hero = news[0] ?? null;
   const rest = news.slice(1);
   const chips = ["全部", ...allTags.slice(0, 7)];
 
   const heroPal = PALETTES[0];
 
+  const mobileItems: NewsItem[] = allNews.map((n) => ({
+    id: n.id,
+    title: n.title,
+    source_org: n.source_org,
+    tags: n.tags ?? [],
+    ago: getAgo(n.published_at || n.fetched_at),
+    image_url: n.image_url,
+  }));
+
   return (
     <div className="wv-fade">
-      {/* 標題帶 */}
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD", padding: "44px 0 32px" }}>
+      {/* 手機版返回列 + 清單 */}
+      <MobileSubHeader title="今日新知" />
+      <MobileNewsList news={mobileItems} tags={allTags.slice(0, 7)} />
+
+      {/* 標題帶（桌機） */}
+      <div className="wv-desktop-only" style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD", padding: "44px 0 32px" }}>
         <div className="wv-wrap">
           <h1 style={{ margin: "0 0 10px", fontSize: "clamp(26px, 3.2vw, 32px)", fontWeight: 800, color: "#241F1B" }}>今日新知</h1>
           <p style={{ margin: "0 0 22px", fontSize: 17, color: "#574E47" }}>健康補助・防詐查證・在地活動，每天更新。</p>
@@ -101,7 +117,7 @@ export default async function NewsPage({
         </div>
       </div>
 
-      <div className="wv-wrap" style={{ paddingTop: 40, paddingBottom: 56 }}>
+      <div className="wv-wrap wv-desktop-only" style={{ paddingTop: 40, paddingBottom: 56 }}>
         {/* 置頂大卡：gradient panel 左 + 文字右 */}
         {hero && (
           <Link

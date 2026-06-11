@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { MobileNewsDetail, type RelatedItem } from "@/components/news/MobileNewsDetail";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -56,13 +57,24 @@ function extractLead(md: string): string | null {
   return null;
 }
 
-/* Renders only non-bullet paragraphs (bullets already shown in 重點整理) */
+/* 內文說明段落（非條列、非標題），第一段為 lead，其餘為說明 */
+function extractParagraphs(md: string): string[] {
+  return md
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !/^[-*]\s/.test(l) && !/^#{1,4}\s/.test(l))
+    .map((l) => l.replace(/\*\*(.*?)\*\*/g, "$1"));
+}
+
+/* Renders non-bullet paragraphs EXCEPT the lead (first prose line, shown separately) */
 function renderMdBody(md: string): string {
   const lines = md.split("\n");
   const parts: string[] = [];
+  let skippedLead = false;
   for (const raw of lines) {
     const line = raw.trim();
     if (!line || /^[-*]\s/.test(line) || /^#{1,4}\s/.test(line)) continue;
+    if (!skippedLead) { skippedLead = true; continue; } // 第一段是導言，已單獨呈現
     const text = line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
     parts.push(`<p style="margin-top:0.9rem;line-height:1.75;font-size:17px">${text}</p>`);
   }
@@ -81,36 +93,54 @@ export default async function NewsDetailPage({ params }: Props) {
   const bullets = extractBullets(data.summary_md);
   const lead = extractLead(data.summary_md);
   const htmlBody = renderMdBody(data.summary_md);
+  const bodyParas = extractParagraphs(data.summary_md).slice(1); // 去掉 lead，其餘為內文說明
 
   /* 相關文章 */
-  let related: Array<{ id: string; title: string; source_org: string; tags: string[] }> = [];
+  let related: RelatedItem[] = [];
   if (tags.length > 0) {
     const { data: relData } = await supabase
       .from("daily_news")
-      .select("id, title, source_org, tags")
+      .select("id, title, source_org, tags, image_url")
       .eq("status", "active")
       .neq("id", id)
       .contains("tags", [tags[0]])
       .order("published_at", { ascending: false, nullsFirst: false })
       .limit(4);
-    related = relData ?? [];
+    related = (relData ?? []) as RelatedItem[];
   }
   if (related.length < 2) {
     const existing = new Set([id, ...related.map((r) => r.id)]);
     const { data: srcData } = await supabase
       .from("daily_news")
-      .select("id, title, source_org, tags")
+      .select("id, title, source_org, tags, image_url")
       .eq("status", "active")
       .eq("source_org", data.source_org)
       .neq("id", id)
       .limit(4);
-    for (const r of srcData ?? []) {
+    for (const r of (srcData ?? []) as RelatedItem[]) {
       if (!existing.has(r.id)) { related.push(r); existing.add(r.id); if (related.length >= 4) break; }
     }
   }
 
   return (
-    <div className="wv-fade">
+    <>
+      {/* 手機版：設計稿版型 */}
+      <MobileNewsDetail
+        id={id}
+        title={data.title}
+        source_org={data.source_org}
+        ago={dateStr}
+        tags={tags}
+        image_url={data.image_url ?? null}
+        source_url={data.source_url ?? null}
+        lead={lead}
+        bodyParas={bodyParas}
+        bullets={bullets}
+        related={related}
+      />
+
+      {/* 桌機版：原本版型 */}
+      <div className="wv-fade wv-desktop-only">
       {/* 頂部列 */}
       <div style={{ background: "#fff", borderBottom: "1px solid #F0E6DE", padding: "13px 0" }}>
         <div className="wv-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -248,6 +278,7 @@ export default async function NewsDetailPage({ params }: Props) {
           </aside>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

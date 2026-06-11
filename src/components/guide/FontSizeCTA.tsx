@@ -18,33 +18,27 @@ export function FontSizeCTA() {
   };
 
   return (
-    <div style={{
-      marginBottom: 56, background: "#fff", border: "1.5px solid #FFD6C7", borderRadius: 22,
-      padding: "26px 30px", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap",
-    }}>
+    <button
+      onClick={cycle}
+      style={{
+        width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 13,
+        background: "#FFF4EF", border: "1px solid #FFE7DD", borderRadius: 18, padding: "15px 16px",
+        cursor: "pointer", font: "inherit",
+      }}
+    >
       <span style={{
-        width: 56, height: 56, borderRadius: 16, flexShrink: 0,
-        background: "#FFF4EF", display: "flex", alignItems: "center", justifyContent: "center",
+        width: 46, height: 46, borderRadius: 13, flexShrink: 0,
+        background: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <ELIcon name="textsize" size={30} color="#F26B43" />
+        <ELIcon name="textsize" size={24} color="#F26B43" />
       </span>
-      <div style={{ flex: 1, minWidth: 200 }}>
-        <div style={{ fontSize: 21, fontWeight: 800, color: "#241F1B" }}>覺得字太小？</div>
-        <div style={{ marginTop: 3, fontSize: 16, color: "#574E47" }}>
-          按一下就放大整個畫面的字，目前：<strong style={{ color: "#B23F1E" }}>{LABELS[idx]}</strong>
-        </div>
-      </div>
-      <button
-        onClick={cycle}
-        style={{
-          height: 52, padding: "0 26px", borderRadius: 999, border: "none", cursor: "pointer",
-          background: "#E0552E", color: "#fff", fontSize: 17, fontWeight: 800, fontFamily: "inherit",
-          display: "inline-flex", alignItems: "center", gap: 9, flexShrink: 0,
-          boxShadow: "0 6px 16px rgba(224,85,46,0.26)",
-        }}
-      >
-        <ELIcon name="textsize" size={20} color="#fff" /> 放大字級
-      </button>
-    </div>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 18, fontWeight: 800, color: "#241F1B" }}>覺得字太小？</span>
+        <span style={{ display: "block", marginTop: 2, fontSize: 14, color: "#574E47", lineHeight: 1.5 }}>
+          {idx === 0 ? "一鍵把整個 App 的字放大" : `目前：${LABELS[idx]}，再按一下繼續放大`}
+        </span>
+      </span>
+      <ELIcon name="chevron" size={20} color="#6E645C" />
+    </button>
   );
 }

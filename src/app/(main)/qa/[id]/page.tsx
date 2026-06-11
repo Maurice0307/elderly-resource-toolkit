@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { AnswerForm } from "@/components/qa/AnswerForm";
 import { VoteButton } from "@/components/qa/VoteButton";
 import { AcceptButton } from "@/components/qa/AcceptButton";
+import { MobileSubHeader } from "@/components/layout/MobileSubHeader";
+import { ELIcon } from "@/components/layout/ELIcon";
 
 type Params = { id: string };
 
@@ -66,8 +68,11 @@ export default async function QuestionPage({ params }: { params: Promise<Params>
 
   return (
     <main style={{ background: "var(--bg-page)", minHeight: "100%", paddingBottom: 24 }}>
-      {/* 返回列 */}
-      <div style={{ background: "#fff", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
+      {/* 手機版返回列 */}
+      <MobileSubHeader title="問答詳情" backHref="/qa" />
+
+      {/* 返回列（桌機） */}
+      <div className="wv-desktop-only" style={{ background: "#fff", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
         <Link
           href="/qa"
           style={{
@@ -91,32 +96,32 @@ export default async function QuestionPage({ params }: { params: Promise<Params>
       <div style={{ background: "#fff", padding: "18px", borderBottom: "1px solid var(--border)" }}>
         <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
           {solved ? (
-            <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--success)", background: "var(--success-soft)", borderRadius: 999, padding: "3px 10px" }}>
-              ✓ 已解決
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 700, color: "#2E7D52", background: "#E7F4EC", borderRadius: 999, padding: "4px 11px" }}>
+              <ELIcon name="check" size={14} color="#2E7D52" /> 已解決
             </span>
           ) : (
-            <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "var(--warning)", background: "var(--warning-soft)", borderRadius: 999, padding: "3px 10px" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#C2410C", background: "#FFF1E8", borderRadius: 999, padding: "4px 11px" }}>
               待回答
             </span>
           )}
           {reg?.name && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.8125rem", color: "var(--text-muted)", background: "var(--bg-soft)", borderRadius: 999, padding: "3px 10px" }}>
-              📍 {reg.name}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 600, color: "#B23F1E", background: "#FFF4EF", borderRadius: 999, padding: "4px 11px" }}>
+              <ELIcon name="pin" size={14} color="#F26B43" /> {reg.name}
             </span>
           )}
           {(q.tags as string[]).map((tag: string) => (
-            <span key={tag} style={{ fontSize: "0.8125rem", color: "var(--cta-ink)", background: "var(--cta-soft)", borderRadius: 999, padding: "3px 10px" }}>
+            <span key={tag} style={{ fontSize: 14, color: "#B23F1E", background: "#FFF4EF", borderRadius: 999, padding: "4px 11px" }}>
               #{tag}
             </span>
           ))}
         </div>
 
-        <h1 style={{ margin: 0, fontSize: "1.375rem", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.45 }}>
+        <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.45 }}>
           {q.title}
         </h1>
 
         {q.body && (
-          <p style={{ margin: "10px 0 0", fontSize: "1rem", color: "var(--text-secondary)", lineHeight: 1.7, whiteSpace: "pre-line" }}>
+          <p style={{ margin: "12px 0 0", fontSize: "1.0625rem", color: "var(--text-secondary)", lineHeight: 1.75, whiteSpace: "pre-line" }}>
             {q.body}
           </p>
         )}
@@ -160,12 +165,12 @@ export default async function QuestionPage({ params }: { params: Promise<Params>
               }}
             >
               {ans.is_accepted && (
-                <div style={{ background: "var(--success-soft)", padding: "7px 14px", display: "flex", alignItems: "center", gap: 6, fontSize: "0.8125rem", fontWeight: 800, color: "var(--success)" }}>
-                  ✓ 最佳解答
+                <div style={{ background: "#E7F4EC", padding: "8px 15px", display: "flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 800, color: "#2E7D52" }}>
+                  <ELIcon name="check" size={15} color="#2E7D52" /> 志工最佳解答
                 </div>
               )}
-              <div style={{ padding: 15 }}>
-                <p style={{ margin: 0, fontSize: "1rem", color: "var(--text-primary)", lineHeight: 1.7, whiteSpace: "pre-line" }}>
+              <div style={{ padding: 16 }}>
+                <p style={{ margin: 0, fontSize: "1.0625rem", color: "var(--text-primary)", lineHeight: 1.75, whiteSpace: "pre-line" }}>
                   {ans.body}
                 </p>
                 <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -200,15 +205,15 @@ export default async function QuestionPage({ params }: { params: Promise<Params>
 
       {/* 回答表單 */}
       <div style={{ padding: "0 18px 24px" }}>
-        <div style={{ fontSize: "0.9375rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: 10 }}>
-          留下你的回答
+        <div style={{ fontSize: "0.9375rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+          <ELIcon name="edit" size={17} color="#6E645C" /> 留下你的回答
         </div>
         {user ? (
           <AnswerForm questionId={id} />
         ) : (
           <div style={{ background: "var(--cta-soft)", borderRadius: 14, padding: "16px 18px", textAlign: "center" }}>
             <Link href="/login" style={{ color: "var(--cta-ink)", fontWeight: 700 }}>登入</Link>
-            <span style={{ color: "var(--text-secondary)", fontSize: "0.9375rem" }}>後即可回答，幫助更多長輩 💛</span>
+            <span style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", display: "inline-flex", alignItems: "center", gap: 4 }}>後即可回答，幫助更多長輩 <ELIcon name="heart" size={16} color="#F26B43" /></span>
           </div>
         )}
       </div>

@@ -1,23 +1,7 @@
 import Link from "next/link";
 import { ELIcon } from "@/components/layout/ELIcon";
-import { FontSizeCTA } from "@/components/guide/FontSizeCTA";
 
 export const metadata = { title: "我們的理念" };
-
-const THREE_STEPS = [
-  {
-    num: 1, icon: "search", title: "找資源",
-    desc: "在「資源查找」打字或照分類，例如「量血壓」「復康巴士」，馬上看到附近的服務。",
-  },
-  {
-    num: 2, icon: "phone", title: "一鍵打電話",
-    desc: "看到電話號碼，按一下就直接撥打，不用記電話號碼，也不需要手動輸入。",
-  },
-  {
-    num: 3, icon: "chat", title: "不會用就問",
-    desc: "加 LINE 好友，用講的也能查詢，在地志工會協助回應，不冰冷、不孤單。",
-  },
-];
 
 const STEPS = [
   { icon: "search",    title: "搜尋資源",   desc: "在首頁搜尋欄輸入需求（如「長照」、「復康巴士」），或依分類瀏覽 8 大服務類別，直接取得電話與地址。" },
@@ -29,11 +13,21 @@ const STEPS = [
 ];
 
 const TRUST_ITEMS = [
-  { icon: "heart",   title: "永遠免費",   desc: "所有資源與教學都不收費，也不會要求付出。" },
-  { icon: "pin",     title: "在地資源",   desc: "看到最合適的縣市鄉鎮，整理身邊就能找到的服務。" },
-  { icon: "social",  title: "真人協助",   desc: "社區志工協助到解答，不是冰冷的機器人。" },
-  { icon: "shield",  title: "安心可靠",   desc: "資料來自政府與民間公認資源，絕不亂推廣。" },
+  { icon: "heart",   title: "永遠免費",   desc: "所有資源與教學都不收費，也不會要您付款。" },
+  { icon: "pin",     title: "在地資源",   desc: "依您所在的縣市鄉鎮，整理身邊就用得到的服務。" },
+  { icon: "social",  title: "真人協助",   desc: "社區志工協助校對與解答，不是冷冰冰的機器。" },
+  { icon: "shield",  title: "安心可靠",   desc: "資料來自政府與民間公開資源，絕不要您匯款。" },
 ];
+
+/* 區塊標題（珊瑚直條 + 標題，對齊設計稿 SectionLabel） */
+function SectionHead({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+      <span style={{ width: 5, height: 22, borderRadius: 3, background: "#F26B43" }} />
+      <h2 style={{ margin: 0, fontSize: 23, fontWeight: 800, color: "#241F1B" }}>{children}</h2>
+    </div>
+  );
+}
 
 export default function GuidePage() {
   return (
@@ -42,105 +36,80 @@ export default function GuidePage() {
       <div style={{
         background: "linear-gradient(135deg,#FFF1E9 0%,#FFE7DD 60%,#FFF4EF 100%)",
         borderBottom: "1px solid #FFE7DD",
-        padding: "52px 0 44px",
-        textAlign: "center",
+        padding: "40px 0 36px",
       }}>
         <div className="wv-wrap">
-          <div style={{ fontSize: 14, fontWeight: 800, color: "#B23F1E", letterSpacing: 2, marginBottom: 16, textTransform: "uppercase" }}>
-            我們的理念
-          </div>
-          <h1 style={{ margin: "0 0 18px", fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 800, color: "#241F1B", lineHeight: 1.25 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff", color: "#B23F1E", fontSize: 14, fontWeight: 700, padding: "6px 14px", borderRadius: 999, marginBottom: 16 }}>
+            <ELIcon name="like" size={15} color="#F26B43" /> 我們的理念
+          </span>
+          <h1 style={{ margin: "0 0 14px", fontSize: "clamp(26px, 5vw, 42px)", fontWeight: 800, color: "#241F1B", lineHeight: 1.3 }}>
             把社區的好資源，<br />整理成一處好找的地方
           </h1>
-          <p style={{ margin: "0 auto", maxWidth: 560, fontSize: 17, color: "#574E47", lineHeight: 1.75 }}>
+          <p style={{ margin: 0, maxWidth: 620, fontSize: 17, color: "#574E47", lineHeight: 1.75 }}>
             政府和民間其實有很多服務，卻散在四處、不好找。幸福好厝邊把它們整理在一起，讓長輩和家人
-            <strong style={{ color: "#241F1B" }}>一站就找到、一鍵就聯絡</strong>。
+            <strong style={{ color: "#B23F1E" }}>一站就找到、一鍵就聯絡</strong>。
           </p>
         </div>
       </div>
 
-      <div className="wv-wrap" style={{ paddingTop: 52, paddingBottom: 64 }}>
+      <div className="wv-wrap" style={{ paddingTop: 40, paddingBottom: 56, display: "flex", flexDirection: "column", gap: 44 }}>
 
-        {/* 三步驟 */}
-        <div style={{ marginBottom: 56 }}>
-          <h2 style={{ margin: "0 0 24px", fontSize: 22, fontWeight: 800, color: "#241F1B" }}>三步驟・馬上會用</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
-            {THREE_STEPS.map((s) => (
-              <div key={s.num} style={{ background: "#fff", borderRadius: 18, border: "1px solid #F0E6DE", padding: "26px 22px" }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12, background: "#E0552E",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 17, fontWeight: 900, color: "#fff", marginBottom: 16,
-                }}>
-                  {s.num}
+        {/* 起源 */}
+        <section style={{ background: "linear-gradient(120deg,#FFF4EF,#FFE7DD)", borderRadius: 22, padding: "28px 28px", border: "1px solid #FFE7DD" }}>
+          <h2 style={{ margin: "0 0 18px", fontSize: 23, fontWeight: 800, color: "#241F1B" }}>起源</h2>
+          <p style={{ margin: 0, fontSize: 16.5, color: "#574E47", lineHeight: 1.85 }}>
+            幸福好厝邊（ELDERLINK）由堉璘團隊創立，使命是把台灣各地分散的長者資源互相連結，讓家屬與志工不必花時間搜尋，直接陪伴長輩。
+          </p>
+        </section>
+
+        {/* 六步上手 */}
+        <section>
+          <SectionHead>六步上手</SectionHead>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 16 }}>
+            {STEPS.map((s, i) => (
+              <div key={s.title} style={{ display: "flex", alignItems: "flex-start", gap: 14, background: "#fff", borderRadius: 18, border: "1px solid #F0E6DE", padding: "18px 18px", boxShadow: "0 2px 8px rgba(40,30,20,0.04)" }}>
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <span style={{ width: 50, height: 50, borderRadius: 14, background: "#FFF4EF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ELIcon name={s.icon} size={26} color="#F26B43" />
+                  </span>
+                  <span style={{ position: "absolute", top: -7, left: -7, width: 26, height: 26, borderRadius: "50%", background: "#E0552E", color: "#fff", fontSize: 14, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{i + 1}</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <ELIcon name={s.icon} size={22} color="#F26B43" />
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 18, fontWeight: 800, color: "#241F1B" }}>{s.title}</div>
+                  <p style={{ margin: "5px 0 0", fontSize: 15, color: "#574E47", lineHeight: 1.7 }}>{s.desc}</p>
                 </div>
-                <p style={{ margin: 0, fontSize: 15, color: "#574E47", lineHeight: 1.7 }}>{s.desc}</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* 覺得字太小？一鍵放大字級 */}
-        <FontSizeCTA />
-
-        {/* 起源 */}
-        <div style={{ marginBottom: 56, background: "linear-gradient(120deg,#FFF4EF,#FFE7DD)", borderRadius: 22, padding: "32px 36px", border: "1px solid #FFE7DD" }}>
-          <h2 style={{ margin: "0 0 14px", fontSize: 20, fontWeight: 800, color: "#241F1B" }}>起源</h2>
-          <p style={{ margin: 0, fontSize: 16, color: "#574E47", lineHeight: 1.8 }}>
-            幸福好厝邊（ELDERLINK）由堉璘團隊創立，使命是把台灣各地分散的長者資源互相連結，讓家屬與志工不必花時間搜尋，直接陪伴長輩。
-          </p>
-        </div>
-
-        {/* 六步上手 */}
-        <h2 style={{ margin: "0 0 24px", fontSize: 22, fontWeight: 800, color: "#241F1B" }}>六步上手</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18, marginBottom: 56 }}>
-          {STEPS.map((s, i) => (
-            <div key={s.title} style={{ background: "#fff", borderRadius: 18, border: "1px solid #F0E6DE", padding: "22px 20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: "#FFF4EF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <ELIcon name={s.icon} size={22} color="#F26B43" />
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: "#B23F1E" }}>STEP {i + 1}</div>
-                  <div style={{ fontSize: 17, fontWeight: 800, color: "#241F1B" }}>{s.title}</div>
-                </div>
+        {/* 您可以放心的四件事（自適應 2 欄，手機不再擠成 4 欄） */}
+        <section>
+          <SectionHead>您可以放心的四件事</SectionHead>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
+            {TRUST_ITEMS.map((t) => (
+              <div key={t.title} style={{ background: "#fff", borderRadius: 18, border: "1px solid #F0E6DE", padding: "22px 18px" }}>
+                <span style={{ width: 48, height: 48, borderRadius: 14, background: "#FFF4EF", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 13 }}>
+                  <ELIcon name={t.icon} size={25} color="#F26B43" />
+                </span>
+                <div style={{ fontSize: 17, fontWeight: 800, color: "#241F1B", marginBottom: 5 }}>{t.title}</div>
+                <p style={{ margin: 0, fontSize: 14.5, color: "#574E47", lineHeight: 1.65 }}>{t.desc}</p>
               </div>
-              <p style={{ margin: 0, fontSize: 14.5, color: "#574E47", lineHeight: 1.7 }}>{s.desc}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
 
-        {/* 您可以放心的四件事（單排） */}
-        <h2 style={{ margin: "0 0 20px", fontSize: 22, fontWeight: 800, color: "#241F1B" }}>您可以放心的四件事</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 52 }}>
-          {TRUST_ITEMS.map((t) => (
-            <div key={t.title} style={{ background: "#fff", borderRadius: 18, border: "1px solid #F0E6DE", padding: "22px 18px", textAlign: "center" }}>
-              <div style={{ width: 50, height: 50, borderRadius: 14, background: "#FFF4EF", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
-                <ELIcon name={t.icon} size={26} color="#F26B43" />
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "#241F1B", marginBottom: 6 }}>{t.title}</div>
-              <p style={{ margin: 0, fontSize: 14, color: "#574E47", lineHeight: 1.6 }}>{t.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* LINE 好友 CTA */}
-        <div style={{
-          background: "#06C755", borderRadius: 22, padding: "24px 28px",
-          display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", marginBottom: 24,
+        {/* 仍不會用 → LINE 好友（對齊設計稿珊瑚漸層） */}
+        <section style={{
+          background: "linear-gradient(120deg,#E0552E,#F26B43)", borderRadius: 22, padding: "22px 26px",
+          display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", boxShadow: "0 8px 20px rgba(224,85,46,0.26)",
         }}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" aria-hidden>
-              <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
-            </svg>
+          <div style={{ width: 50, height: 50, borderRadius: 14, background: "rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <ELIcon name="chat" size={26} color="#fff" />
           </div>
           <div style={{ flex: 1, minWidth: 200 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>還是不太會用？</div>
-            <div style={{ marginTop: 3, fontSize: 15, color: "rgba(255,255,255,0.88)", lineHeight: 1.5 }}>
+            <div style={{ marginTop: 3, fontSize: 15, color: "rgba(255,255,255,0.92)", lineHeight: 1.5 }}>
               加 LINE 好友，用講的問就有人回，不用怕。
             </div>
           </div>
@@ -149,13 +118,13 @@ export default function GuidePage() {
             target="_blank" rel="noopener noreferrer"
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
-              background: "#fff", color: "#06C755", borderRadius: 999, height: 46, padding: "0 22px",
+              background: "#fff", color: "#B23F1E", borderRadius: 999, height: 46, padding: "0 22px",
               fontSize: 15, fontWeight: 800, textDecoration: "none", flexShrink: 0,
             }}
           >
             加 LINE 好友
           </a>
-        </div>
+        </section>
 
         {/* 開始找資源 CTA */}
         <div style={{ textAlign: "center" }}>

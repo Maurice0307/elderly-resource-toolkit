@@ -6,6 +6,7 @@ import { BookmarkButton } from "@/components/resources/BookmarkButton";
 import { ShareButton } from "@/components/resources/ShareButton";
 import { ReportButton } from "@/components/resources/ReportButton";
 import { DwellTracker } from "@/components/resources/DwellTracker";
+import { MobileResourceDetail } from "@/components/resources/MobileResourceDetail";
 import { getResourceById } from "@/lib/resources/queries";
 import { createClient } from "@/lib/supabase/server";
 import { ELIcon } from "@/components/layout/ELIcon";
@@ -46,13 +47,36 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
   return (
     <div className="wv-fade">
       <DwellTracker />
-      <div className="wv-wrap" style={{ paddingTop: 26, paddingBottom: 56 }}>
+
+      {/* 手機版：完整詳情（對齊設計稿 page-detail） */}
+      <div className="wv-mobile-only">
+        <MobileResourceDetail
+          resourceId={resource.id}
+          name={resource.name}
+          summary={resource.summary}
+          scope={resource.scope}
+          address={resource.address}
+          categoryName={cat.name}
+          categoryIcon={cat.icon}
+          phone={resource.phone}
+          phoneHint={resource.phone_hint}
+          websiteUrl={resource.website_url}
+          sourceOrg={resource.source_org}
+          tags={resource.tags as string[] | null}
+          likeCount={resource.like_count}
+          lat={resource.latitude}
+          lng={resource.longitude}
+          backHref={`/resources?cat=${cat.slug}`}
+        />
+      </div>
+
+      <div className="wv-wrap wv-desktop-only" style={{ paddingTop: 26, paddingBottom: 56 }}>
         <div className="wv-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 340px", gap: 28, alignItems: "start" }}>
           {/* 左欄：主內容 */}
           <div>
             <Link
               href={`/resources?cat=${cat.slug}`}
-              className="wv-pill"
+              className="wv-pill wv-hideSm"
               style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 18 }}
             >
               <ELIcon name="chevron" size={18} color="#574E47" style={{ transform: "rotate(180deg)" }} /> 返回列表

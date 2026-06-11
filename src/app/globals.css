@@ -55,7 +55,10 @@ body {
   font-size: 16px;       /* 1rem → 支援系統動態放大 */
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   /* 動態字級安全：不裁切，字自動換行 */
   overflow-wrap: anywhere;
   word-break: normal;
@@ -331,6 +334,15 @@ button, [role="button"], a.btn, .btn {
   50%       { box-shadow: 0 0 0 9px rgba(224,85,46,0); }
 }
 
+/* ── iOS「加入主畫面」導引：浮現 + 箭頭擺動（對齊設計稿） ── */
+@keyframes alRise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: translateY(0); } }
+.al-install { animation: alRise .5s cubic-bezier(.22,1,.36,1) both; }
+.al-install-arrow { animation: alBob 1.6s ease-in-out infinite; }
+@keyframes alBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+@media (prefers-reduced-motion: reduce) {
+  .al-install, .al-install-arrow { animation: none; }
+}
+
 /* ── 詳情頁雙欄：手機收合為單欄（避免主欄被擠成直排）── */
 @media (max-width: 940px) {
   .wv-split { grid-template-columns: 1fr !important; gap: 22px !important; }
@@ -387,8 +399,21 @@ button, [role="button"], a.btn, .btn {
 /* ── 響應式：窄螢幕隱藏桌面元素 ── */
 @media (max-width: 940px) {
   .wv-nav     { display: none; }
-  .wv-burger  { display: inline-flex; }
+  /* 手機版：只保留底部導覽，移除頂部功能列（漢堡）與網頁頁尾 */
+  .wv-burger  { display: none; }
+  .wv-footer  { display: none; }
   .wv-hideSm  { display: none !important; }
+  /* 手機版背景純白，僅搜尋區帶色（對齊設計稿 Phone 白底） */
+  .wv {
+    background: #fff;
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+  /* 子頁（自帶返回列）：手機版隱藏頂部品牌列 */
+  .wv-subpage .wv-header { display: none; }
+  /* 手機版後台：子頁留 16px 邊距、不限寬；主控台用 .wv-admin-fullbleed 破出留白滿版 */
+  .wv-admin-body { padding: 16px !important; }
+  .wv-admin-body > div { max-width: none !important; margin: 0 !important; }
+  .wv-admin-fullbleed { margin: -16px -16px 0 !important; }
   .wv-tabbar {
     display: flex;
     position: fixed;
@@ -401,8 +426,6 @@ button, [role="button"], a.btn, .btn {
     box-shadow: 0 -4px 20px rgba(80,45,25,0.06);
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /* 內容與頁尾底部留白，避免被固定 tab bar 蓋住 */
-  .wv { padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (max-width: 600px) {
   .wv-wrap    { padding: 0 18px; }

@@ -55,9 +55,12 @@ export async function updateAndApproveResource(
 }
 
 export async function approveResource(resourceId: string) {
-  await assertAdmin();
+  const { userId } = await assertAdmin();
   const admin = createAdminClient();
-  await admin.from("resources").update({ status: "active" }).eq("id", resourceId);
+  await admin
+    .from("resources")
+    .update({ status: "active", approved_at: new Date().toISOString(), approved_by: userId })
+    .eq("id", resourceId);
   revalidatePath("/admin/resources");
 }
 
@@ -98,6 +101,33 @@ export async function deleteAnswer(answerId: string) {
   revalidatePath("/admin/questions");
 }
 
+// 管理員查證後設定最佳解答（不受發問者本人限制）→ 同時把問題標記為已解決
+export async function adminSetBestAnswer(questionId: string, answerId: string) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  const { data: q } = await admin.from("questions").select("accepted_answer_id").eq("id", questionId).single();
+  const prev = (q?.accepted_answer_id as string | null) ?? null;
+  if (prev && prev !== answerId) {
+    await admin.from("answers").update({ is_accepted: false }).eq("id", prev);
+  }
+  await admin.from("answers").update({ is_accepted: true }).eq("id", answerId);
+  await admin.from("questions").update({ accepted_answer_id: answerId, status: "resolved" }).eq("id", questionId);
+  revalidatePath("/admin/questions");
+  revalidatePath(`/qa/${questionId}`);
+}
+
+// 取消最佳解答 → 問題回到待查證
+export async function adminUnsetBestAnswer(questionId: string) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  const { data: q } = await admin.from("questions").select("accepted_answer_id").eq("id", questionId).single();
+  const prev = (q?.accepted_answer_id as string | null) ?? null;
+  if (prev) await admin.from("answers").update({ is_accepted: false }).eq("id", prev);
+  await admin.from("questions").update({ accepted_answer_id: null, status: "open" }).eq("id", questionId);
+  revalidatePath("/admin/questions");
+  revalidatePath(`/qa/${questionId}`);
+}
+
 // ── News moderation ────────────────────────────────────────────────────
 
 export async function hideNews(newsId: string) {
@@ -132,6 +162,29 @@ export async function deleteResource(resourceId: string) {
   if (callerRole !== "admin") redirect("/");
   const admin = createAdminClient();
   const { error } = await admin.from("resources").delete().eq("id", resourceId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/resources");
+}
+
+// 批次刪除（超級管理員限定）
+export async function deleteResources(ids: string[]) {
+  const { role: callerRole } = await assertAdmin();
+  if (callerRole !== "admin") redirect("/");
+  if (!ids || ids.length === 0) return;
+  const admin = createAdminClient();
+  const { error } = await admin.from("resources").delete().in("id", ids);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/resources");
+}
+
+// 批次改狀態（moderator 以上）— 用於批次上架/結束/封存
+export async function setResourcesStatus(ids: string[], status: "active" | "ended" | "archived") {
+  await assertAdmin();
+  if (!ids || ids.length === 0) return;
+  const admin = createAdminClient();
+  const patch: Record<string, unknown> = { status };
+  if (status === "active") patch.approved_at = new Date().toISOString();
+  const { error } = await admin.from("resources").update(patch).in("id", ids);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/resources");
 }

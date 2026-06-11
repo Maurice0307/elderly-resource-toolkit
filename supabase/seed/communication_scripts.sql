@@ -20,7 +20,7 @@ values (
     {"role":"志工","text":"大家好嗎？今天來拜訪一下！","reason":"語氣太隨便，缺乏尊重，長輩可能覺得不受重視。"}
   ]'::jsonb,
   array['敲門前先電話通知（若有電話）','拿出志工識別證主動出示','說明是誰介紹你來的，建立信任感','第一次拜訪不要待太久，10-15 分鐘即可'],
-  array['志工','探訪','第一印象']
+  array['志工探訪','探訪','第一印象']
 )
 on conflict (slug) do update
   set title=excluded.title, context=excluded.context, ok_examples=excluded.ok_examples,
@@ -44,7 +44,7 @@ values (
     {"role":"志工","text":"你最近有沒有什麼問題需要幫忙的？","reason":"開門見山問「有什麼問題」，讓長輩感覺自己是「需要被幫助的人」，有些人會因此防禦。"}
   ]'::jsonb,
   array['觀察環境找話題（照片、植物、獎狀、電視節目）','問長輩年輕時的故事，他們最喜歡分享過去','給真誠的讚美，不要誇張','讓長輩多說話，自己少說'],
-  array['志工','聊天','破冰']
+  array['志工破冰','聊天','破冰']
 )
 on conflict (slug) do update
   set title=excluded.title, context=excluded.context, ok_examples=excluded.ok_examples,
@@ -69,7 +69,7 @@ values (
     {"role":"家屬","text":"你要記得按時吃藥，不要讓我擔心。","reason":"帶有責備感，長輩會有壓力，反而不想講電話。"}
   ]'::jsonb,
   array['提一件今天發生的小事分享給父母','問父母最近在看什麼電視節目','說「上次你提到…」顯示你有在記得他說的事','偶爾傳一張自拍或食物照片，讓他感覺參與你的生活'],
-  array['家屬','溝通','日常關心']
+  array['日常關心','家屬','溝通']
 )
 on conflict (slug) do update
   set title=excluded.title, context=excluded.context, ok_examples=excluded.ok_examples,
@@ -94,7 +94,7 @@ values (
     {"role":"家屬","text":"老人家哪個沒有在痛，忍一下就好啦。","reason":"輕描淡寫長輩的感受，讓他覺得自己不被重視。"}
   ]'::jsonb,
   array['先重複長輩說的話（「你說你腳在痛…」），讓他感覺被聽見','不要急著給解決方案，先說「聽起來真的很辛苦」','避免說「老人家都這樣」、「沒事啦」','同理後再提建議，效果更好'],
-  array['家屬','情緒','同理心']
+  array['情感支持','家屬','同理心']
 )
 on conflict (slug) do update
   set title=excluded.title, context=excluded.context, ok_examples=excluded.ok_examples,
@@ -120,7 +120,7 @@ values (
     {"role":"家屬","text":"你不去我沒辦法管你！","reason":"放棄的語氣讓長輩覺得你不在乎，失去溝通機會。"}
   ]'::jsonb,
   array['用「我擔心」代替「你應該」，把焦點放在自己的感受','把就醫包裝成「順道」或「一起去」，降低抗拒感','找長輩信任的人（鄰居、老朋友）一起勸說效果更好','不要一次達成，分多次溝通也沒關係'],
-  array['就醫','勸導','困難溝通']
+  array['困難溝通','就醫','勸導']
 )
 on conflict (slug) do update
   set title=excluded.title, context=excluded.context, ok_examples=excluded.ok_examples,
@@ -145,8 +145,54 @@ values (
     {"role":"家屬","text":"你上次差點被騙，真的要更小心。","reason":"帶有責備意味，長輩會感到難堪而防禦，效果適得其反。"}
   ]'::jsonb,
   array['用真實案例（新聞故事）代替說教','建立一個簡單的家庭規則（轉帳前先打電話問我）','把 165 存進長輩手機聯絡人','定期（每個月）複習一次，不是說一次就夠了'],
-  array['防詐','困難溝通','金融安全']
+  array['防詐溝通','防詐','金融安全']
 )
 on conflict (slug) do update
   set title=excluded.title, context=excluded.context, ok_examples=excluded.ok_examples,
       ng_examples=excluded.ng_examples, tips=excluded.tips, updated_at=now();
+
+-- ── 照顧者篇 ──────────────────────────────────────
+insert into public.communication_scripts
+  (audience, slug, title, context, ok_examples, ng_examples, tips, tags)
+values (
+  'family',
+  'self-burnout',
+  '照顧到快撐不住，怎麼跟自己說',
+  '長期照顧家人的您，常把所有責任扛在身上，累到喘不過氣，又因為「想休息」而自責。這些話是說給辛苦的自己聽的。',
+  '[
+    {"role":"對自己說","text":"我已經做得很多了，會累是正常的，不是我不夠好。"},
+    {"role":"對自己說","text":"我先把自己照顧好，才有力氣照顧他。喘息一下不是偷懶。"},
+    {"role":"對自己說","text":"我可以打 0800-507-272 照顧者專線，找人聊聊、問問喘息服務。"}
+  ]'::jsonb,
+  '[
+    {"role":"別這樣想","text":"我是他的家人，再累也應該自己撐。","reason":"把責任全扛在身上，容易燃燒殆盡，對被照顧者也不好。"},
+    {"role":"別這樣想","text":"我請別人幫忙，是我不孝、沒用。","reason":"把求助當成失敗，會讓你錯過喘息服務等正當資源。"}
+  ]'::jsonb,
+  array['允許自己有情緒，累、煩、想哭都正常','求助與喘息是正當權利，不是不孝','把照顧者喘息專線 0800-507-272 存進手機','每天留 10 分鐘做一件純粹讓自己開心的小事'],
+  array['照顧者自我對話','照顧者','喘息']
+)
+on conflict (slug) do update
+  set title=excluded.title, context=excluded.context, ok_examples=excluded.ok_examples,
+      ng_examples=excluded.ng_examples, tips=excluded.tips, tags=excluded.tags, updated_at=now();
+
+insert into public.communication_scripts
+  (audience, slug, title, context, ok_examples, ng_examples, tips, tags)
+values (
+  'family',
+  'caregiver-family',
+  '手足不幫忙照顧，怎麼開口',
+  '照顧父母常落在一個人身上，其他手足卻像局外人。憋著怨氣或情緒爆發都傷感情，這裡是把話說開的方式。',
+  '[
+    {"role":"你可以說","text":"媽最近狀況比較多，我一個人有點吃力，想跟大家商量一下分工。"},
+    {"role":"你可以說","text":"你平日忙，那週末能不能固定回來一天，讓我也喘口氣？或是分擔一些醫藥費也好。"}
+  ]'::jsonb,
+  '[
+    {"role":"別這樣說","text":"都是我在顧，你們都不管！","reason":"指責性語氣會讓對方防禦、反駁，問題沒解決還傷感情。"},
+    {"role":"別這樣說","text":"算了，反正講了也沒用。","reason":"壓抑只會累積怨氣，最後一次爆發更難收拾。"}
+  ]'::jsonb,
+  array['用「我需要幫忙」代替「你都不幫忙」','把任務拆成具體小事（出錢、出力、跑一趟）','開家庭會議，讓每個人認領能做的部分','接受別人的方式不一定跟你一樣，重點是有參與'],
+  array['照顧者溝通','照顧者','手足分工']
+)
+on conflict (slug) do update
+  set title=excluded.title, context=excluded.context, ok_examples=excluded.ok_examples,
+      ng_examples=excluded.ng_examples, tips=excluded.tips, tags=excluded.tags, updated_at=now();

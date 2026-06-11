@@ -2,9 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ScriptDialog } from "@/components/scripts/ScriptDialog";
+import { MobileScriptDetail } from "@/components/scripts/MobileScriptDetail";
 import type { CommunicationScript } from "@/types/domain";
 
 type Params = { slug: string };
+
+// 與清單頁一致的情境排序，用來決定「下一個情境」
+const ORDER = [
+  "persuade-doctor", "anti-fraud-talk", "emotional-empathy", "beyond-did-you-eat",
+  "first-knock", "break-ice", "self-burnout", "caregiver-family",
+];
 
 const audienceLabel: Record<string, string> = {
   volunteer: "志工篇",
@@ -38,8 +45,23 @@ export default async function ScriptDetailPage({ params }: { params: Promise<Par
 
   const script = data as CommunicationScript;
 
+  // 找出「下一個情境」（依設計排序，循環）
+  const { data: allRows } = await supabase
+    .from("communication_scripts")
+    .select("slug, title")
+    .eq("status", "active");
+  const all = (allRows ?? []) as { slug: string; title: string }[];
+  all.sort((a, b) => (ORDER.indexOf(a.slug) + 1 || 99) - (ORDER.indexOf(b.slug) + 1 || 99));
+  const idx = all.findIndex((s) => s.slug === slug);
+  const next = all.length > 1 ? all[(idx + 1) % all.length] : null;
+
   return (
-    <main style={{ background: "var(--bg-page)", minHeight: "100%", paddingBottom: 24, maxWidth: 880, margin: "0 auto" }}>
+    <>
+      {/* 手機版：設計稿對話泡泡版型 */}
+      <MobileScriptDetail script={script} next={next} />
+
+      {/* 桌機版：原本版型 */}
+      <main className="wv-desktop-only" style={{ background: "var(--bg-page)", minHeight: "100%", paddingBottom: 24, maxWidth: 880, margin: "0 auto" }}>
       {/* 返回列 */}
       <div style={{ background: "#fff", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
         <Link
@@ -90,6 +112,7 @@ export default async function ScriptDetailPage({ params }: { params: Promise<Par
           ))}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }

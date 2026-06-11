@@ -13,7 +13,7 @@ export default async function ResourcesIndexPage({
 
   return (
     <div className="wv-fade">
-      <div style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD" }}>
+      <div className="wv-desktop-only" style={{ background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)", borderBottom: "1px solid #FFE7DD" }}>
         <div className="wv-wrap" style={{ padding: "34px 28px 30px" }}>
           <h1 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: "#241F1B", letterSpacing: -0.5 }}>資源查找</h1>
           <p style={{ margin: "8px 0 0", fontSize: 17, color: "#574E47" }}>

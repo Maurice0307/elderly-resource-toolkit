@@ -2,14 +2,18 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { postQuestion } from "@/lib/qa/actions";
+import { MobileSubHeader } from "@/components/layout/MobileSubHeader";
 
 export default function AskPage() {
   const [state, action, pending] = useActionState(postQuestion, null);
 
   return (
     <main style={{ background: "var(--bg-page)", minHeight: "100%", paddingBottom: 24 }}>
-      {/* 返回列 */}
-      <div style={{ background: "#fff", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
+      {/* 手機版返回列 */}
+      <MobileSubHeader title="我要提問" backHref="/qa" search={false} />
+
+      {/* 返回列（桌機） */}
+      <div className="wv-desktop-only" style={{ background: "#fff", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
         <Link
           href="/qa"
           style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.9375rem", fontWeight: 600, color: "var(--cta-ink)", textDecoration: "none" }}

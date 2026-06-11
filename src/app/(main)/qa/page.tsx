@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { MobileSubHeader } from "@/components/layout/MobileSubHeader";
 
 export const metadata = { title: "互助問答" };
 
@@ -45,15 +46,35 @@ export default async function QAPage({
   const questions = (data ?? []) as unknown as QuestionRow[];
 
   const filters = [
-    { key: "all",   label: "全部問題", href: "/qa" },
+    { key: "all",   label: "全部",     href: "/qa" },
     { key: "open",  label: "待回答",   href: "/qa?f=open" },
     { key: "local", label: "我的地區", href: "/qa?f=local" },
   ];
 
   return (
     <div className="wv-fade">
-      {/* 標題帶 */}
-      <div style={{
+      {/* 手機版返回列 */}
+      <MobileSubHeader title="互助問答" />
+
+      {/* 手機版篩選 chips */}
+      <div className="wv-mobile-only">
+        <div style={{ padding: "14px 18px 4px", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {filters.map(({ key, label, href }) => (
+            <Link key={key} href={href} style={{
+              display: "inline-flex", alignItems: "center", gap: 4,
+              padding: "8px 14px", borderRadius: 999, fontSize: 13, fontWeight: 700, textDecoration: "none",
+              background: f === key ? "#E0552E" : "#fff",
+              color: f === key ? "#fff" : "#574E47",
+              border: `1.5px solid ${f === key ? "#E0552E" : "#E4D7CC"}`,
+            }}>
+              {key === "local" && <ELIcon name="pin" size={13} color={f === key ? "#fff" : "#574E47"} />}{label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* 標題帶（桌機） */}
+      <div className="wv-desktop-only" style={{
         background: "linear-gradient(135deg,#FFF1E9,#FFE7DD)",
         borderBottom: "1px solid #FFE7DD", padding: "34px 0 30px",
       }}>
@@ -93,49 +114,43 @@ export default async function QAPage({
               <p style={{ fontSize: 18, fontWeight: 700 }}>暫無問題</p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {questions.map((q) => {
+            <div>
+              {questions.map((q, i) => {
                 const region = Array.isArray(q.region) ? q.region[0] : q.region;
                 const solved = q.status === "resolved";
                 return (
                   <Link
                     key={q.id}
                     href={`/qa/${q.id}`}
-                    className="wv-card click"
                     style={{
-                      display: "flex", alignItems: "flex-start", gap: 14,
-                      background: "#fff", borderRadius: 18,
-                      border: "1px solid #F0E6DE", padding: "22px 24px",
-                      textDecoration: "none",
+                      display: "flex", alignItems: "flex-start", gap: 12,
+                      padding: "16px 4px", textDecoration: "none",
+                      borderTop: i === 0 ? "none" : "1px solid #F0E6DE",
                     }}
                   >
-                    {/* QA icon 直接放，不包 chip */}
-                    <ELIcon name="qa" size={26} color="#F26B43" style={{ marginTop: 2, flexShrink: 0 }} />
-
+                    <ELIcon name="qa" size={22} color="#F26B43" style={{ marginTop: 3, flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ margin: "0 0 12px", fontSize: 20, fontWeight: 700, color: "#241F1B", lineHeight: 1.5 }}>
+                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#241F1B", lineHeight: 1.55 }}>
                         {q.title}
                       </h3>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                      <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         <span style={{
-                          fontSize: 13, fontWeight: 800, padding: "3px 10px", borderRadius: 999,
+                          display: "inline-flex", alignItems: "center", gap: 4,
+                          fontSize: 13, fontWeight: 800, padding: "4px 10px", borderRadius: 999,
                           background: solved ? "#E7F4EC" : "#FFF1E8",
                           color: solved ? "#2E7D52" : "#C2410C",
                         }}>
-                          {solved ? "✓ 已解決" : "待回答"}
+                          {solved ? <><ELIcon name="check" size={13} color="#2E7D52" /> 已解決</> : "待回答"}
                         </span>
                         {region?.name && (
-                          <span style={{ fontSize: 13.5, color: "#6E645C", display: "flex", alignItems: "center", gap: 4 }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 13, fontWeight: 600, color: "#B23F1E", background: "#FFF4EF", padding: "4px 10px", borderRadius: 999 }}>
                             <ELIcon name="pin" size={13} color="#F26B43" /> {region.name}
                           </span>
                         )}
-                        <span style={{ fontSize: 13.5, color: "#6E645C" }}>{q.answer_count} 則回答</span>
-                        <span style={{ fontSize: 13.5, color: "#6E645C", marginLeft: "auto" }}>{getAgo(q.created_at)}</span>
+                        <span style={{ fontSize: 13.5, color: "#6E645C" }}>{q.answer_count} 則回答 · {getAgo(q.created_at)}</span>
                       </div>
                     </div>
-
-                    {/* 右側 chevron */}
-                    <ELIcon name="chevron" size={22} color="#6E645C" style={{ marginTop: 4, flexShrink: 0 }} />
+                    <ELIcon name="chevron" size={20} color="#CBBFB5" style={{ marginTop: 3, flexShrink: 0 }} />
                   </Link>
                 );
               })}

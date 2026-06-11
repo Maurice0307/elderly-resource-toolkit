@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ELIcon } from "./ELIcon";
+import { BrandLogo } from "./BrandLogo";
 
 const NAV_ITEMS = [
   { label: "首頁",     href: "/" },
@@ -23,9 +24,7 @@ function BrandMark() {
         background: "linear-gradient(135deg,#F2764F,#E0552E)",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M3 10.5 L12 3 L21 10.5 V20 a1 1 0 0 1-1 1 H15 v-5 H9 v5 H4 a1 1 0 0 1-1-1 Z" />
-        </svg>
+        <BrandLogo size={24} color="#fff" />
       </div>
       <div>
         <div style={{ fontSize: 16, fontWeight: 900, color: "#241F1B", lineHeight: 1.1, letterSpacing: -0.3 }}>幸福好厝邊</div>
@@ -37,7 +36,7 @@ function BrandMark() {
 
 export function WebFooter() {
   return (
-    <footer style={{ marginTop: 64, borderTop: "1px solid #F0E6DE", background: "#fff" }}>
+    <footer className="wv-footer" style={{ marginTop: 64, borderTop: "1px solid #F0E6DE", background: "#fff" }}>
       <div
         className="wv-wrap"
         style={{

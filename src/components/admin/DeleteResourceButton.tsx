@@ -1,6 +1,7 @@
 "use client";
 import { useTransition } from "react";
 import { deleteResource } from "@/lib/admin/actions";
+import { adBtn } from "@/components/admin/adminUi";
 
 export function DeleteResourceButton({ resourceId, resourceName }: { resourceId: string; resourceName: string }) {
   const [isPending, startTransition] = useTransition();
@@ -14,8 +15,7 @@ export function DeleteResourceButton({ resourceId, resourceName }: { resourceId:
     <button
       onClick={handleClick}
       disabled={isPending}
-      className="rounded-lg px-3 py-1.5 text-sm font-semibold transition disabled:opacity-50"
-      style={{ background: "#FEE2E2", color: "#DC2626", border: "1px solid #FCA5A5" }}
+      style={{ ...adBtn("alert"), opacity: isPending ? 0.5 : 1 }}
     >
       {isPending ? "刪除中…" : "刪除"}
     </button>

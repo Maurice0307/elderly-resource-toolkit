@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireRole } from "@/lib/auth/requireRole";
 import { NewsAdminPanel } from "@/components/admin/NewsAdminPanel";
+import { AdPageHead } from "@/components/admin/adminUi";
 
 export const metadata = { title: "新聞管理" };
 
@@ -16,13 +17,7 @@ export default async function AdminNewsPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-        📰 新聞管理
-      </h1>
-      <p className="mt-1 text-lg" style={{ color: "var(--text-muted)" }}>
-        新增、上架、下架長輩友善新聞
-      </p>
-
+      <AdPageHead title="新聞管理" desc="新增、上架、下架長輩友善新聞" />
       <NewsAdminPanel news={data ?? []} />
     </div>
   );

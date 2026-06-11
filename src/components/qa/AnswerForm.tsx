@@ -20,7 +20,7 @@ export function AnswerForm({ questionId }: { questionId: string }) {
         name="body"
         required
         rows={5}
-        placeholder="分享你知道的，幫助更多人 🙌"
+        placeholder="分享你知道的，幫助更多人"
         className="w-full rounded-2xl border px-5 py-4 text-xl outline-none transition focus:ring-2"
         style={{ borderColor: "var(--border)", background: "var(--bg-elevated)", color: "var(--text-primary)", resize: "vertical" }}
       />

@@ -20,7 +20,7 @@ export async function requireRole(min: "moderator" | "admin") {
     .single();
 
   const role = (profile?.role ?? "user") as AppRole;
-  if (roleRank[role] < roleRank[min]) redirect("/");
+  if (roleRank[role] < roleRank[min]) redirect("/profile?denied=admin");
 
   return {
     user,

@@ -56,9 +56,15 @@ export async function GET(req: NextRequest) {
     .select("id, name, summary, description, phone, phone_hint, address, website_url, scope, status, identity_tags, tags, source_org, source_url, created_at, subcategory_id, region_id")
     .order("created_at", { ascending: false });
 
-  if (statusFilter) query = query.eq("status", statusFilter);
-  if (subcatFilterIds && subcatFilterIds.length > 0) query = query.in("subcategory_id", subcatFilterIds);
-  if (regionFilterIds && regionFilterIds.length > 0) query = query.in("region_id", regionFilterIds);
+  // 若帶 ids（批次匯出選取的項目），優先用 ids，忽略其他篩選
+  const idsParam = (searchParams.get("ids") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (idsParam.length > 0) {
+    query = query.in("id", idsParam);
+  } else {
+    if (statusFilter) query = query.eq("status", statusFilter);
+    if (subcatFilterIds && subcatFilterIds.length > 0) query = query.in("subcategory_id", subcatFilterIds);
+    if (regionFilterIds && regionFilterIds.length > 0) query = query.in("region_id", regionFilterIds);
+  }
 
   const { data: resources, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

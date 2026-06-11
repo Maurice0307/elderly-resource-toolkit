@@ -13,11 +13,23 @@ const IDENTITIES = [
   { key: "volunteer", icon: "like",  name: "我是志工", desc: "想回答問題、分享在地資源" },
 ];
 
+// 縣市由北到南排序（涵蓋 台/臺 兩種寫法）
+const NORTH_TO_SOUTH = [
+  "基隆市", "臺北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣",
+  "臺中市", "彰化縣", "南投縣", "雲林縣", "嘉義市", "嘉義縣", "臺南市",
+  "高雄市", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣", "金門縣", "連江縣",
+];
+function countyOrder(name: string): number {
+  const i = NORTH_TO_SOUTH.indexOf(name.replace(/台/g, "臺"));
+  return i < 0 ? 999 : i;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onboardingAction = completeOnboarding as any;
 
 export function Onboarding({ defaultName }: { defaultName: string }) {
   const [state, action, pending] = useActionState<OnboardingState, FormData>(onboardingAction, null);
+  const [name, setName] = useState(defaultName);
   const [identity, setIdentity] = useState("");
   const [counties, setCounties] = useState<County[]>([]);
   const [regionPickerOpen, setRegionPickerOpen] = useState(false);
@@ -27,7 +39,9 @@ export function Onboarding({ defaultName }: { defaultName: string }) {
 
   useEffect(() => {
     fetch("/api/location/regions").then((r) => r.json())
-      .then((d) => setCounties(Array.isArray(d) ? d : []))
+      .then((d) => setCounties(
+        (Array.isArray(d) ? d : []).slice().sort((a: County, b: County) => countyOrder(a.name) - countyOrder(b.name)),
+      ))
       .catch(() => {});
   }, []);
 
@@ -55,8 +69,20 @@ export function Onboarding({ defaultName }: { defaultName: string }) {
 
         <h1 style={{ margin: "0 0 6px", fontSize: 26, fontWeight: 800, color: "#241F1B" }}>請問您是？</h1>
         <p style={{ margin: "0 0 20px", fontSize: 16, color: "#574E47", lineHeight: 1.6 }}>
-          {defaultName ? `${defaultName}，` : ""}我們會依照您的身分，優先推薦合適的內容
+          {name.trim() ? `${name.trim()}，` : ""}我們會依照您的身分，優先推薦合適的內容
         </p>
+
+        {/* 稱呼 */}
+        <div style={{ marginBottom: 22 }}>
+          <label style={{ display: "block", fontSize: 15, fontWeight: 700, color: "#574E47", marginBottom: 8 }}>您的稱呼</label>
+          <input
+            name="display_name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="想讓大家怎麼稱呼您？"
+            style={{ width: "100%", border: "2px solid #E4D7CC", borderRadius: 13, padding: "13px 16px", fontSize: 17, fontWeight: 600, color: "#241F1B", background: "#fff", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
+          />
+        </div>
 
         {/* 身分卡 */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -141,11 +167,11 @@ export function Onboarding({ defaultName }: { defaultName: string }) {
         {/* 完成 */}
         <div style={{ position: "sticky", bottom: 0, background: "#fff", padding: "16px 0 24px", marginTop: 16 }}>
           <button
-            type="submit" disabled={!identity || pending}
+            type="submit" disabled={!identity || !name.trim() || pending}
             style={{
               width: "100%", height: 56, borderRadius: 999, border: "none",
-              background: !identity || pending ? "#E4D7CC" : "#E0552E", color: "#fff",
-              fontSize: 18, fontWeight: 800, cursor: !identity || pending ? "not-allowed" : "pointer",
+              background: !identity || !name.trim() || pending ? "#E4D7CC" : "#E0552E", color: "#fff",
+              fontSize: 18, fontWeight: 800, cursor: !identity || !name.trim() || pending ? "not-allowed" : "pointer",
               fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
               boxShadow: !identity || pending ? "none" : "0 6px 16px rgba(224,85,46,0.26)",
             }}

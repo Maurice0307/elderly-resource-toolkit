@@ -62,7 +62,7 @@ export function HeroSearch() {
 
   const submit = () => {
     const trimmed = q.trim();
-    router.push(trimmed ? `/resources?q=${encodeURIComponent(trimmed)}` : "/resources");
+    router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}&mode=intent` : "/search");
   };
 
   return (
@@ -120,7 +120,7 @@ export function HeroSearch() {
               }}
             />
           </div>
-          <VoiceMicButton onResult={(t) => { setQ(t); router.push(`/resources?q=${encodeURIComponent(t)}`); }} />
+          <VoiceMicButton onResult={(t) => { setQ(t); router.push(`/search?q=${encodeURIComponent(t)}&mode=intent`); }} />
           <button
             onClick={submit}
             style={{
@@ -142,7 +142,7 @@ export function HeroSearch() {
           {HOT.map((h) => (
             <button
               key={h}
-              onClick={() => { setQ(h); router.push(`/resources?q=${encodeURIComponent(h)}`); }}
+              onClick={() => { setQ(h); router.push(`/search?q=${encodeURIComponent(h)}&mode=intent`); }}
               style={{
                 border: "1.5px solid #FFD6C7", background: "rgba(255,255,255,0.6)",
                 color: "#B23F1E", fontSize: 14.5, fontWeight: 700, padding: "6px 14px",

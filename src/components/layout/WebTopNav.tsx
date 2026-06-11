@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ELIcon } from "./ELIcon";
+import { BrandLogo } from "./BrandLogo";
 
 const NAV_ITEMS = [
   { key: "home",      label: "首頁",     icon: "home",   href: "/" },
@@ -25,6 +26,17 @@ const MORE_ITEMS = [
 type RegionDistrict = { id: string; code: string; name: string };
 type RegionCounty = { id: string; code: string; name: string; districts: RegionDistrict[] };
 
+// 縣市由北到南排序（涵蓋 台/臺 兩種寫法）
+const NORTH_TO_SOUTH = [
+  "基隆市", "臺北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣",
+  "臺中市", "彰化縣", "南投縣", "雲林縣", "嘉義市", "嘉義縣", "臺南市",
+  "高雄市", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣", "金門縣", "連江縣",
+];
+function countyOrder(name: string): number {
+  const i = NORTH_TO_SOUTH.indexOf(name.replace(/台/g, "臺"));
+  return i < 0 ? 999 : i;
+}
+
 function Brand() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -34,9 +46,7 @@ function Brand() {
         display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: "0 4px 12px rgba(224,85,46,0.32)",
       }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M3 10.5 L12 3 L21 10.5 V20 a1 1 0 0 1-1 1 H15 v-5 H9 v5 H4 a1 1 0 0 1-1-1 Z" />
-        </svg>
+        <BrandLogo size={24} color="#fff" />
       </div>
       <div>
         <div style={{ fontSize: 17, fontWeight: 900, color: "#241F1B", lineHeight: 1.1, letterSpacing: -0.3 }}>幸福好厝邊</div>
@@ -49,23 +59,34 @@ function Brand() {
 function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
   const [counties, setCounties] = useState<RegionCounty[]>([]);
   const [openCounty, setOpenCounty] = useState<string | null>(null);
+  const [savedCode, setSavedCode] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const sc = (() => { try { return localStorage.getItem("el_region_code") ?? ""; } catch { return ""; } })();
+    setSavedCode(sc);
     fetch("/api/location/regions")
       .then((r) => r.json())
-      .then((data) => { setCounties(Array.isArray(data) ? data : []); setLoading(false); })
+      .then((data: RegionCounty[]) => {
+        const list = (Array.isArray(data) ? data : []).slice().sort((a, b) => countyOrder(a.name) - countyOrder(b.name));
+        setCounties(list);
+        setLoading(false);
+        // 預設展開：目前已選的縣市，否則第一個
+        const match = list.find((c) => c.code === sc || c.districts.some((d) => d.code === sc));
+        setOpenCounty(match?.code ?? list[0]?.code ?? null);
+      })
       .catch(() => setLoading(false));
   }, []);
 
-  async function selectDistrict(code: string, name: string) {
+  async function pick(code: string, name: string) {
     setSaving(true);
     try {
       await fetch("/api/location/set", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
       localStorage.setItem("el_region_label", name);
       localStorage.setItem("el_region_code", code);
     } catch { /* ignore */ }
+    window.dispatchEvent(new CustomEvent("el:region-changed", { detail: { label: name, code } }));
     onClose(name);
   }
 
@@ -75,79 +96,96 @@ function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
       localStorage.removeItem("el_region_label");
       localStorage.removeItem("el_region_code");
     } catch { /* ignore */ }
+    window.dispatchEvent(new CustomEvent("el:region-changed", { detail: { label: "全台灣", code: "" } }));
     onClose(undefined);
   }
+
+  const activeCounty = counties.find((c) => c.code === openCounty) ?? null;
 
   return (
     <div
       onClick={() => onClose()}
-      style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(28,18,12,0.55)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(28,18,12,0.55)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 26, boxShadow: "0 30px 70px rgba(0,0,0,0.35)",
-          width: "min(480px, 94vw)", maxHeight: "78vh", display: "flex", flexDirection: "column", overflow: "hidden",
+          background: "#fff", borderRadius: "24px 24px 0 0", boxShadow: "0 -22px 60px rgba(0,0,0,0.28)",
+          width: "100%", maxWidth: 560, maxHeight: "82dvh", display: "flex", flexDirection: "column", overflow: "hidden",
         }}
       >
         {/* 頭 */}
-        <div style={{ padding: "18px 20px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #F0E6DE" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <ELIcon name="pin" size={20} color="#F26B43" />
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#241F1B" }}>選擇你的地區</span>
+        <div style={{ flexShrink: 0, padding: "18px 20px 14px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderBottom: "1px solid #EFE5DC" }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#241F1B" }}>變更地區</div>
+            <div style={{ fontSize: 13, color: "#6E645C", marginTop: 3 }}>選擇縣市，再選行政區</div>
           </div>
-          <button onClick={() => onClose()} style={{ border: "none", background: "#FAF7F5", width: 36, height: 36, borderRadius: 999, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ELIcon name="close" size={18} color="#574E47" />
+          <button onClick={() => onClose()} aria-label="關閉" style={{ flexShrink: 0, border: "1px solid #E4D7CC", background: "#fff", width: 38, height: 38, borderRadius: 999, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ELIcon name="close" size={20} color="#574E47" stroke={2.2} />
           </button>
         </div>
-        {/* 列表 */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "32px 0", color: "#6E645C", fontSize: 15 }}>載入地區資料⋯</div>
-          ) : counties.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "32px 0", color: "#6E645C", fontSize: 15 }}>無法取得地區資料</div>
-          ) : (
-            counties.map((county) => (
-              <div key={county.code}>
-                <button
-                  onClick={() => setOpenCounty(openCounty === county.code ? null : county.code)}
-                  style={{
-                    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "10px 12px", borderRadius: 10, border: "none", background: "transparent",
-                    cursor: "pointer", font: "inherit", fontSize: 16, fontWeight: 800, color: "#241F1B",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#FAF7F5")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  {county.name}
-                  <ELIcon name="chevron" size={16} color="#6E645C" style={{ transform: openCounty === county.code ? "rotate(270deg)" : "rotate(90deg)", transition: "transform 0.2s" }} />
-                </button>
-                {openCounty === county.code && (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 5, padding: "4px 8px 10px" }}>
-                    {county.districts.map((d) => (
+
+        {/* 雙欄：左縣市 / 右行政區 */}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px 0", color: "#6E645C", fontSize: 15 }}>載入地區資料⋯</div>
+        ) : counties.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 0", color: "#6E645C", fontSize: 15 }}>無法取得地區資料</div>
+        ) : (
+          <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+            {/* 左：縣市 */}
+            <div style={{ width: 140, flexShrink: 0, overflowY: "auto", borderRight: "1px solid #F0E6DE", background: "#FBF7F4" }}>
+              {counties.map((c) => {
+                const on = c.code === openCounty;
+                return (
+                  <button
+                    key={c.code}
+                    onClick={() => setOpenCounty(c.code)}
+                    style={{
+                      width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 6,
+                      padding: "14px 12px 14px 13px", border: "none",
+                      borderLeft: "3px solid " + (on ? "#E0552E" : "transparent"),
+                      background: on ? "#fff" : "transparent",
+                      color: on ? "#B23F1E" : "#574E47", fontSize: 16, fontWeight: 800,
+                      font: "inherit", cursor: "pointer",
+                    }}
+                  >
+                    {c.name}
+                    {on && <ELIcon name="pin" size={15} color="#F26B43" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 右：行政區（含「全區」） */}
+            <div style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>
+              {activeCounty && (
+                <>
+                  {[{ code: activeCounty.code, name: "全區", save: activeCounty.name }, ...activeCounty.districts.map((d) => ({ code: d.code, name: d.name, save: `${activeCounty.name} · ${d.name}` }))].map((d) => {
+                    const sel = savedCode === d.code;
+                    return (
                       <button
                         key={d.code}
                         disabled={saving}
-                        onClick={() => selectDistrict(d.code, d.name)}
+                        onClick={() => pick(d.code, d.save)}
                         style={{
-                          padding: "9px 6px", borderRadius: 10, border: "1.5px solid #E4D7CC",
-                          background: "#fff", cursor: "pointer", font: "inherit",
-                          fontSize: 14.5, fontWeight: 700, color: "#574E47",
+                          width: "100%", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                          padding: "13px 16px", border: "none", background: "transparent", borderBottom: "1px solid #F7F1EC",
+                          fontSize: 16, fontWeight: sel ? 800 : 600, color: sel ? "#B23F1E" : "#241F1B", font: "inherit", cursor: "pointer",
                         }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "#FFF4EF"; e.currentTarget.style.borderColor = "#F26B43"; e.currentTarget.style.color = "#B23F1E"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = "#E4D7CC"; e.currentTarget.style.color = "#574E47"; }}
                       >
                         {d.name}
+                        {sel && <ELIcon name="check" size={18} color="#E0552E" />}
                       </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-        {/* 底部：清除按鈕 */}
-        <div style={{ padding: "12px 20px 16px", borderTop: "1px solid #F0E6DE" }}>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 底部：不篩選 */}
+        <div style={{ flexShrink: 0, padding: "12px 20px calc(14px + env(safe-area-inset-bottom))", borderTop: "1px solid #F0E6DE" }}>
           <button
             onClick={clearRegion}
             style={{
@@ -234,7 +272,7 @@ function MobileMenu({ onClose, currentPath }: { onClose: () => void; currentPath
   );
 }
 
-function AccountMenu({ user, onClose, onLogout }: { user: { email?: string; name?: string }; onClose: () => void; onLogout: () => void }) {
+function AccountMenu({ user, onClose, onLogout }: { user: { email?: string; phone?: string; name?: string; avatar?: string }; onClose: () => void; onLogout: () => void }) {
   const initial = (user.name || user.email || "?")[0].toUpperCase();
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 55 }}>
@@ -250,15 +288,28 @@ function AccountMenu({ user, onClose, onLogout }: { user: { email?: string; name
         }}
       >
         <div style={{ padding: "16px 18px", display: "flex", alignItems: "center", gap: 12, background: "#FFF4EF" }}>
-          <div style={{
-            width: 46, height: 46, borderRadius: 999, flexShrink: 0,
-            background: "linear-gradient(135deg,#FFB38F,#E0552E)",
-            color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 20, fontWeight: 800,
-          }}>{initial}</div>
+          {user.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatar} alt={user.name || ""} style={{ width: 46, height: 46, borderRadius: 999, flexShrink: 0, objectFit: "cover" }} />
+          ) : (
+            <div style={{
+              width: 46, height: 46, borderRadius: 999, flexShrink: 0,
+              background: "linear-gradient(135deg,#FFB38F,#E0552E)",
+              color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 20, fontWeight: 800,
+            }}>{initial}</div>
+          )}
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: "#241F1B" }}>{user.name || "使用者"}</div>
-            <div style={{ fontSize: 13.5, color: "#B23F1E", fontWeight: 700 }}>{user.email}</div>
+            <div style={{ fontSize: 13.5, color: "#B23F1E", fontWeight: 700 }}>
+              {user.email && !user.email.endsWith("@line.users")
+                ? user.email
+                : user.email?.endsWith("@line.users")
+                ? "LINE 帳號"
+                : user.phone
+                ? `手機 ${user.phone.replace(/^\+886/, "0")}`
+                : "會員"}
+            </div>
           </div>
         </div>
         <div style={{ padding: 8 }}>
@@ -310,7 +361,7 @@ export function WebTopNav() {
   const [acctOpen, setAcctOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [regionLabel, setRegionLabel] = useState<string | null>(null);
-  const [user, setUser] = useState<{ email?: string; name?: string } | null>(null);
+  const [user, setUser] = useState<{ email?: string; phone?: string; name?: string; avatar?: string } | null>(null);
   const [mounted, setMounted] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -336,19 +387,23 @@ export function WebTopNav() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }: { data: { user: { email?: string; user_metadata?: Record<string, string> } | null } }) => {
+    supabase.auth.getUser().then(({ data }: { data: { user: { email?: string; phone?: string; user_metadata?: Record<string, string> } | null } }) => {
       if (data.user) {
         setUser({
           email: data.user.email,
-          name: data.user.user_metadata?.full_name || data.user.user_metadata?.name,
+          phone: data.user.phone,
+          name: data.user.user_metadata?.display_name || data.user.user_metadata?.full_name || data.user.user_metadata?.name,
+          avatar: data.user.user_metadata?.avatar_url,
         });
       }
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { user: { email?: string; user_metadata?: Record<string, string> } } | null) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { user: { email?: string; phone?: string; user_metadata?: Record<string, string> } } | null) => {
       if (session?.user) {
         setUser({
           email: session.user.email,
-          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+          phone: session.user.phone,
+          name: session.user.user_metadata?.display_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+          avatar: session.user.user_metadata?.avatar_url,
         });
       } else {
         setUser(null);
@@ -458,19 +513,21 @@ export function WebTopNav() {
 
         {/* 右側工具列 */}
         <div className="wv-headright">
-          {/* 字級（桌面才顯示） */}
+          {/* 字級（手機與桌面皆顯示） */}
           <button
-            className="wv-pill wv-hideSm"
+            className="wv-pill"
             title="調整字級"
             aria-label="調整字級"
-            style={{ width: 46, padding: 0, justifyContent: "center" }}
+            style={{ width: 46, padding: 0, justifyContent: "center", flexShrink: 0 }}
             onClick={() => {
               const main = document.querySelector("main");
               if (!main) return;
               const current = parseFloat(main.style.zoom || "1");
               const scales = [1, 1.14, 1.3];
               const idx = scales.indexOf(current);
-              main.style.zoom = String(scales[(idx + 1) % scales.length]);
+              const next = scales[(idx + 1) % scales.length];
+              main.style.zoom = String(next);
+              try { localStorage.setItem("el_font_scale", String(next)); } catch {}
             }}
           >
             <ELIcon name="textsize" size={20} color="#F26B43" />
@@ -496,14 +553,19 @@ export function WebTopNav() {
               onClick={() => setAcctOpen(true)}
               style={{ paddingLeft: 6, flexShrink: 0 }}
             >
-              <span style={{
-                width: 34, height: 34, borderRadius: 999, flexShrink: 0,
-                background: "linear-gradient(135deg,#FFB38F,#E0552E)",
-                color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 16, fontWeight: 800,
-              }}>
-                {(user.name || user.email || "?")[0].toUpperCase()}
-              </span>
+              {user.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.avatar} alt={user.name || ""} style={{ width: 34, height: 34, borderRadius: 999, flexShrink: 0, objectFit: "cover" }} />
+              ) : (
+                <span style={{
+                  width: 34, height: 34, borderRadius: 999, flexShrink: 0,
+                  background: "linear-gradient(135deg,#FFB38F,#E0552E)",
+                  color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 16, fontWeight: 800,
+                }}>
+                  {(user.name || user.email || "?")[0].toUpperCase()}
+                </span>
+              )}
               <span className="wv-hideSm" style={{ whiteSpace: "nowrap" }}>
                 {user.name || user.email}
               </span>

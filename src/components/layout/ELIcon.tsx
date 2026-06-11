@@ -46,7 +46,7 @@ const PATHS: Record<string, string> = {
   housing:   '<path d="M4 11l8-6.2 8 6.2"/><path d="M6 9.7V19h12V9.7"/><path d="M10 19v-5h4v5"/>',
   finance:   '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10.5h18"/><circle cx="16.5" cy="14.2" r="1.3"/>',
   social:    '<circle cx="9" cy="8" r="3.2"/><path d="M3.6 19a5.4 5.4 0 0 1 10.8 0"/><path d="M16 6.4a3 3 0 0 1 0 5.4"/><path d="M17.6 19a5.5 5.5 0 0 0-2.4-4.6"/>',
-  leisure:   '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2"/>',
+  leisure:   '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/>',
   mail:      '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.6 6.5 12 12.7l8.4-6.2"/>',
   link:      '<path d="M10 13.5a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1.5 1.5"/><path d="M14 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5L12.5 17"/>',
   copy:      '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2.5"/>',

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ELIcon } from "@/components/layout/ELIcon";
 
 type Category = {
@@ -59,68 +60,94 @@ const DISTRICT_CODE: Record<string, string> = {
 };
 
 
-function ScopeTag({ scope }: { scope?: string | null }) {
-  const local = scope === "local";
+/* 台灣地址 → 縣市名（取開頭三字 + 縣/市） */
+function countyOf(address?: string | null): string | null {
+  if (!address) return null;
+  const m = address.match(/^\s*(.{2}[縣市])/);
+  return m ? m[1] : null;
+}
+
+/* 地區徽章（對齊設計稿 LocBadge：在地＝藍色 + 縣市名） */
+function LocBadge({ scope, address }: { scope?: string | null; address?: string | null }) {
+  const national = scope === "national";
+  const label = national ? "全國" : (countyOf(address) || "在地");
   return (
     <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5, fontWeight: 800,
-      padding: "3px 10px", borderRadius: 999,
-      background: local ? "#FFF4EF" : "#EDF2FF",
-      color: local ? "#B23F1E" : "#2952B3",
+      display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", flexShrink: 0,
+      fontSize: 13, fontWeight: 600, padding: "4px 10px", borderRadius: 999,
+      background: national ? "#FFE7DD" : "#EAF1FB",
+      color: national ? "#B23F1E" : "#2A63C0",
     }}>
-      <ELIcon name={local ? "pin" : "shield"} size={12} color={local ? "#F26B43" : "#2952B3"} />
-      {local ? "在地服務" : "全國專線"}
+      {label}
     </span>
   );
 }
 
-function ResourceCard({ res, catSlug }: { res: ResourceItem; catSlug: string }) {
+/* 撥打電話按鈕（對齊設計稿 CallButton：大字、明顯、最小點擊區 48） */
+function CallButton({ phone }: { phone: string }) {
+  const tel = "tel:" + String(phone).replace(/[^0-9+]/g, "");
   return (
-    <Link
-      href={`/resources/${catSlug}/${res.id}`}
-      className="wv-card click"
+    <a href={tel} onClick={(e) => e.stopPropagation()} style={{
+      textDecoration: "none", display: "flex", alignItems: "center", gap: 10, minHeight: 48, width: "100%",
+      padding: "0 16px", borderRadius: 12, border: "1.5px solid #F26B43", background: "#FFF4EF",
+    }}>
+      <ELIcon name="phone" size={22} color="#B23F1E" />
+      <span style={{ fontSize: 18, fontWeight: 800, color: "#B23F1E", letterSpacing: 0.5, fontVariantNumeric: "tabular-nums" }}>{phone}</span>
+      <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 800, color: "#B23F1E" }}>撥打 ›</span>
+    </a>
+  );
+}
+
+/* scope 篩選 chip（對齊設計稿 Chip） */
+function ScopeChip({ active, onClick, children }: { active?: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} style={{
+      display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
+      padding: "8px 14px", borderRadius: 999, fontSize: 13, fontWeight: 700, font: "inherit", cursor: "pointer",
+      background: active ? "#E0552E" : "#fff", color: active ? "#fff" : "#574E47",
+      border: "1.5px solid " + (active ? "#E0552E" : "#E4D7CC"),
+    }}>{children}</button>
+  );
+}
+
+/* 資源卡（完全對齊設計稿 ResourceCard：左側珊瑚色邊 + 撥打鈕 + 標籤） */
+function ResourceCard({ res, catSlug }: { res: ResourceItem; catSlug: string }) {
+  const router = useRouter();
+  const url = `/resources/${catSlug}/${res.id}`;
+  const go = () => router.push(url);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={go}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }}
       style={{
-        display: "block", background: "#fff", borderRadius: 18,
-        border: "1px solid #F0E6DE", padding: "20px 22px", textDecoration: "none",
+        background: "#fff", border: "1px solid #F0E6DE", borderLeft: "5px solid #F26B43",
+        borderRadius: 18, padding: 16, boxShadow: "0 2px 8px rgba(40,30,20,0.04)", cursor: "pointer",
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-        <span style={{
-          width: 50, height: 50, borderRadius: 14, background: "#FFF4EF", flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <ELIcon name={res.scope === "local" ? "pin" : "phone"} size={25} color="#F26B43" />
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-            <ScopeTag scope={res.scope} />
-            <span style={{ fontSize: 12.5, color: "#6E645C" }}>已驗證</span>
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#241F1B", lineHeight: 1.4 }}>{res.name}</div>
-          {res.summary && (
-            <p style={{
-              margin: "8px 0 0", fontSize: 15.5, color: "#574E47", lineHeight: 1.65,
-              display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-            }}>
-              {res.summary}
-            </p>
-          )}
-          <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-            {res.phone && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 17, fontWeight: 800, color: "#B23F1E" }}>
-                <ELIcon name="phone" size={18} color="#F26B43" /> {res.phone}
-              </span>
-            )}
-            {res.like_count != null && res.like_count > 0 && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13.5, fontWeight: 700, color: "#6E645C" }}>
-                <ELIcon name="like" size={14} color="#F26B43" /> {res.like_count}
-              </span>
-            )}
-            <span style={{ marginLeft: "auto", fontSize: 14.5, fontWeight: 700, color: "#B23F1E" }}>查看詳情 →</span>
-          </div>
-        </div>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <h3 style={{ flex: 1, margin: 0, fontSize: 18, fontWeight: 800, color: "#241F1B", lineHeight: 1.4 }}>{res.name}</h3>
+        <LocBadge scope={res.scope} address={res.address} />
       </div>
-    </Link>
+      {res.summary && (
+        <p style={{ margin: "8px 0 0", fontSize: 16, color: "#574E47", lineHeight: 1.55 }}>{res.summary}</p>
+      )}
+      {res.phone && <div style={{ marginTop: 12 }}><CallButton phone={res.phone} /></div>}
+      {res.address && (
+        <div style={{ marginTop: 10, display: "flex", alignItems: "flex-start", gap: 7, fontSize: 13, color: "#6E645C" }}>
+          <ELIcon name="pin" size={16} color="#6E645C" style={{ marginTop: 1 }} />
+          <span style={{ flex: 1, lineHeight: 1.5 }}>{res.address}</span>
+        </div>
+      )}
+      {res.tags && res.tags.length > 0 && (
+        <div style={{ marginTop: 11, display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {res.tags.map((t) => (
+            <span key={t} style={{ display: "inline-flex", alignItems: "center", background: "#FFF4EF", color: "#B23F1E", fontSize: 13, fontWeight: 600, padding: "4px 10px", borderRadius: 999 }}>#{t}</span>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -131,13 +158,15 @@ export function ResourcesClient({
   categories: readonly Category[];
   initialCat?: string | null;
 }) {
+  const router = useRouter();
   const [activeCat, setActiveCat]     = useState(initialCat ?? categories[0]?.slug ?? "health");
   const [activeSub, setActiveSub]     = useState("全部");
   const [sortKey,   setSortKey]       = useState<SortKey>("recommend");
   const [q,         setQ]             = useState("");
   const [resources, setResources]     = useState<ResourceItem[]>([]);
   const [loading,      setLoading]      = useState(false);
-  const [showNational, setShowNational] = useState(true); // ON = 同時顯示全國專線
+  const [showNational, setShowNational] = useState(true); // ON = 顯示全國專線（手機與桌面共用）
+  const [showLocal,    setShowLocal]    = useState(true); // ON = 顯示在地資源（手機 scope chip 用；桌面恆 true）
 
   /* ── region state ── */
   const [regionLabel, setRegionLabel] = useState<string>("");
@@ -191,6 +220,18 @@ export function ResourcesClient({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  /* 地區彈窗（其他區域）變更後：更新 chip 與篩選範圍並重新抓資料 */
+  useEffect(() => {
+    function onRegion(e: Event) {
+      const d = (e as CustomEvent<{ label: string; code: string }>).detail;
+      if (!d) return;
+      setRegionLabel(d.label === "全台灣" ? "" : d.label);
+      setRegionCode(d.code);
+    }
+    window.addEventListener("el:region-changed", onRegion);
+    return () => window.removeEventListener("el:region-changed", onRegion);
+  }, []);
+
   const cat  = categories.find((c) => c.slug === activeCat);
   const subs = cat ? ["全部", ...cat.subcategories.map((s) => s.name)] : ["全部"];
 
@@ -209,7 +250,12 @@ export function ResourcesClient({
 
   const filtered = resources
     .filter((r) => {
-      if (!showNational && r.scope === "national") return false;
+      // scope 雙開關：在地 / 全國（兩者皆開＝同時顯示；皆關＝視為皆顯示）
+      const isNat = r.scope === "national";
+      if (showLocal || showNational) {
+        if (isNat && !showNational) return false;
+        if (!isNat && !showLocal) return false;
+      }
       if (q.trim()) {
         const hay = [r.name, r.summary, ...(r.tags ?? [])].join(" ").toLowerCase();
         if (!hay.includes(q.toLowerCase())) return false;
@@ -228,6 +274,24 @@ export function ResourcesClient({
       return 0;
     });
 
+  /* 手機版：排序循環 + scope 計數文字（對齊設計稿） */
+  const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+    { key: "recommend", label: "綜合推薦" },
+    { key: "local",     label: "在地優先" },
+    { key: "popular",   label: "最多人推薦" },
+    { key: "name",      label: "名稱排序" },
+  ];
+  const sortLabel = SORT_OPTIONS.find((s) => s.key === sortKey)?.label ?? "綜合推薦";
+  const cycleSort = () => {
+    const i = SORT_OPTIONS.findIndex((s) => s.key === sortKey);
+    setSortKey(SORT_OPTIONS[(i + 1) % SORT_OPTIONS.length].key);
+  };
+  const scopeText =
+    showLocal && showNational ? "在地與全國資源"
+    : showLocal ? "在地資源"
+    : showNational ? "全國資源"
+    : "在地與全國資源";
+
   function handleCatChange(slug: string) {
     setActiveCat(slug); setSortKey("recommend");
   }
@@ -240,6 +304,19 @@ export function ResourcesClient({
 
   return (
     <div>
+      {/* 手機版返回列（對齊設計稿 SubHeader：返回 + 分類名 + 搜尋） */}
+      <div className="wv-mobile-only">
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 14px 12px", borderBottom: "1px solid #F0E6DE", background: "#fff" }}>
+          <button onClick={() => router.back()} aria-label="返回" style={{ width: 40, height: 40, borderRadius: 999, border: "1px solid #E4D7CC", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#241F1B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+          </button>
+          <div style={{ flex: 1, minWidth: 0, fontSize: 22, fontWeight: 800, color: "#241F1B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cat?.name ?? "資源查找"}</div>
+          <Link href="/search" aria-label="搜尋" style={{ width: 40, height: 40, borderRadius: 999, border: "1px solid #E4D7CC", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <ELIcon name="search" size={21} color="#574E47" />
+          </Link>
+        </div>
+      </div>
+
       <div className="wv-wrap wv-split" style={{ paddingTop: 26, paddingBottom: 56, display: "grid", gridTemplateColumns: "236px minmax(0,1fr)", gap: 30, alignItems: "start" }}>
         {/* 側欄 */}
         <aside className="wv-hideSm" style={{ position: "sticky", top: 96 }}>
@@ -271,8 +348,8 @@ export function ResourcesClient({
 
         {/* 結果區 */}
         <div>
-          {/* 搜尋框 + 地區選擇 */}
-          <div style={{ display: "flex", background: "#fff", borderRadius: 999, padding: "6px 6px 6px 0", boxShadow: "0 10px 26px rgba(120,60,30,0.10)", marginBottom: 18, alignItems: "center" }}>
+          {/* 搜尋框 + 地區選擇（桌機；手機改用返回列放大鏡 + scope chips） */}
+          <div className="wv-hideSm" style={{ display: "flex", background: "#fff", borderRadius: 999, padding: "6px 6px 6px 0", boxShadow: "0 10px 26px rgba(120,60,30,0.10)", marginBottom: 18, alignItems: "center" }}>
             {/* Region dropdown */}
             <div ref={dropRef} style={{ position: "relative", flexShrink: 0 }}>
               <button
@@ -344,7 +421,7 @@ export function ResourcesClient({
                 return (
                   <button
                     key={s}
-                    onClick={() => setActiveSub(s)}
+                    onClick={() => setActiveSub(activeSub === s ? "全部" : s)}
                     style={{
                       padding: "9px 16px", borderRadius: 999, cursor: "pointer", font: "inherit",
                       fontSize: 15, fontWeight: 700, whiteSpace: "nowrap",
@@ -360,8 +437,31 @@ export function ResourcesClient({
             </div>
           )}
 
-          {/* 標題列：[分類 N筆] ── (目前範圍) [Switch] [排序▽] */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+          {/* 手機版：scope 篩選 chips + 計數（對齊設計稿 page-category） */}
+          <div className="wv-mobile-only">
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <ScopeChip active={showLocal} onClick={() => setShowLocal((v) => !v)}>
+                  <ELIcon name="pin" size={14} color={showLocal ? "#fff" : "#574E47"} /> {regionLabel || "全台灣"}
+                </ScopeChip>
+                <ScopeChip active={showNational} onClick={() => setShowNational((v) => !v)}>全國</ScopeChip>
+                <ScopeChip onClick={() => window.dispatchEvent(new Event("el:open-region"))}>其他區域 ›</ScopeChip>
+              </div>
+              <button
+                type="button"
+                onClick={cycleSort}
+                style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4, height: 38, fontSize: 13, fontWeight: 700, color: "#574E47", border: "none", background: "transparent", cursor: "pointer", font: "inherit", padding: 0 }}
+              >
+                <ELIcon name="filter" size={15} color="#574E47" /> {sortLabel}
+              </button>
+            </div>
+            <div style={{ fontSize: 13, color: "#6E645C", marginBottom: 14 }}>
+              共 <b style={{ color: "#241F1B" }}>{filtered.length}</b> 項服務 · {scopeText}
+            </div>
+          </div>
+
+          {/* 標題列（桌機）：[分類 N筆] ── (目前範圍) [Switch] [排序▽] */}
+          <div className="wv-hideSm" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
             {/* 左：分類名稱 + 計數 */}
             <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B", flexShrink: 0 }}>
               {cat?.name ?? "資源"}
@@ -450,6 +550,21 @@ export function ResourcesClient({
               {filtered.map((r) => <ResourceCard key={r.id} res={r} catSlug={activeCat} />)}
             </div>
           )}
+
+          {/* 找不到 → 投稿（對齊設計稿 page-category 底部 CTA） */}
+          <Link href="/submit" style={{
+            marginTop: 18, background: "#FFF4EF", border: "1.5px dashed #FFD6C7", borderRadius: 18,
+            padding: 16, display: "flex", alignItems: "center", gap: 12, textDecoration: "none",
+          }}>
+            <span style={{ width: 44, height: 44, borderRadius: 12, background: "#F26B43", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <ELIcon name="send" size={22} color="#fff" />
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#241F1B" }}>少了哪個資源？</div>
+              <div style={{ marginTop: 2, fontSize: 13, color: "#574E47" }}>知道好用的就推薦給大家</div>
+            </div>
+            <span style={{ background: "#E0552E", color: "#fff", fontWeight: 800, fontSize: 14, padding: "10px 15px", borderRadius: 999, whiteSpace: "nowrap", flexShrink: 0 }}>立即分享</span>
+          </Link>
         </div>
       </div>
     </div>

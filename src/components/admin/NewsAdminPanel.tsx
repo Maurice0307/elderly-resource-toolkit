@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { hideNews, restoreNews, deleteNews } from "@/lib/admin/actions";
+import { AD, AdPill, AdCard, AdEmpty, adBtn } from "@/components/admin/adminUi";
+import { ELIcon } from "@/components/layout/ELIcon";
+
+const newsField: React.CSSProperties = {
+  width: "100%", minHeight: 48, padding: "0 14px", borderRadius: 12,
+  border: `1.5px solid ${AD.line}`, background: "#fff", color: AD.ink,
+  fontSize: 15, fontFamily: "inherit", boxSizing: "border-box",
+};
 
 type NewsRow = {
   id: string;
@@ -58,189 +66,103 @@ export function NewsAdminPanel({ news: initial }: Props) {
   return (
     <div>
       {/* ── 新增表單 ── */}
-      <div
-        className="mt-6 rounded-2xl p-6"
-        style={{ background: "var(--bg-elevated)", border: "2px solid var(--border)" }}
-      >
-        <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
-          新增新聞文章
-        </h2>
-        <p className="mt-1 text-base" style={{ color: "var(--text-muted)" }}>
-          貼上文章網址，AI 自動抓取並改寫成長輩友善摘要
-        </p>
+      <AdCard style={{ padding: "18px 18px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ width: 36, height: 36, borderRadius: 10, background: AD.chip, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <ELIcon name="megaphone" size={20} color={AD.coral} />
+          </span>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: AD.ink }}>新增新聞文章</h2>
+            <p style={{ margin: "2px 0 0", fontSize: 13, color: AD.muted }}>貼上文章網址，AI 自動改寫成長輩友善摘要</p>
+          </div>
+        </div>
 
-        <div className="mt-4 flex flex-col gap-3">
+        <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
           <input
-            type="text"
-            placeholder="媒體來源名稱，例如：幸福熟齡"
-            value={sourceOrg}
-            onChange={(e) => setSourceOrg(e.target.value)}
-            className="w-full rounded-xl px-4 py-3 text-lg"
-            style={{
-              border: "1.5px solid var(--border)",
-              background: "var(--bg-page)",
-              color: "var(--text-primary)",
-            }}
+            type="text" placeholder="媒體來源名稱，例如：幸福熟齡"
+            value={sourceOrg} onChange={(e) => setSourceOrg(e.target.value)} style={newsField}
           />
           <input
-            type="url"
-            placeholder="文章網址 https://..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="w-full rounded-xl px-4 py-3 text-lg"
-            style={{
-              border: "1.5px solid var(--border)",
-              background: "var(--bg-page)",
-              color: "var(--text-primary)",
-            }}
+            type="url" placeholder="文章網址 https://..."
+            value={url} onChange={(e) => setUrl(e.target.value)} style={newsField}
           />
           <button
-            onClick={handleFetch}
-            disabled={fetchState === "loading"}
-            className="rounded-xl px-6 py-3 text-lg font-bold transition hover:opacity-90 disabled:opacity-60"
-            style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
+            onClick={handleFetch} disabled={fetchState === "loading"}
+            style={{ ...adBtn("coral"), minHeight: 50, fontSize: 16, opacity: fetchState === "loading" ? 0.6 : 1 }}
           >
-            {fetchState === "loading" ? "處理中…" : "抓取並新增"}
+            {fetchState === "loading" ? "處理中…" : <><ELIcon name="send" size={17} color="#fff" /> 抓取並新增</>}
           </button>
         </div>
 
         {fetchMsg && (
           <div
-            className="mt-3 rounded-xl px-4 py-3 text-base font-medium"
             style={{
-              background:
-                fetchState === "success"
-                  ? "var(--success-soft)"
-                  : fetchState === "error"
-                    ? "#FEE2E2"
-                    : "var(--bg-accent)",
-              color:
-                fetchState === "success"
-                  ? "#065F46"
-                  : fetchState === "error"
-                    ? "#991B1B"
-                    : "#92400E",
+              marginTop: 12, borderRadius: 12, padding: "11px 14px", fontSize: 14, fontWeight: 600,
+              background: fetchState === "success" ? "#E7F6EC" : fetchState === "error" ? "#FCEBEA" : "#FEF1E2",
+              color: fetchState === "success" ? "#1E7A43" : fetchState === "error" ? "#C0392B" : "#B45309",
             }}
           >
             {fetchMsg}
           </div>
         )}
-      </div>
+      </AdCard>
 
       {/* ── 新聞列表 ── */}
-      <div className="mt-8">
-        <h2 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
+      <div style={{ marginTop: 22 }}>
+        <h2 style={{ margin: "0 2px 12px", fontSize: 18, fontWeight: 800, color: AD.ink }}>
           已收錄新聞（共 {initial.length} 則）
         </h2>
 
         {initial.length === 0 ? (
-          <div
-            className="mt-4 rounded-2xl p-8 text-center text-lg"
-            style={{ background: "var(--bg-soft)", color: "var(--text-muted)" }}
-          >
-            還沒有新聞，從上方新增第一則吧！
-          </div>
+          <AdEmpty icon="news" title="還沒有新聞" desc="從上方新增第一則吧！" />
         ) : (
-          <ul className="mt-4 space-y-3">
-            {initial.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-col gap-3 rounded-2xl p-5 sm:flex-row sm:items-start sm:justify-between"
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "2px solid var(--border)",
-                  borderLeftWidth: 6,
-                  borderLeftColor: item.status === "active" ? "var(--success)" : "var(--border)",
-                  opacity: item.status === "hidden" ? 0.65 : 1,
-                }}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className="rounded-full px-3 py-1 text-sm font-semibold"
-                      style={{
-                        background: item.status === "active" ? "var(--success-soft)" : "#F5F5F4",
-                        color: item.status === "active" ? "#065F46" : "#78716C",
-                      }}
-                    >
-                      {item.status === "active" ? "✅ 上架中" : "🚫 已隱藏"}
-                    </span>
-                    <span className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
-                      📰 {item.source_org}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {initial.map((item) => {
+              const active = item.status === "active";
+              return (
+                <AdCard key={item.id} accent={active} style={{ opacity: active ? 1 : 0.8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <AdPill tone={active ? "ok" : "neutral"}>
+                      {active ? <><ELIcon name="check" size={13} color="#1E9E54" stroke={2.4} /> 上架中</> : "已隱藏"}
+                    </AdPill>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5, fontWeight: 600, color: AD.muted }}>
+                      <ELIcon name="news" size={14} color={AD.muted} /> {item.source_org}
                     </span>
                     {item.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full px-2 py-0.5 text-xs"
-                        style={{ background: "var(--bg-accent)", color: "#92400E" }}
-                      >
+                      <span key={tag} style={{ fontSize: 11.5, padding: "2px 8px", borderRadius: 999, background: AD.chip, color: AD.coralDark, fontWeight: 600 }}>
                         #{tag}
                       </span>
                     ))}
                   </div>
-                  <p className="mt-2 text-lg font-semibold leading-snug" style={{ color: "var(--text-primary)" }}>
+                  <p style={{ margin: "10px 0 0", fontSize: 15.5, fontWeight: 700, color: AD.ink, lineHeight: 1.5 }}>
                     {item.title}
                   </p>
-                  <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+                  <p style={{ margin: "4px 0 0", fontSize: 13, color: AD.muted }}>
                     {new Date(item.published_at ?? item.fetched_at).toLocaleDateString("zh-TW")}
                   </p>
-                </div>
 
-                <div className="flex shrink-0 gap-2">
-                  <a
-                    href={`/news/${item.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl px-4 py-2 text-base font-semibold transition hover:opacity-80"
-                    style={{
-                      background: "var(--bg-soft)",
-                      color: "var(--text-secondary)",
-                      border: "1.5px solid var(--border)",
-                    }}
-                  >
-                    預覽
-                  </a>
-
-                  {item.status === "active" ? (
-                    <form action={hideNews.bind(null, item.id)}>
-                      <button
-                        type="submit"
-                        className="rounded-xl px-4 py-2 text-base font-semibold transition hover:opacity-80"
-                        style={{ background: "#FEF3C7", color: "#92400E", border: "1.5px solid #FDE68A" }}
-                      >
-                        下架
-                      </button>
-                    </form>
-                  ) : (
-                    <form action={restoreNews.bind(null, item.id)}>
-                      <button
-                        type="submit"
-                        className="rounded-xl px-4 py-2 text-base font-semibold transition hover:opacity-80"
-                        style={{ background: "var(--success-soft)", color: "#065F46", border: "1.5px solid #A7F3D0" }}
-                      >
-                        上架
-                      </button>
-                    </form>
-                  )}
-
-                  <form
-                    action={deleteNews.bind(null, item.id)}
-                    onSubmit={(e) => {
-                      if (!confirm("確定要刪除這則新聞？此動作無法復原。")) e.preventDefault();
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="rounded-xl px-4 py-2 text-base font-semibold transition hover:opacity-80"
-                      style={{ background: "#FEE2E2", color: "#991B1B", border: "1.5px solid #FECACA" }}
+                  <div style={{ marginTop: 13, paddingTop: 13, borderTop: `1px solid ${AD.border}`, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    <a href={`/news/${item.id}`} target="_blank" rel="noopener noreferrer" style={adBtn("neutral")}>預覽</a>
+                    {active ? (
+                      <form action={hideNews.bind(null, item.id)}>
+                        <button type="submit" style={adBtn("pending")}>下架</button>
+                      </form>
+                    ) : (
+                      <form action={restoreNews.bind(null, item.id)}>
+                        <button type="submit" style={adBtn("ok")}>上架</button>
+                      </form>
+                    )}
+                    <form
+                      action={deleteNews.bind(null, item.id)}
+                      onSubmit={(e) => { if (!confirm("確定要刪除這則新聞？此動作無法復原。")) e.preventDefault(); }}
                     >
-                      刪除
-                    </button>
-                  </form>
-                </div>
-              </li>
-            ))}
-          </ul>
+                      <button type="submit" style={adBtn("alert")}>刪除</button>
+                    </form>
+                  </div>
+                </AdCard>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

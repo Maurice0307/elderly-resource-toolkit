@@ -1,6 +1,7 @@
 "use client";
 import { useTransition } from "react";
 import { toggleVote } from "@/lib/qa/actions";
+import { ELIcon } from "@/components/layout/ELIcon";
 
 interface Props {
   answerId: string;
@@ -23,15 +24,18 @@ export function VoteButton({ answerId, questionId, voteCount, hasVoted, userId }
       type="button"
       onClick={handleClick}
       disabled={pending}
-      aria-label={hasVoted ? "取消讚" : "讚"}
-      className="flex items-center gap-1.5 rounded-full px-4 py-2 text-base font-semibold transition disabled:opacity-60"
-      style={
-        hasVoted
-          ? { background: "var(--bg-accent)", color: "#92400E", border: "1.5px solid #FDE68A", minHeight: "var(--hit)" }
-          : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)", minHeight: "var(--hit)" }
-      }
+      aria-label={hasVoted ? "取消「有用」" : "覺得有用"}
+      style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+        minHeight: 0, height: 40, padding: "0 14px", borderRadius: 999,
+        fontSize: 14, fontWeight: 800, cursor: "pointer", font: "inherit",
+        border: "1.5px solid " + (hasVoted ? "#E0552E" : "#E4D7CC"),
+        background: hasVoted ? "#FFF4EF" : "#fff",
+        color: hasVoted ? "#B23F1E" : "#574E47",
+        opacity: pending ? 0.6 : 1, flexShrink: 0,
+      }}
     >
-      👍 {voteCount}
+      <ELIcon name="like" size={16} color={hasVoted ? "#B23F1E" : "#574E47"} /> 有用 {voteCount}
     </button>
   );
 }

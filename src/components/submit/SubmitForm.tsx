@@ -7,6 +7,17 @@ import { categories } from "@/config/categories";
 type SubcategoryRow = { id: string; slug: string; name: string; category_slug: string };
 type RegionRow      = { id: string; name: string; parent_id: string | null };
 
+// 縣市由北到南排序（涵蓋 台/臺 兩種寫法）
+const NORTH_TO_SOUTH = [
+  "基隆市", "臺北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣",
+  "臺中市", "彰化縣", "南投縣", "雲林縣", "嘉義市", "嘉義縣", "臺南市",
+  "高雄市", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣", "金門縣", "連江縣",
+];
+function countyOrder(name: string): number {
+  const i = NORTH_TO_SOUTH.indexOf(name.replace(/台/g, "臺"));
+  return i < 0 ? 999 : i;
+}
+
 type Props = {
   subcategories: SubcategoryRow[];
   regions: RegionRow[];
@@ -21,7 +32,10 @@ export function SubmitForm({ subcategories, regions }: Props) {
     ? subcategories.filter((s) => s.category_slug === catSlug)
     : [];
 
-  const parentRegions = regions.filter((r) => r.parent_id === null);
+  const parentRegions = regions
+    .filter((r) => r.parent_id === null)
+    .slice()
+    .sort((a, b) => countyOrder(a.name) - countyOrder(b.name));
   const childRegions  = (parentId: string) =>
     regions.filter((r) => r.parent_id === parentId);
 
