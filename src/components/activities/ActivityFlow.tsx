@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { ReportButton } from "@/components/resources/ReportButton";
 
 export type FlowStep = {
   order: number;
@@ -181,7 +182,12 @@ export function ActivityFlow({ slug, title, summary, heroImage, videoUrl, durati
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 10, padding: "24px 18px calc(20px + env(safe-area-inset-bottom))" }}>
+        {/* 回報問題 */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "22px 18px 0" }}>
+          <ReportButton subject={title} kind="activity" />
+        </div>
+
+        <div style={{ display: "flex", gap: 10, padding: "14px 18px calc(20px + env(safe-area-inset-bottom))" }}>
           <button type="button" onClick={() => setSaved((v) => !v)} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, height: 52, borderRadius: 999, border: "1.5px solid " + (saved ? "#E0552E" : "#E4D7CC"), background: saved ? "#FFF4EF" : "#fff", color: saved ? "#B23F1E" : "#574E47", fontSize: 16, fontWeight: 800, cursor: "pointer", font: "inherit" }}>
             <ELIcon name="heart" size={19} color={saved ? "#F26B43" : "#6E645C"} /> {saved ? "已收藏" : "收藏"}
           </button>

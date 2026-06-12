@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ELIcon } from "@/components/layout/ELIcon";
 import { MobileNewsDetail, type RelatedItem } from "@/components/news/MobileNewsDetail";
+import { NewsBottomActions } from "@/components/news/NewsBottomActions";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -245,6 +246,9 @@ export default async function NewsDetailPage({ params }: Props) {
                 </a>
               </div>
             )}
+
+            {/* 底部動作：收藏 / 回報 / 看別則新知 */}
+            <NewsBottomActions id={data.id} title={data.title} />
           </article>
 
           {/* ── 右欄：延伸閱讀（sticky；手機取消） ── */}

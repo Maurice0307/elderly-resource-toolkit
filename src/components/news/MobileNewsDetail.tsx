@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { ReportButton } from "@/components/resources/ReportButton";
 
 export type RelatedItem = {
   id: string;
@@ -204,6 +205,19 @@ export function MobileNewsDetail(props: Props) {
           </a>
         </div>
       )}
+
+      {/* 底部動作：收藏 / 回報 / 看別則新知（回上頁） */}
+      <div style={{ padding: "14px 18px 4px", display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button onClick={toggleSave} style={{ flex: "1 1 0", minWidth: 96, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, height: 46, borderRadius: 999, border: `1.5px solid ${saved ? "#F2B79E" : "#E4D7CC"}`, background: saved ? "#FFF4EF" : "#fff", color: saved ? "#B23F1E" : "#574E47", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+          <ELIcon name="heart" size={19} color={saved ? "#B23F1E" : "#6E645C"} /> {saved ? "已收藏" : "收藏"}
+        </button>
+        <div style={{ flex: "1 1 0", minWidth: 96, display: "flex" }}>
+          <ReportButton subject={title} kind="news" full />
+        </div>
+        <button onClick={back} style={{ flex: "1 1 0", minWidth: 110, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, height: 46, borderRadius: 999, border: "1.5px solid #E4D7CC", background: "#fff", color: "#574E47", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+          <ELIcon name="news" size={18} color="#6E645C" /> 看別則新知
+        </button>
+      </div>
 
       {/* 延伸閱讀 */}
       {related.length > 0 && (

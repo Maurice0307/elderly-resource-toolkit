@@ -219,7 +219,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
                   </a>
                 )}
                 <ShareButton title={resource.name} phone={resource.phone} address={resource.address} />
-                <ReportButton resourceName={resource.name} />
+                <ReportButton subject={resource.name} kind="resource" />
               </div>
               {resource.source_org && (
                 <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid #F0E6DE", fontSize: 13.5, color: "#6E645C", lineHeight: 1.6 }}>

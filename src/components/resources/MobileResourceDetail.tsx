@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { ELIcon } from "@/components/layout/ELIcon";
 import { BrandLogo } from "@/components/layout/BrandLogo";
+import { ReportButton } from "@/components/resources/ReportButton";
 
 type Props = {
   resourceId: string;
@@ -209,6 +210,11 @@ export function MobileResourceDetail(props: Props) {
           <ELIcon name="send" size={21} color="#574E47" />
           <span style={{ fontSize: 12.5, fontWeight: 700, color: "#574E47" }}>分享給家人</span>
         </button>
+      </div>
+
+      {/* 回報資料有誤 */}
+      <div style={{ padding: "4px 18px 0" }}>
+        <ReportButton subject={name} kind="resource" full />
       </div>
 
       {/* 提醒 */}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { ReportButton } from "@/components/resources/ReportButton";
 import type { CommunicationScript } from "@/types/domain";
 
 type NextScript = { slug: string; title: string } | null;
@@ -174,6 +175,11 @@ export function MobileScriptDetail({ script, next }: { script: CommunicationScri
           </div>
         </div>
       )}
+
+      {/* 回報問題 */}
+      <div style={{ display: "flex", justifyContent: "center", padding: "18px 18px 6px" }}>
+        <ReportButton subject={script.title} kind="script" />
+      </div>
 
       {/* 底部動作 */}
       <div style={{ position: "sticky", bottom: 0, borderTop: "1px solid #F0E6DE", padding: "12px 18px calc(12px + env(safe-area-inset-bottom))", background: "#fff", display: "flex", gap: 10 }}>

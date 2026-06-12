@@ -4,16 +4,44 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ELIcon } from "@/components/layout/ELIcon";
 
-/* 回報資料有誤：勾選式回報彈窗（對齊設計稿 WebReportModal） */
-const REASONS = [
-  "電話打不通或號碼有誤",
-  "地址或位置不正確",
-  "服務已停止或單位已遷移",
-  "服務時間／資格資訊過時",
-  "內容描述有誤",
-];
+/* 通用回報彈窗（勾選式 + 自行輸入）。可用於資源、活動、溝通錦囊、新知等。 */
 
-export function ReportButton({ resourceName }: { resourceName: string }) {
+type Kind = "resource" | "activity" | "script" | "news";
+
+const PRESET: Record<Kind, { btnLabel: string; title: string; desc: (s: string) => string; reasons: string[] }> = {
+  resource: {
+    btnLabel: "回報資料有誤",
+    title: "回報資料有誤",
+    desc: (s) => `「${s}」哪裡需要修正？可複選或自行輸入。`,
+    reasons: ["電話打不通或號碼有誤", "地址或位置不正確", "服務已停止或單位已遷移", "服務時間／資格資訊過時", "內容描述有誤"],
+  },
+  activity: {
+    btnLabel: "回報問題",
+    title: "回報問題",
+    desc: (s) => `「${s}」有什麼問題？可複選或自行輸入。`,
+    reasons: ["內容有誤", "步驟看不懂", "影片或圖片無法顯示", "不適合長輩", "其他問題"],
+  },
+  script: {
+    btnLabel: "回報問題",
+    title: "回報問題",
+    desc: (s) => `「${s}」有什麼問題？可複選或自行輸入。`,
+    reasons: ["內容有誤", "用語不合適", "情境不實用", "其他問題"],
+  },
+  news: {
+    btnLabel: "回報問題",
+    title: "回報問題",
+    desc: (s) => `「${s}」有什麼問題？可複選或自行輸入。`,
+    reasons: ["連結打不開", "內容有誤或過時", "與長輩無關", "其他問題"],
+  },
+};
+
+export function ReportButton({
+  subject,
+  kind = "resource",
+  full = false,
+  compact = false,
+}: { subject: string; kind?: Kind; full?: boolean; compact?: boolean }) {
+  const preset = PRESET[kind];
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
@@ -23,17 +51,12 @@ export function ReportButton({ resourceName }: { resourceName: string }) {
 
   const anyPicked = Object.values(picked).some(Boolean) || note.trim().length > 0;
 
-  function toggle(r: string) {
-    setPicked((p) => ({ ...p, [r]: !p[r] }));
-  }
+  function toggle(r: string) { setPicked((p) => ({ ...p, [r]: !p[r] })); }
   function close() {
     setOpen(false);
     setTimeout(() => { setDone(false); setPicked({}); setNote(""); }, 200);
   }
-  function submit() {
-    if (!anyPicked) return;
-    setDone(true);
-  }
+  function submit() { if (anyPicked) setDone(true); }
 
   return (
     <>
@@ -41,12 +64,14 @@ export function ReportButton({ resourceName }: { resourceName: string }) {
         type="button"
         onClick={() => setOpen(true)}
         style={{
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          height: 46, borderRadius: 999, border: "1.5px solid #E4D7CC", background: "#fff",
-          fontSize: 15, fontWeight: 700, color: "#574E47", cursor: "pointer", font: "inherit",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: compact ? 6 : 8,
+          width: full ? "100%" : undefined,
+          height: 46, padding: compact ? "0 12px" : "0 16px", borderRadius: 999,
+          border: "1.5px solid #E4D7CC", background: "#fff",
+          fontSize: 15, fontWeight: 700, color: "#574E47", cursor: "pointer", fontFamily: "inherit",
         }}
       >
-        <ELIcon name="report" size={19} color="#6E645C" /> 回報資料有誤
+        <ELIcon name="report" size={19} color="#6E645C" /> {preset.btnLabel}
       </button>
 
       {mounted && open && createPortal(
@@ -58,22 +83,22 @@ export function ReportButton({ resourceName }: { resourceName: string }) {
                   <ELIcon name="check" size={34} color="#2E7D52" />
                 </div>
                 <div style={{ fontSize: 21, fontWeight: 800, color: "#241F1B" }}>已收到您的回報</div>
-                <p style={{ margin: "10px 0 22px", fontSize: 16, color: "#574E47", lineHeight: 1.7 }}>謝謝您幫忙把關，社區志工會盡快確認並更新。</p>
+                <p style={{ margin: "10px 0 22px", fontSize: 16, color: "#574E47", lineHeight: 1.7 }}>謝謝您幫忙把關，社區志工會盡快確認並處理。</p>
                 <button onClick={close} style={{ width: "100%", height: 52, borderRadius: 999, border: "none", background: "#E0552E", color: "#fff", fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>完成</button>
               </div>
             ) : (
               <>
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "22px 24px 6px" }}>
                   <div>
-                    <div style={{ fontSize: 21, fontWeight: 800, color: "#241F1B" }}>回報資料有誤</div>
-                    <div style={{ fontSize: 14, color: "#6E645C", marginTop: 3, lineHeight: 1.5 }}>「{resourceName}」哪裡需要修正？可複選。</div>
+                    <div style={{ fontSize: 21, fontWeight: 800, color: "#241F1B" }}>{preset.title}</div>
+                    <div style={{ fontSize: 14, color: "#6E645C", marginTop: 3, lineHeight: 1.5 }}>{preset.desc(subject)}</div>
                   </div>
                   <button onClick={close} aria-label="關閉" style={{ flexShrink: 0, width: 38, height: 38, borderRadius: "50%", border: "none", background: "#FBF7F4", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <ELIcon name="close" size={19} color="#574E47" />
                   </button>
                 </div>
                 <div style={{ padding: "12px 24px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
-                  {REASONS.map((r) => {
+                  {preset.reasons.map((r) => {
                     const on = !!picked[r];
                     return (
                       <button key={r} type="button" onClick={() => toggle(r)} style={{
@@ -96,7 +121,7 @@ export function ReportButton({ resourceName }: { resourceName: string }) {
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     rows={3}
-                    placeholder="補充說明（可不填）：例如正確的電話或地址"
+                    placeholder="補充說明（可不填）：可自行描述你遇到的問題"
                     style={{ width: "100%", borderRadius: 14, border: "2px solid #E4D7CC", padding: "13px 15px", fontSize: 16, color: "#241F1B", background: "#fff", outline: "none", boxSizing: "border-box", fontFamily: "inherit", resize: "vertical", marginTop: 2 }}
                   />
                   <button
