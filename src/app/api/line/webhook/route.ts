@@ -3,7 +3,7 @@ import crypto from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildResourceMessages, buildWelcomeMessage } from "@/lib/line/flex";
-import { withMenu, menuText, buildLinkList, routeIntent } from "@/lib/line/menu";
+import { withMenu, menuText, buildLinkList, routeIntent, categoryMenu } from "@/lib/line/menu";
 import { getLineProfile, logLineMessage } from "@/lib/line/store";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
@@ -46,6 +46,13 @@ export async function POST(req: NextRequest) {
 
   for (const event of payload.events ?? []) {
     try {
+      if (event.type === "postback") {
+        const data: string = event.postback?.data ?? "";
+        if (data.startsWith("cat=")) {
+          await handleCategoryResources(decodeURIComponent(data.slice(4)), event.replyToken!, siteUrl);
+        }
+        continue;
+      }
       if (event.type === "follow") {
         await lineReply(event.replyToken, [withMenu(buildWelcomeMessage(siteUrl)), menuText("👇 點下方選單，或直接打字告訴我你想找什麼")]);
         continue;
@@ -73,7 +80,7 @@ async function handleMessage(text: string, replyToken: string, siteUrl: string) 
       await lineReply(replyToken, [menuText("您好！想找什麼呢？點下方的選單按鈕，或直接打字告訴我 🙂")]);
       return;
     case "resource":
-      await lineReply(replyToken, [menuText("請告訴我您想找的資源，例如「中壢 量血壓」或「桃園 長照」🔍")]);
+      await handleResourceMenu(replyToken);
       return;
     case "activity":  await handleActivities(replyToken, siteUrl); return;
     case "script":    await handleScripts(replyToken, siteUrl); return;
@@ -81,6 +88,35 @@ async function handleMessage(text: string, replyToken: string, siteUrl: string) 
     case "qa":        await handleQa(replyToken, siteUrl); return;
     default:          await handleTextMessage(text, replyToken, siteUrl); return;
   }
+}
+
+async function handleResourceMenu(replyToken: string) {
+  const admin = createAdminClient();
+  const { data: cats } = await admin.from("categories").select("name").order("sort_order");
+  await lineReply(replyToken, [categoryMenu(cats ?? [])]);
+}
+
+async function handleCategoryResources(catName: string, replyToken: string, siteUrl: string) {
+  const admin = createAdminClient();
+  const { data: cat } = await admin.from("categories").select("id").eq("name", catName).maybeSingle();
+  if (!cat) { await handleTextMessage(catName, replyToken, siteUrl); return; }
+  const { data: subs } = await admin.from("subcategories").select("id").eq("category_id", cat.id);
+  const subIds = (subs ?? []).map((s) => s.id);
+  const { data: resources } = subIds.length
+    ? await admin
+        .from("resources")
+        .select("id, name, summary, phone, website_url, scope, region_id, regions(name)")
+        .in("subcategory_id", subIds)
+        .eq("status", "active")
+        .order("like_count", { ascending: false, nullsFirst: false })
+        .limit(8)
+    : { data: [] };
+  const flex = buildResourceMessages(
+    (resources ?? []).map((r) => ({ ...r, regions: Array.isArray(r.regions) ? r.regions[0] : r.regions })),
+    siteUrl,
+  );
+  if (flex) await lineReply(replyToken, [withMenu(flex)]);
+  else await lineReply(replyToken, [menuText(`「${catName}」目前還沒有資源，換個分類或直接打關鍵字試試 👇`)]);
 }
 
 async function handleActivities(replyToken: string, siteUrl: string) {
@@ -249,4 +285,5 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
 type LineEvent =
   | { type: "follow"; replyToken: string; source?: { userId?: string } }
   | { type: "message"; replyToken: string; message: { type: "text"; text: string }; source?: { userId?: string } }
-  | { type: string; replyToken?: string; source?: { userId?: string } };
+  | { type: "postback"; replyToken: string; postback?: { data?: string }; source?: { userId?: string } }
+  | { type: string; replyToken?: string; postback?: { data?: string }; source?: { userId?: string } };

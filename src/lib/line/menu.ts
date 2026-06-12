@@ -27,6 +27,20 @@ export function menuText(text: string): LineMsg {
   return withMenu({ type: "text", text });
 }
 
+/* 階層式：點「找資源」後彈出分類子選單（postback，不洗版） */
+export function categoryMenu(cats: { name: string }[]): LineMsg {
+  return {
+    type: "text",
+    text: "想找哪一類資源呢？點下面的分類 👇",
+    quickReply: {
+      items: cats.slice(0, 12).map((c) => ({
+        type: "action",
+        action: { type: "postback", label: c.name.slice(0, 20), data: `cat=${encodeURIComponent(c.name)}`, displayText: c.name },
+      })),
+    },
+  };
+}
+
 /* 通用連結清單（carousel；每張卡一個標題＋按鈕連到網站） */
 export function buildLinkList(opts: {
   altText: string;
