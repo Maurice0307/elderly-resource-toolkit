@@ -3,7 +3,7 @@ import crypto from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildResourceMessages, buildWelcomeMessage } from "@/lib/line/flex";
-import { menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
+import { menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, pickerBubble, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
 import { getLineProfile, logLineMessage } from "@/lib/line/store";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
         if (data.startsWith("cat="))         await handleSubcatMenu(decodeURIComponent(data.slice(4)), rt);
         else if (data.startsWith("catall="))  await handleCategoryResources(decodeURIComponent(data.slice(7)), rt, siteUrl);
         else if (data.startsWith("sub="))     await handleSubcatResources(data.slice(4), rt, siteUrl);
+        else if (data.startsWith("act="))     await handleActivityTheme(data.slice(4), rt, siteUrl);
+        else if (data.startsWith("scr="))     await handleScriptAudience(data.slice(4), rt, siteUrl);
         continue;
       }
       if (event.type === "follow") {
@@ -98,7 +100,6 @@ const snip = (s: string | null | undefined, n = 46) => {
   const t = (s ?? "").replace(/[#*>]/g, "").replace(/^[-•\s]+/gm, "").replace(/\s+/g, " ").trim();
   return t.length > n ? t.slice(0, n) + "…" : t;
 };
-const GROUP_LABEL: Record<string, string> = { move: "動動身體", create: "創意手作", smart: "智慧生活" };
 
 async function handleResourceMenu(replyToken: string) {
   const admin = createAdminClient();
@@ -147,26 +148,52 @@ async function handleSubcatResources(subId: string, replyToken: string, siteUrl:
   else await lineReply(replyToken, [menuText(`「${sub?.name ?? "這一項"}」目前還沒有資源，換一項或直接打關鍵字試試 👇`)]);
 }
 
-async function handleActivities(replyToken: string, siteUrl: string) {
+// 活動分類（對齊網站 activities 頁的 CARD_CATS / themeKeyFor）
+const ACT_THEMES = [
+  { key: "life", name: "生活技能" }, { key: "body", name: "動動身體" }, { key: "smart", name: "智慧生活" },
+  { key: "craft", name: "手工美勞" }, { key: "plant", name: "花草植栽" }, { key: "draw", name: "創意繪畫" },
+  { key: "fraud", name: "防詐・假訊息" },
+];
+const ACT_THEME_BY_SLUG: Record<string, string> = {
+  "interact-clay": "craft", "interact-origami-heart": "craft", "interact-origami-carnation": "craft", "interact-origami-bear": "craft", "interact-origami-bird": "craft", "interact-leaf-bookmark": "craft",
+  "interact-moss-ball": "plant", "interact-bean-sprout": "plant", "balcony-garden": "plant",
+  "interact-life-story": "draw", "interact-zentangle": "draw", "interact-memory-puzzle": "draw",
+  "interact-knee-care": "body", "chair-exercise": "body", "fall-prevention": "body", "morning-stretch": "body",
+  "my-plate": "smart", "line-video-call": "smart",
+  "interact-recycling-game": "life", "interact-cpr": "life", "interact-aed": "life", "interact-heimlich": "life", "interact-fire-safety": "life", "interact-fire-escape": "life", "interact-earthquake": "life", "interact-earthquake-prep": "life",
+  "interact-fraud-impersonation": "fraud", "interact-fraud-rumor": "fraud",
+};
+function actThemeKey(card: { slug: string; tags?: string[]; group_slug?: string }): string {
+  if (ACT_THEME_BY_SLUG[card.slug]) return ACT_THEME_BY_SLUG[card.slug];
+  if ((card.tags ?? []).some((t) => t.includes("防詐") || t.includes("詐騙"))) return "fraud";
+  switch (card.group_slug) { case "smart": return "smart"; case "move": return "body"; case "life": return "life"; case "health": return "body"; default: return "craft"; }
+}
+
+// 點「活動圖卡」→ 活動分類選單
+async function handleActivities(replyToken: string, _siteUrl: string) {
+  await lineReply(replyToken, [pickerBubble("想做哪一種活動？", "選一種，我列出可以動手做的圖卡", [],
+    ACT_THEMES.map((t) => ({ label: t.name, data: `act=${t.key}` })), "#2E7D52")]);
+}
+
+// 點活動分類 → 該類活動清單
+async function handleActivityTheme(key: string, replyToken: string, siteUrl: string) {
   const admin = createAdminClient();
-  const { data } = await admin
-    .from("activity_cards")
-    .select("slug, title, summary, tags, group_slug, steps")
-    .eq("status", "active")
-    .limit(8);
+  const { data } = await admin.from("activity_cards").select("slug, title, summary, tags, group_slug, steps").eq("status", "active");
+  const list = (data ?? []).filter((a) => actThemeKey(a) === key);
+  const themeName = ACT_THEMES.find((t) => t.key === key)?.name ?? "活動";
   await lineReply(replyToken, [buildLinkList({
-    altText: "活動圖卡",
+    altText: themeName,
     headerColor: "#2E7D52",
-    headerLabel: "活動圖卡",
+    headerLabel: themeName,
     icon: iconUrl(siteUrl, "grid"),
-    emptyText: "目前還沒有活動圖卡，稍後再來看看 🙂",
-    items: (data ?? []).map((a) => {
-      const type = (Array.isArray(a.tags) && a.tags[0]) || GROUP_LABEL[a.group_slug] || "";
+    emptyText: `「${themeName}」目前還沒有活動，換一種試試 🙂`,
+    items: list.slice(0, 10).map((a) => {
       const steps = Array.isArray(a.steps) ? a.steps.length : 0;
-      const head = `${type ? `類型：${type}・` : ""}${steps} 個步驟`;
+      const mins = Math.max(5, steps * 3);
       return {
         title: a.title,
-        sub: a.summary ? `${head}\n${snip(a.summary, 50)}` : head,
+        meta: `約 ${mins} 分鐘・${steps} 個步驟`,
+        desc: a.summary ? snip(a.summary, 56) : undefined,
         uri: `${siteUrl}/activities/${a.slug}`,
         btn: "開始活動",
       };
@@ -174,21 +201,29 @@ async function handleActivities(replyToken: string, siteUrl: string) {
   })]);
 }
 
-async function handleScripts(replyToken: string, siteUrl: string) {
+const SCRIPT_AUD: Record<string, string> = { family: "給家人", volunteer: "給志工", difficult: "難溝通情境" };
+
+// 點「溝通錦囊」→ 對象選單
+async function handleScripts(replyToken: string, _siteUrl: string) {
+  await lineReply(replyToken, [pickerBubble("想找哪種溝通情境？", "選對象，我給你可以照著說的話", [],
+    [{ label: "給長輩・家人", data: "scr=family" }, { label: "志工服務時", data: "scr=volunteer" }, { label: "難溝通的情況", data: "scr=difficult" }], "#2952B3")]);
+}
+
+// 點對象 → 該類錦囊清單
+async function handleScriptAudience(aud: string, replyToken: string, siteUrl: string) {
   const admin = createAdminClient();
-  const { data } = await admin
-    .from("communication_scripts")
-    .select("slug, title, context")
-    .limit(8);
+  const { data } = await admin.from("communication_scripts").select("slug, title, context").eq("audience", aud).limit(10);
+  const label = SCRIPT_AUD[aud] ?? "溝通錦囊";
   await lineReply(replyToken, [buildLinkList({
     altText: "溝通錦囊",
     headerColor: "#2952B3",
     headerLabel: "溝通錦囊",
     icon: iconUrl(siteUrl, "chat"),
-    emptyText: "目前還沒有溝通錦囊，稍後再來看看 🙂",
+    emptyText: `「${label}」目前還沒有錦囊，換一個試試 🙂`,
     items: (data ?? []).map((s) => ({
       title: s.title,
-      sub: s.context ?? undefined,
+      meta: label,
+      desc: s.context ? snip(s.context, 56) : undefined,
       uri: `${siteUrl}/scripts/${s.slug}`,
       btn: "看怎麼說",
     })),
@@ -211,7 +246,8 @@ async function handleNews(replyToken: string, siteUrl: string) {
     emptyText: "今天還沒有新消息，稍後再來看看 🙂",
     items: (data ?? []).map((n) => ({
       title: n.title,
-      sub: n.summary_md ? `${n.source_org ?? ""}\n${snip(n.summary_md, 52)}` : (n.source_org ?? undefined),
+      meta: n.source_org ?? undefined,
+      desc: n.summary_md ? snip(n.summary_md, 60) : undefined,
       uri: `${siteUrl}/news/${n.id}`,
       btn: "閱讀",
       image: (n.image_url && /^https:\/\//.test(n.image_url)) ? n.image_url : null,
@@ -229,11 +265,12 @@ async function handleQa(replyToken: string, siteUrl: string) {
     .limit(7);
   const items = (data ?? []).map((q) => ({
     title: q.title,
-    sub: q.body ? `${q.answer_count ?? 0} 則回答\n${snip(q.body, 48)}` : `${q.answer_count ?? 0} 則回答`,
+    meta: `${q.answer_count ?? 0} 則回答`,
+    desc: q.body ? snip(q.body, 56) : undefined,
     uri: `${siteUrl}/qa/${q.id}`,
     btn: "看討論",
   }));
-  items.push({ title: "我要提問", sub: "找不到答案？直接問，在地志工幫您解答", uri: `${siteUrl}/qa/ask`, btn: "我要提問" });
+  items.push({ title: "我要提問", meta: undefined, desc: "找不到答案？直接問，在地志工幫您解答", uri: `${siteUrl}/qa/ask`, btn: "我要提問" });
   await lineReply(replyToken, [buildLinkList({
     altText: "互助問答",
     headerColor: "#B23F1E",

@@ -34,22 +34,15 @@ export const CATEGORY_ICON: Record<string, string> = {
 };
 export const iconUrl = (siteUrl: string, name: string) => `${siteUrl}/line/${name}.png`;
 
-/* 大按鈕格狀選單（兩欄並排、全部看得到、不用滑） */
-function gridButton(label: string, data: string, primary = false, color = "#E0552E"): LineMsg {
+/* 大按鈕選單（單欄、整排、字不擠不截斷、不用滑） */
+function fullButton(label: string, data: string, primary = false, color = "#E0552E"): LineMsg {
   return {
-    type: "button", style: primary ? "primary" : "secondary", color: primary ? color : undefined,
-    height: "md", flex: 1,
-    action: { type: "postback", label: label.slice(0, 18), data, displayText: label },
+    type: "button", style: primary ? "primary" : "secondary", color: primary ? color : undefined, height: "md",
+    action: { type: "postback", label: label.slice(0, 20), data, displayText: label },
   };
 }
-function pickerBubble(title: string, hint: string, full: LineMsg | null, options: { label: string; data: string }[]): LineMsg {
-  const rows: LineMsg[] = [];
-  if (full) rows.push(full);
-  for (let i = 0; i < options.length; i += 2) {
-    const pair = options.slice(i, i + 2).map((o) => gridButton(o.label, o.data));
-    if (pair.length === 1) pair.push({ type: "filler" });
-    rows.push({ type: "box", layout: "horizontal", spacing: "md", margin: "md", contents: pair });
-  }
+export function pickerBubble(title: string, hint: string, fullBtns: LineMsg[], options: { label: string; data: string }[], color = "#E0552E"): LineMsg {
+  const rows: LineMsg[] = [...fullBtns, ...options.map((o) => fullButton(o.label, o.data))];
   return {
     type: "flex", altText: title,
     contents: {
@@ -58,24 +51,24 @@ function pickerBubble(title: string, hint: string, full: LineMsg | null, options
         type: "box", layout: "vertical", paddingAll: "20px", contents: [
           { type: "text", text: title, weight: "bold", size: "xl", color: "#241F1B", wrap: true },
           { type: "text", text: hint, size: "sm", color: "#9C8E84", margin: "sm", wrap: true },
-          { type: "box", layout: "vertical", margin: "lg", spacing: "none", contents: rows },
+          { type: "box", layout: "vertical", margin: "lg", spacing: "md", contents: rows },
         ],
       },
     },
+    quickReply: undefined,
   };
 }
 
-/* 階層式 ①：點「找資源」→ 分類大按鈕格狀選單 */
+/* ① 找資源 → 分類大按鈕 */
 export function categoryMenu(cats: { name: string }[]): LineMsg {
-  return pickerBubble("想找哪一類資源？", "點下面的分類，或直接打關鍵字也可以", null,
+  return pickerBubble("想找哪一類資源？", "點下面的分類，或直接打關鍵字也可以", [],
     cats.slice(0, 14).map((c) => ({ label: c.name, data: `cat=${encodeURIComponent(c.name)}` })));
 }
 
-/* 階層式 ②：點分類 → 細分類大按鈕（含「全部」） */
+/* ② 分類 → 細分類大按鈕（含「全部」） */
 export function subcategoryMenu(catName: string, subs: { id: string; name: string }[]): LineMsg {
-  const full = gridButton(`全部${catName}`, `catall=${encodeURIComponent(catName)}`, true);
-  return pickerBubble(`${catName}`, "想找哪一項？點選或直接打字",
-    { type: "box", layout: "horizontal", contents: [full] },
+  return pickerBubble(catName, "想找哪一項？點選或直接打字",
+    [fullButton(`全部${catName}`, `catall=${encodeURIComponent(catName)}`, true)],
     subs.slice(0, 12).map((s) => ({ label: s.name, data: `sub=${s.id}` })));
 }
 
@@ -86,7 +79,7 @@ export function buildLinkList(opts: {
   headerLabel: string;
   icon?: string;
   emptyText: string;
-  items: { title: string; sub?: string; uri: string; btn?: string; image?: string | null }[];
+  items: { title: string; meta?: string; desc?: string; uri: string; btn?: string; image?: string | null }[];
 }): LineMsg {
   if (opts.items.length === 0) return menuText(opts.emptyText);
   const color = opts.headerColor ?? "#E0552E";
@@ -95,14 +88,14 @@ export function buildLinkList(opts: {
       type: "bubble",
       size: "kilo",
       body: {
-        type: "box", layout: "vertical", paddingAll: "18px", spacing: "sm",
-        contents: [
+        type: "box", layout: "vertical", paddingAll: "18px", contents: [
           { type: "box", layout: "horizontal", alignItems: "center", spacing: "sm", contents: [
             ...(opts.icon ? [{ type: "image", url: opts.icon, size: "22px", aspectMode: "fit", flex: 0 }] : []),
             { type: "text", text: opts.headerLabel, size: "sm", weight: "bold", color, flex: 0 },
           ] },
-          { type: "text", text: it.title, weight: "bold", size: "xl", wrap: true, color: "#241F1B", margin: "md" },
-          ...(it.sub ? [{ type: "text", text: it.sub, size: "md", wrap: true, color: "#574E47", margin: "sm" }] : []),
+          { type: "text", text: it.title, weight: "bold", size: "xl", wrap: true, color: "#241F1B", margin: "lg" },
+          ...(it.meta ? [{ type: "text", text: it.meta, size: "sm", weight: "bold", color, wrap: true, margin: "md" }] : []),
+          ...(it.desc ? [{ type: "text", text: it.desc, size: "md", wrap: true, color: "#574E47", margin: "sm" }] : []),
         ],
       },
       footer: {
