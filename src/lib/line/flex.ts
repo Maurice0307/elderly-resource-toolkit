@@ -24,10 +24,10 @@ export function buildResourceMessages(resources: Resource[], siteUrl: string, ic
 
 function row(iconUrl: string, label: string, value: string, valueColor = SUB, bold = false) {
   return {
-    type: "box", layout: "baseline", spacing: "sm", margin: "md", contents: [
-      { type: "icon", url: iconUrl, size: "lg" },
+    type: "box", layout: "horizontal", alignItems: "center", spacing: "sm", margin: "md", contents: [
+      { type: "image", url: iconUrl, size: "20px", aspectMode: "fit", flex: 0 },
       { type: "text", text: label, size: "sm", color: MUTED, flex: 0 },
-      { type: "text", text: value, size: "sm", color: valueColor, weight: bold ? "bold" : "regular", wrap: true, margin: "sm" },
+      { type: "text", text: value, size: "md", color: valueColor, weight: bold ? "bold" : "regular", wrap: true, margin: "sm" },
     ],
   };
 }
@@ -39,13 +39,13 @@ function buildBubble(r: Resource, siteUrl: string, icon: string) {
   const searchUrl = `${siteUrl}/search?q=${encodeURIComponent(r.name)}`;
 
   const body: object[] = [
-    { type: "box", layout: "baseline", contents: [
-      { type: "icon", url: icon, size: "lg" },
-      { type: "text", text: scopeLabel, size: "sm", color: accent, weight: "bold", margin: "sm" },
+    { type: "box", layout: "horizontal", alignItems: "center", spacing: "sm", contents: [
+      { type: "image", url: icon, size: "22px", aspectMode: "fit", flex: 0 },
+      { type: "text", text: scopeLabel, size: "sm", color: accent, weight: "bold", flex: 0 },
     ] },
-    { type: "text", text: r.name, weight: "bold", size: "lg", wrap: true, color: INK, margin: "md" },
+    { type: "text", text: r.name, weight: "bold", size: "xl", wrap: true, color: INK, margin: "md" },
   ];
-  if (r.summary) body.push({ type: "text", text: r.summary, size: "sm", wrap: true, color: MUTED, margin: "sm" });
+  if (r.summary) body.push({ type: "text", text: r.summary, size: "md", wrap: true, color: SUB, margin: "md" });
 
   const info: object[] = [];
   if (r.phone) info.push(row(`${siteUrl}/line/phone.png`, "電話", r.phone, accent, true));
@@ -57,16 +57,16 @@ function buildBubble(r: Resource, siteUrl: string, icon: string) {
 
   const footer: object[] = [];
   if (r.phone) footer.push({
-    type: "button", style: "primary", color: accent, height: "sm",
-    action: { type: "uri", label: "📞 撥打電話", uri: `tel:${r.phone.replace(/[^\d+]/g, "")}` },
+    type: "button", style: "primary", color: accent, height: "md",
+    action: { type: "uri", label: "撥打電話", uri: `tel:${r.phone.replace(/[^\d+]/g, "")}` },
   });
-  footer.push({ type: "button", style: "secondary", height: "sm", action: { type: "uri", label: "查看詳情", uri: searchUrl } });
+  footer.push({ type: "button", style: "secondary", height: "md", action: { type: "uri", label: "查看詳情", uri: searchUrl } });
   if (r.website_url) footer.push({ type: "button", style: "link", height: "sm", action: { type: "uri", label: "前往官網 ›", uri: r.website_url } });
 
   return {
     type: "bubble", size: "mega",
-    body: { type: "box", layout: "vertical", paddingAll: "18px", contents: body },
-    footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "18px", paddingTop: "4px", contents: footer },
+    body: { type: "box", layout: "vertical", paddingAll: "20px", contents: body },
+    footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "20px", paddingTop: "4px", contents: footer },
   };
 }
 

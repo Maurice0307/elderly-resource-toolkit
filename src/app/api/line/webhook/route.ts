@@ -3,7 +3,7 @@ import crypto from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildResourceMessages, buildWelcomeMessage } from "@/lib/line/flex";
-import { withMenu, menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
+import { menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
 import { getLineProfile, logLineMessage } from "@/lib/line/store";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
       if (event.type === "follow") {
-        await lineReply(event.replyToken, [withMenu(buildWelcomeMessage(siteUrl)), menuText("👇 點下方選單，或直接打字告訴我你想找什麼")]);
+        await lineReply(event.replyToken, [buildWelcomeMessage(siteUrl), menuText("👇 點下方「功能選單」的大圖示，或直接打字告訴我你想找什麼")]);
         continue;
       }
       if (event.type === "message" && event.message.type === "text") {
@@ -94,6 +94,11 @@ async function handleMessage(text: string, replyToken: string, siteUrl: string) 
 const RES_COLS = "id, name, summary, phone, website_url, address, scope, region_id, regions(name)";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const normRes = (rows: any[]): any[] => (rows ?? []).map((r) => ({ ...r, regions: Array.isArray(r.regions) ? r.regions[0] : r.regions }));
+const snip = (s: string | null | undefined, n = 46) => {
+  const t = (s ?? "").replace(/[#*>]/g, "").replace(/^[-•\s]+/gm, "").replace(/\s+/g, " ").trim();
+  return t.length > n ? t.slice(0, n) + "…" : t;
+};
+const GROUP_LABEL: Record<string, string> = { move: "動動身體", create: "創意手作", smart: "智慧生活" };
 
 async function handleResourceMenu(replyToken: string) {
   const admin = createAdminClient();
@@ -123,7 +128,7 @@ async function handleCategoryResources(catName: string, replyToken: string, site
     ? await admin.from("resources").select(RES_COLS).in("subcategory_id", subIds).eq("status", "active").order("like_count", { ascending: false, nullsFirst: false }).limit(8)
     : { data: [] };
   const flex = buildResourceMessages(normRes(data ?? []), siteUrl, CATEGORY_ICON[catName] ?? "pin");
-  if (flex) await lineReply(replyToken, [withMenu(flex)]);
+  if (flex) await lineReply(replyToken, [flex]);
   else await lineReply(replyToken, [menuText(`「${catName}」目前還沒有資源，換個分類或直接打關鍵字試試 👇`)]);
 }
 
@@ -138,7 +143,7 @@ async function handleSubcatResources(subId: string, replyToken: string, siteUrl:
     if (cat?.name) iconName = CATEGORY_ICON[cat.name] ?? "pin";
   }
   const flex = buildResourceMessages(normRes(data ?? []), siteUrl, iconName);
-  if (flex) await lineReply(replyToken, [withMenu(flex)]);
+  if (flex) await lineReply(replyToken, [flex]);
   else await lineReply(replyToken, [menuText(`「${sub?.name ?? "這一項"}」目前還沒有資源，換一項或直接打關鍵字試試 👇`)]);
 }
 
@@ -146,7 +151,7 @@ async function handleActivities(replyToken: string, siteUrl: string) {
   const admin = createAdminClient();
   const { data } = await admin
     .from("activity_cards")
-    .select("slug, title, steps")
+    .select("slug, title, summary, tags, group_slug, steps")
     .eq("status", "active")
     .limit(8);
   await lineReply(replyToken, [buildLinkList({
@@ -155,12 +160,17 @@ async function handleActivities(replyToken: string, siteUrl: string) {
     headerLabel: "活動圖卡",
     icon: iconUrl(siteUrl, "grid"),
     emptyText: "目前還沒有活動圖卡，稍後再來看看 🙂",
-    items: (data ?? []).map((a) => ({
-      title: a.title,
-      sub: Array.isArray(a.steps) ? `${a.steps.length} 個步驟` : undefined,
-      uri: `${siteUrl}/activities/${a.slug}`,
-      btn: "開始活動",
-    })),
+    items: (data ?? []).map((a) => {
+      const type = (Array.isArray(a.tags) && a.tags[0]) || GROUP_LABEL[a.group_slug] || "";
+      const steps = Array.isArray(a.steps) ? a.steps.length : 0;
+      const head = `${type ? `類型：${type}・` : ""}${steps} 個步驟`;
+      return {
+        title: a.title,
+        sub: a.summary ? `${head}\n${snip(a.summary, 50)}` : head,
+        uri: `${siteUrl}/activities/${a.slug}`,
+        btn: "開始活動",
+      };
+    }),
   })]);
 }
 
@@ -189,7 +199,7 @@ async function handleNews(replyToken: string, siteUrl: string) {
   const admin = createAdminClient();
   const { data } = await admin
     .from("daily_news")
-    .select("id, title, source_org, image_url, published_at, fetched_at")
+    .select("id, title, source_org, summary_md, image_url, published_at, fetched_at")
     .eq("status", "active")
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(8);
@@ -201,7 +211,7 @@ async function handleNews(replyToken: string, siteUrl: string) {
     emptyText: "今天還沒有新消息，稍後再來看看 🙂",
     items: (data ?? []).map((n) => ({
       title: n.title,
-      sub: n.source_org ?? undefined,
+      sub: n.summary_md ? `${n.source_org ?? ""}\n${snip(n.summary_md, 52)}` : (n.source_org ?? undefined),
       uri: `${siteUrl}/news/${n.id}`,
       btn: "閱讀",
       image: (n.image_url && /^https:\/\//.test(n.image_url)) ? n.image_url : null,
@@ -213,13 +223,13 @@ async function handleQa(replyToken: string, siteUrl: string) {
   const admin = createAdminClient();
   const { data } = await admin
     .from("questions")
-    .select("id, title, answer_count")
+    .select("id, title, body, answer_count")
     .in("status", ["open", "resolved"])
     .order("created_at", { ascending: false })
     .limit(7);
   const items = (data ?? []).map((q) => ({
     title: q.title,
-    sub: `${q.answer_count ?? 0} 則回答`,
+    sub: q.body ? `${q.answer_count ?? 0} 則回答\n${snip(q.body, 48)}` : `${q.answer_count ?? 0} 則回答`,
     uri: `${siteUrl}/qa/${q.id}`,
     btn: "看討論",
   }));
@@ -300,7 +310,7 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
 
   const flexMsg = buildResourceMessages(normRes(resources), siteUrl, "search");
 
-  if (flexMsg) await lineReply(replyToken, [withMenu(flexMsg)]);
+  if (flexMsg) await lineReply(replyToken, [flexMsg]);
 }
 
 // LINE event types

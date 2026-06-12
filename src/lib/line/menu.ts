@@ -24,7 +24,7 @@ export function withMenu(message: LineMsg): LineMsg {
 }
 
 export function menuText(text: string): LineMsg {
-  return withMenu({ type: "text", text });
+  return { type: "text", text };
 }
 
 /* 分類 → 線條 icon 名稱對應 */
@@ -34,31 +34,49 @@ export const CATEGORY_ICON: Record<string, string> = {
 };
 export const iconUrl = (siteUrl: string, name: string) => `${siteUrl}/line/${name}.png`;
 
-/* 階層式 ①：點「找資源」後彈出分類子選單（postback，不洗版） */
-export function categoryMenu(cats: { name: string }[]): LineMsg {
+/* 大按鈕格狀選單（兩欄並排、全部看得到、不用滑） */
+function gridButton(label: string, data: string, primary = false, color = "#E0552E"): LineMsg {
   return {
-    type: "text",
-    text: "想找哪一類資源呢？點下面的分類 👇",
-    quickReply: {
-      items: cats.slice(0, 13).map((c) => ({
-        type: "action",
-        action: { type: "postback", label: c.name.slice(0, 20), data: `cat=${encodeURIComponent(c.name)}`, displayText: c.name },
-      })),
+    type: "button", style: primary ? "primary" : "secondary", color: primary ? color : undefined,
+    height: "md", flex: 1,
+    action: { type: "postback", label: label.slice(0, 18), data, displayText: label },
+  };
+}
+function pickerBubble(title: string, hint: string, full: LineMsg | null, options: { label: string; data: string }[]): LineMsg {
+  const rows: LineMsg[] = [];
+  if (full) rows.push(full);
+  for (let i = 0; i < options.length; i += 2) {
+    const pair = options.slice(i, i + 2).map((o) => gridButton(o.label, o.data));
+    if (pair.length === 1) pair.push({ type: "filler" });
+    rows.push({ type: "box", layout: "horizontal", spacing: "md", margin: "md", contents: pair });
+  }
+  return {
+    type: "flex", altText: title,
+    contents: {
+      type: "bubble", size: "mega",
+      body: {
+        type: "box", layout: "vertical", paddingAll: "20px", contents: [
+          { type: "text", text: title, weight: "bold", size: "xl", color: "#241F1B", wrap: true },
+          { type: "text", text: hint, size: "sm", color: "#9C8E84", margin: "sm", wrap: true },
+          { type: "box", layout: "vertical", margin: "lg", spacing: "none", contents: rows },
+        ],
+      },
     },
   };
 }
 
-/* 階層式 ②：點分類後彈出細分類（postback），加上「全部」選項 */
+/* 階層式 ①：點「找資源」→ 分類大按鈕格狀選單 */
+export function categoryMenu(cats: { name: string }[]): LineMsg {
+  return pickerBubble("想找哪一類資源？", "點下面的分類，或直接打關鍵字也可以", null,
+    cats.slice(0, 14).map((c) => ({ label: c.name, data: `cat=${encodeURIComponent(c.name)}` })));
+}
+
+/* 階層式 ②：點分類 → 細分類大按鈕（含「全部」） */
 export function subcategoryMenu(catName: string, subs: { id: string; name: string }[]): LineMsg {
-  const items = subs.slice(0, 12).map((s) => ({
-    type: "action" as const,
-    action: { type: "postback" as const, label: s.name.slice(0, 20), data: `sub=${s.id}`, displayText: s.name },
-  }));
-  items.unshift({
-    type: "action",
-    action: { type: "postback", label: `全部${catName}`.slice(0, 20), data: `catall=${encodeURIComponent(catName)}`, displayText: `全部 ${catName}` },
-  });
-  return { type: "text", text: `「${catName}」想找哪一項？也可以直接打關鍵字 👇`, quickReply: { items } };
+  const full = gridButton(`全部${catName}`, `catall=${encodeURIComponent(catName)}`, true);
+  return pickerBubble(`${catName}`, "想找哪一項？點選或直接打字",
+    { type: "box", layout: "horizontal", contents: [full] },
+    subs.slice(0, 12).map((s) => ({ label: s.name, data: `sub=${s.id}` })));
 }
 
 /* 通用連結清單（carousel；可帶配圖 hero，標題＋按鈕連到網站） */
@@ -77,14 +95,14 @@ export function buildLinkList(opts: {
       type: "bubble",
       size: "kilo",
       body: {
-        type: "box", layout: "vertical", paddingAll: "16px", spacing: "sm",
+        type: "box", layout: "vertical", paddingAll: "18px", spacing: "sm",
         contents: [
-          { type: "box", layout: "baseline", contents: [
-            ...(opts.icon ? [{ type: "icon", url: opts.icon, size: "lg" }] : []),
-            { type: "text", text: opts.headerLabel, size: "xs", weight: "bold", color, margin: opts.icon ? "sm" : "none" },
+          { type: "box", layout: "horizontal", alignItems: "center", spacing: "sm", contents: [
+            ...(opts.icon ? [{ type: "image", url: opts.icon, size: "22px", aspectMode: "fit", flex: 0 }] : []),
+            { type: "text", text: opts.headerLabel, size: "sm", weight: "bold", color, flex: 0 },
           ] },
-          { type: "text", text: it.title, weight: "bold", size: "md", wrap: true, color: "#241F1B", margin: "sm" },
-          ...(it.sub ? [{ type: "text", text: it.sub, size: "sm", wrap: true, color: "#9C8E84" }] : []),
+          { type: "text", text: it.title, weight: "bold", size: "xl", wrap: true, color: "#241F1B", margin: "md" },
+          ...(it.sub ? [{ type: "text", text: it.sub, size: "md", wrap: true, color: "#574E47", margin: "sm" }] : []),
         ],
       },
       footer: {
@@ -100,10 +118,9 @@ export function buildLinkList(opts: {
     }
     return bubble;
   });
-  const flex: LineMsg = bubbles.length === 1
+  return bubbles.length === 1
     ? { type: "flex", altText: opts.altText, contents: bubbles[0] }
     : { type: "flex", altText: opts.altText, contents: { type: "carousel", contents: bubbles } };
-  return withMenu(flex);
 }
 
 /* 判斷訊息要走哪個功能；回傳 null 代表當作資源關鍵字搜尋 */
