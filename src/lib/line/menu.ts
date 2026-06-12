@@ -27,13 +27,20 @@ export function menuText(text: string): LineMsg {
   return withMenu({ type: "text", text });
 }
 
-/* 階層式：點「找資源」後彈出分類子選單（postback，不洗版） */
+/* 分類 → 線條 icon 名稱對應 */
+export const CATEGORY_ICON: Record<string, string> = {
+  "醫療健康": "health", "交通接駁": "send", "居住安全": "home", "經濟財務": "coin",
+  "社會資源": "social", "休閒活動": "run", "教育進修": "education",
+};
+export const iconUrl = (siteUrl: string, name: string) => `${siteUrl}/line/${name}.png`;
+
+/* 階層式 ①：點「找資源」後彈出分類子選單（postback，不洗版） */
 export function categoryMenu(cats: { name: string }[]): LineMsg {
   return {
     type: "text",
     text: "想找哪一類資源呢？點下面的分類 👇",
     quickReply: {
-      items: cats.slice(0, 12).map((c) => ({
+      items: cats.slice(0, 13).map((c) => ({
         type: "action",
         action: { type: "postback", label: c.name.slice(0, 20), data: `cat=${encodeURIComponent(c.name)}`, displayText: c.name },
       })),
@@ -41,11 +48,25 @@ export function categoryMenu(cats: { name: string }[]): LineMsg {
   };
 }
 
+/* 階層式 ②：點分類後彈出細分類（postback），加上「全部」選項 */
+export function subcategoryMenu(catName: string, subs: { id: string; name: string }[]): LineMsg {
+  const items = subs.slice(0, 12).map((s) => ({
+    type: "action" as const,
+    action: { type: "postback" as const, label: s.name.slice(0, 20), data: `sub=${s.id}`, displayText: s.name },
+  }));
+  items.unshift({
+    type: "action",
+    action: { type: "postback", label: `全部${catName}`.slice(0, 20), data: `catall=${encodeURIComponent(catName)}`, displayText: `全部 ${catName}` },
+  });
+  return { type: "text", text: `「${catName}」想找哪一項？也可以直接打關鍵字 👇`, quickReply: { items } };
+}
+
 /* 通用連結清單（carousel；可帶配圖 hero，標題＋按鈕連到網站） */
 export function buildLinkList(opts: {
   altText: string;
   headerColor?: string;
   headerLabel: string;
+  icon?: string;
   emptyText: string;
   items: { title: string; sub?: string; uri: string; btn?: string; image?: string | null }[];
 }): LineMsg {
@@ -58,7 +79,10 @@ export function buildLinkList(opts: {
       body: {
         type: "box", layout: "vertical", paddingAll: "16px", spacing: "sm",
         contents: [
-          { type: "text", text: opts.headerLabel, size: "xs", weight: "bold", color },
+          { type: "box", layout: "baseline", contents: [
+            ...(opts.icon ? [{ type: "icon", url: opts.icon, size: "lg" }] : []),
+            { type: "text", text: opts.headerLabel, size: "xs", weight: "bold", color, margin: opts.icon ? "sm" : "none" },
+          ] },
           { type: "text", text: it.title, weight: "bold", size: "md", wrap: true, color: "#241F1B", margin: "sm" },
           ...(it.sub ? [{ type: "text", text: it.sub, size: "sm", wrap: true, color: "#9C8E84" }] : []),
         ],

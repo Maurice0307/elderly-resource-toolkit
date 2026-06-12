@@ -4,6 +4,7 @@ type Resource = {
   summary?: string | null;
   phone?: string | null;
   website_url?: string | null;
+  address?: string | null;
   scope: string;
   regions?: { name: string } | null;
 };
@@ -11,32 +12,47 @@ type Resource = {
 const CORAL = "#E0552E";
 const INK = "#241F1B";
 const MUTED = "#9C8E84";
+const SUB = "#574E47";
 
-export function buildResourceMessages(resources: Resource[], siteUrl: string) {
+export function buildResourceMessages(resources: Resource[], siteUrl: string, iconName = "pin") {
   if (resources.length === 0) return null;
-  const bubbles = resources.slice(0, 10).map((r) => buildBubble(r, siteUrl));
+  const icon = `${siteUrl}/line/${iconName}.png`;
+  const bubbles = resources.slice(0, 10).map((r) => buildBubble(r, siteUrl, icon));
   if (bubbles.length === 1) return { type: "flex", altText: resources[0].name, contents: bubbles[0] };
   return { type: "flex", altText: `找到 ${resources.length} 筆相關資源`, contents: { type: "carousel", contents: bubbles } };
 }
 
-function buildBubble(r: Resource, siteUrl: string) {
+function row(iconUrl: string, label: string, value: string, valueColor = SUB, bold = false) {
+  return {
+    type: "box", layout: "baseline", spacing: "sm", margin: "md", contents: [
+      { type: "icon", url: iconUrl, size: "lg" },
+      { type: "text", text: label, size: "sm", color: MUTED, flex: 0 },
+      { type: "text", text: value, size: "sm", color: valueColor, weight: bold ? "bold" : "regular", wrap: true, margin: "sm" },
+    ],
+  };
+}
+
+function buildBubble(r: Resource, siteUrl: string, icon: string) {
   const isNational = r.scope === "national";
   const scopeLabel = isNational ? "全國服務" : (r.regions?.name ?? "在地服務");
   const accent = isNational ? "#B45309" : CORAL;
   const searchUrl = `${siteUrl}/search?q=${encodeURIComponent(r.name)}`;
 
   const body: object[] = [
-    { type: "text", text: r.name, weight: "bold", size: "lg", wrap: true, color: INK },
+    { type: "box", layout: "baseline", contents: [
+      { type: "icon", url: icon, size: "lg" },
+      { type: "text", text: scopeLabel, size: "sm", color: accent, weight: "bold", margin: "sm" },
+    ] },
+    { type: "text", text: r.name, weight: "bold", size: "lg", wrap: true, color: INK, margin: "md" },
   ];
   if (r.summary) body.push({ type: "text", text: r.summary, size: "sm", wrap: true, color: MUTED, margin: "sm" });
-  if (r.phone) {
+
+  const info: object[] = [];
+  if (r.phone) info.push(row(`${siteUrl}/line/phone.png`, "電話", r.phone, accent, true));
+  if (r.address) info.push(row(`${siteUrl}/line/pin.png`, "地址", r.address, SUB));
+  if (info.length) {
     body.push({ type: "separator", margin: "lg", color: "#F0E6DE" });
-    body.push({
-      type: "box", layout: "baseline", margin: "lg", contents: [
-        { type: "text", text: "電話", size: "sm", color: MUTED, flex: 0 },
-        { type: "text", text: r.phone, size: "md", color: accent, weight: "bold", align: "end" },
-      ],
-    });
+    body.push(...info);
   }
 
   const footer: object[] = [];
@@ -44,25 +60,12 @@ function buildBubble(r: Resource, siteUrl: string) {
     type: "button", style: "primary", color: accent, height: "sm",
     action: { type: "uri", label: "📞 撥打電話", uri: `tel:${r.phone.replace(/[^\d+]/g, "")}` },
   });
-  footer.push({
-    type: "button", style: "secondary", height: "sm",
-    action: { type: "uri", label: "查看詳情", uri: searchUrl },
-  });
-  if (r.website_url) footer.push({
-    type: "button", style: "link", height: "sm",
-    action: { type: "uri", label: "前往官網 ›", uri: r.website_url },
-  });
+  footer.push({ type: "button", style: "secondary", height: "sm", action: { type: "uri", label: "查看詳情", uri: searchUrl } });
+  if (r.website_url) footer.push({ type: "button", style: "link", height: "sm", action: { type: "uri", label: "前往官網 ›", uri: r.website_url } });
 
   return {
     type: "bubble", size: "mega",
-    body: {
-      type: "box", layout: "vertical", paddingAll: "0px", contents: [
-        { type: "box", layout: "horizontal", backgroundColor: accent, paddingAll: "12px", paddingStart: "18px", contents: [
-          { type: "text", text: scopeLabel, color: "#FFFFFF", size: "sm", weight: "bold" },
-        ] },
-        { type: "box", layout: "vertical", paddingAll: "18px", paddingBottom: "8px", contents: body },
-      ],
-    },
+    body: { type: "box", layout: "vertical", paddingAll: "18px", contents: body },
     footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "18px", paddingTop: "4px", contents: footer },
   };
 }

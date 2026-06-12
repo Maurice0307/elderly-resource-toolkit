@@ -3,7 +3,7 @@ import crypto from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildResourceMessages, buildWelcomeMessage } from "@/lib/line/flex";
-import { withMenu, menuText, buildLinkList, routeIntent, categoryMenu } from "@/lib/line/menu";
+import { withMenu, menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
 import { getLineProfile, logLineMessage } from "@/lib/line/store";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
@@ -48,9 +48,10 @@ export async function POST(req: NextRequest) {
     try {
       if (event.type === "postback") {
         const data: string = event.postback?.data ?? "";
-        if (data.startsWith("cat=")) {
-          await handleCategoryResources(decodeURIComponent(data.slice(4)), event.replyToken!, siteUrl);
-        }
+        const rt = event.replyToken!;
+        if (data.startsWith("cat="))         await handleSubcatMenu(decodeURIComponent(data.slice(4)), rt);
+        else if (data.startsWith("catall="))  await handleCategoryResources(decodeURIComponent(data.slice(7)), rt, siteUrl);
+        else if (data.startsWith("sub="))     await handleSubcatResources(data.slice(4), rt, siteUrl);
         continue;
       }
       if (event.type === "follow") {
@@ -90,33 +91,55 @@ async function handleMessage(text: string, replyToken: string, siteUrl: string) 
   }
 }
 
+const RES_COLS = "id, name, summary, phone, website_url, address, scope, region_id, regions(name)";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const normRes = (rows: any[]): any[] => (rows ?? []).map((r) => ({ ...r, regions: Array.isArray(r.regions) ? r.regions[0] : r.regions }));
+
 async function handleResourceMenu(replyToken: string) {
   const admin = createAdminClient();
   const { data: cats } = await admin.from("categories").select("name").order("sort_order");
   await lineReply(replyToken, [categoryMenu(cats ?? [])]);
 }
 
+// 點分類 → 顯示細分類按鈕
+async function handleSubcatMenu(catName: string, replyToken: string) {
+  const admin = createAdminClient();
+  const { data: cat } = await admin.from("categories").select("id").eq("name", catName).maybeSingle();
+  if (!cat) { await lineReply(replyToken, [menuText("找不到這個分類，直接打關鍵字也可以喔 🙂")]); return; }
+  const { data: subs } = await admin.from("subcategories").select("id, name").eq("category_id", cat.id).order("sort_order");
+  if (!subs || subs.length === 0) { await handleCategoryResources(catName, replyToken, ""); return; }
+  await lineReply(replyToken, [subcategoryMenu(catName, subs)]);
+}
+
+// 「全部 X」→ 整個分類的資源
 async function handleCategoryResources(catName: string, replyToken: string, siteUrl: string) {
+  siteUrl = siteUrl || "https://elderly-resource-toolkit.vercel.app";
   const admin = createAdminClient();
   const { data: cat } = await admin.from("categories").select("id").eq("name", catName).maybeSingle();
   if (!cat) { await handleTextMessage(catName, replyToken, siteUrl); return; }
   const { data: subs } = await admin.from("subcategories").select("id").eq("category_id", cat.id);
   const subIds = (subs ?? []).map((s) => s.id);
-  const { data: resources } = subIds.length
-    ? await admin
-        .from("resources")
-        .select("id, name, summary, phone, website_url, scope, region_id, regions(name)")
-        .in("subcategory_id", subIds)
-        .eq("status", "active")
-        .order("like_count", { ascending: false, nullsFirst: false })
-        .limit(8)
+  const { data } = subIds.length
+    ? await admin.from("resources").select(RES_COLS).in("subcategory_id", subIds).eq("status", "active").order("like_count", { ascending: false, nullsFirst: false }).limit(8)
     : { data: [] };
-  const flex = buildResourceMessages(
-    (resources ?? []).map((r) => ({ ...r, regions: Array.isArray(r.regions) ? r.regions[0] : r.regions })),
-    siteUrl,
-  );
+  const flex = buildResourceMessages(normRes(data ?? []), siteUrl, CATEGORY_ICON[catName] ?? "pin");
   if (flex) await lineReply(replyToken, [withMenu(flex)]);
   else await lineReply(replyToken, [menuText(`「${catName}」目前還沒有資源，換個分類或直接打關鍵字試試 👇`)]);
+}
+
+// 點細分類 → 該細分類的資源
+async function handleSubcatResources(subId: string, replyToken: string, siteUrl: string) {
+  const admin = createAdminClient();
+  const { data: sub } = await admin.from("subcategories").select("name, category_id").eq("id", subId).maybeSingle();
+  const { data } = await admin.from("resources").select(RES_COLS).eq("subcategory_id", subId).eq("status", "active").order("like_count", { ascending: false, nullsFirst: false }).limit(8);
+  let iconName = "pin";
+  if (sub?.category_id) {
+    const { data: cat } = await admin.from("categories").select("name").eq("id", sub.category_id).maybeSingle();
+    if (cat?.name) iconName = CATEGORY_ICON[cat.name] ?? "pin";
+  }
+  const flex = buildResourceMessages(normRes(data ?? []), siteUrl, iconName);
+  if (flex) await lineReply(replyToken, [withMenu(flex)]);
+  else await lineReply(replyToken, [menuText(`「${sub?.name ?? "這一項"}」目前還沒有資源，換一項或直接打關鍵字試試 👇`)]);
 }
 
 async function handleActivities(replyToken: string, siteUrl: string) {
@@ -129,7 +152,8 @@ async function handleActivities(replyToken: string, siteUrl: string) {
   await lineReply(replyToken, [buildLinkList({
     altText: "活動圖卡",
     headerColor: "#2E7D52",
-    headerLabel: "🎴 活動圖卡",
+    headerLabel: "活動圖卡",
+    icon: iconUrl(siteUrl, "grid"),
     emptyText: "目前還沒有活動圖卡，稍後再來看看 🙂",
     items: (data ?? []).map((a) => ({
       title: a.title,
@@ -149,7 +173,8 @@ async function handleScripts(replyToken: string, siteUrl: string) {
   await lineReply(replyToken, [buildLinkList({
     altText: "溝通錦囊",
     headerColor: "#2952B3",
-    headerLabel: "💬 溝通錦囊",
+    headerLabel: "溝通錦囊",
+    icon: iconUrl(siteUrl, "chat"),
     emptyText: "目前還沒有溝通錦囊，稍後再來看看 🙂",
     items: (data ?? []).map((s) => ({
       title: s.title,
@@ -171,7 +196,8 @@ async function handleNews(replyToken: string, siteUrl: string) {
   await lineReply(replyToken, [buildLinkList({
     altText: "今日新知",
     headerColor: "#C2410C",
-    headerLabel: "📰 今日新知",
+    headerLabel: "今日新知",
+    icon: iconUrl(siteUrl, "news"),
     emptyText: "今天還沒有新消息，稍後再來看看 🙂",
     items: (data ?? []).map((n) => ({
       title: n.title,
@@ -201,7 +227,8 @@ async function handleQa(replyToken: string, siteUrl: string) {
   await lineReply(replyToken, [buildLinkList({
     altText: "互助問答",
     headerColor: "#B23F1E",
-    headerLabel: "🙋 互助問答",
+    headerLabel: "互助問答",
+    icon: iconUrl(siteUrl, "qa"),
     emptyText: "目前還沒有問答，您可以到網站發問 🙂",
     items,
   })]);
@@ -247,7 +274,7 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
   // Query resources
   let query = admin
     .from("resources")
-    .select("id, name, summary, phone, website_url, scope, region_id, regions(name)")
+    .select(RES_COLS)
     .eq("status", "active")
     .or(`name.ilike.%${keyword}%,summary.ilike.%${keyword}%`)
     .limit(5);
@@ -255,7 +282,7 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
   if (regionId) {
     query = admin
       .from("resources")
-      .select("id, name, summary, phone, website_url, scope, region_id, regions(name)")
+      .select(RES_COLS)
       .eq("status", "active")
       .or(`scope.eq.national,region_id.eq.${regionId}`)
       .or(`name.ilike.%${keyword}%,summary.ilike.%${keyword}%`)
@@ -271,13 +298,7 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
     return;
   }
 
-  const flexMsg = buildResourceMessages(
-    resources.map((r) => ({
-      ...r,
-      regions: Array.isArray(r.regions) ? r.regions[0] : r.regions,
-    })),
-    siteUrl
-  );
+  const flexMsg = buildResourceMessages(normRes(resources), siteUrl, "search");
 
   if (flexMsg) await lineReply(replyToken, [withMenu(flexMsg)]);
 }
