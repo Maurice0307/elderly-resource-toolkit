@@ -1,6 +1,6 @@
-import { ELIcon } from "@/components/layout/ELIcon";
 import { createClient } from "@/lib/supabase/server";
 import { ProposalList, type Proposal } from "@/components/propose/ProposalList";
+import { WishButton } from "@/components/propose/WishButton";
 import { MobileSubHeader } from "@/components/layout/MobileSubHeader";
 
 export const metadata = { title: "點子提案專區" };
@@ -68,13 +68,8 @@ export default async function ProposePage() {
       <div className="wv-wrap" style={{ paddingTop: 36, paddingBottom: 40 }}>
         <ProposalList proposals={proposals} loggedIn={!!user} persist={persist} />
 
-        {/* 我要提案（置底） */}
-        <a
-          href="mailto:itchiang2025@gmail.com?subject=新提案&body=提案名稱：%0A提案說明："
-          style={{ width: "100%", maxWidth: 480, margin: "0 auto", height: 54, borderRadius: 14, background: "#E0552E", color: "#fff", fontSize: 17, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", gap: 9, textDecoration: "none", boxShadow: "0 6px 16px rgba(224,85,46,0.26)" }}
-        >
-          <ELIcon name="megaphone" size={20} color="#fff" /> 我要提案
-        </a>
+        {/* 我要提案（置底）→ 許願池彈窗 */}
+        <WishButton loggedIn={!!user} />
       </div>
     </div>
   );

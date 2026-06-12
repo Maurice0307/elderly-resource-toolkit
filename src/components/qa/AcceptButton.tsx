@@ -1,6 +1,7 @@
 "use client";
 import { useTransition } from "react";
 import { acceptAnswer } from "@/lib/qa/actions";
+import { ELIcon } from "@/components/layout/ELIcon";
 
 interface Props {
   answerId: string;
@@ -25,7 +26,7 @@ export function AcceptButton({
         className="flex items-center gap-1.5 rounded-full px-4 py-2 text-base font-semibold"
         style={{ background: "var(--success-soft)", color: "#065F46", border: "1.5px solid #6EE7B7" }}
       >
-        ✅ 已採納
+        <ELIcon name="check" size={17} color="#1E9E54" stroke={2.4} /> 已採納
       </span>
     );
   }
@@ -44,7 +45,7 @@ export function AcceptButton({
           : { background: "var(--bg-soft)", color: "var(--text-secondary)", border: "1.5px solid var(--border)", minHeight: "var(--hit)" }
       }
     >
-      {isAccepted ? "✅ 已採納" : "採納此答案"}
+      {isAccepted ? <><ELIcon name="check" size={17} color="#1E9E54" stroke={2.4} /> 已採納</> : "採納此答案"}
     </button>
   );
 }

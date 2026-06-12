@@ -12,10 +12,27 @@ export default async function AdminUsersPage() {
 
   const { data: users } = await admin
     .from("profiles")
-    .select("id, display_name, role, identity, points, created_at")
+    .select("id, display_name, role, identity, points, created_at, home_region_id")
     .order("role")
     .order("created_at", { ascending: false })
     .limit(100);
+
+  // 地區名稱（含上層縣市）
+  const regionIds = [...new Set((users ?? []).map((u) => u.home_region_id).filter(Boolean))] as string[];
+  const regionName: Record<string, string> = {};
+  if (regionIds.length > 0) {
+    const { data: regs } = await admin.from("regions").select("id, name, parent_id").in("id", regionIds);
+    const parentIds = [...new Set((regs ?? []).map((r) => r.parent_id).filter(Boolean))] as string[];
+    const parentMap: Record<string, string> = {};
+    if (parentIds.length > 0) {
+      const { data: parents } = await admin.from("regions").select("id, name").in("id", parentIds);
+      for (const p of parents ?? []) parentMap[p.id] = p.name;
+    }
+    for (const r of regs ?? []) {
+      regionName[r.id] = r.parent_id && parentMap[r.parent_id] ? `${parentMap[r.parent_id]} ${r.name}` : r.name;
+    }
+  }
+  const regionOf = (id: string | null) => (id && regionName[id]) || "—";
 
   // 聯絡資訊（email / 手機）來自 auth.users
   const { data: authList } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -43,7 +60,7 @@ export default async function AdminUsersPage() {
     admin:     { label: "超級管理員", tone: "coral" },
   };
   const identityLabel: Record<string, string> = { elder: "長者", family: "家屬", volunteer: "志工", other: "其他" };
-  const fmtDate = (d: string) => new Date(d).toLocaleDateString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit" });
+  const fmtDate = (d: string) => new Date(d).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 
   const roleButtons = (u: { id: string; role: string }) => (
     <>
@@ -89,7 +106,7 @@ export default async function AdminUsersPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
             <thead>
               <tr style={{ background: "#FAF6F2", borderBottom: `1px solid ${AD.border}` }}>
-                {["成員", "角色", "身分", "積分", "加入時間", "聯絡資訊"].map((h) => (
+                {["成員", "角色", "身分", "地區", "積分", "加入時間", "聯絡資訊"].map((h) => (
                   <th key={h} style={{ textAlign: "left", padding: "11px 14px", fontSize: 12.5, color: AD.muted, fontWeight: 700, whiteSpace: "nowrap" }}>{h}</th>
                 ))}
                 <th style={{ textAlign: "right", padding: "11px 16px 11px 14px", fontSize: 12.5, color: AD.muted, fontWeight: 700 }}>操作</th>
@@ -114,6 +131,7 @@ export default async function AdminUsersPage() {
                     </td>
                     <td style={{ padding: "12px 14px" }}><AdPill tone={info.tone}>{info.label}</AdPill></td>
                     <td style={{ padding: "12px 14px", fontSize: 13, color: AD.sub, whiteSpace: "nowrap" }}>{u.identity ? identityLabel[u.identity] ?? u.identity : "—"}</td>
+                    <td style={{ padding: "12px 14px", fontSize: 13, color: AD.sub, whiteSpace: "nowrap" }}>{regionOf(u.home_region_id)}</td>
                     <td style={{ padding: "12px 14px", fontSize: 13.5, fontWeight: 700, color: AD.ink, whiteSpace: "nowrap" }}>{u.points}</td>
                     <td style={{ padding: "12px 14px", fontSize: 12.5, color: AD.sub, whiteSpace: "nowrap" }}>{fmtDate(u.created_at)}</td>
                     <td style={{ padding: "12px 14px" }}>
@@ -156,10 +174,13 @@ export default async function AdminUsersPage() {
                 </div>
               </div>
 
-              {/* 加入時間 + 聯絡資訊（每項一行） */}
+              {/* 加入時間 + 地區 + 聯絡資訊（每項一行） */}
               <div style={{ marginTop: 11, paddingTop: 11, borderTop: `1px solid ${AD.border}`, display: "flex", flexDirection: "column", gap: 6 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: AD.sub }}>
                   <ELIcon name="medal" size={15} color={AD.muted} /> 加入時間：{fmtDate(u.created_at)}
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: AD.sub }}>
+                  <ELIcon name="pin" size={15} color={AD.muted} /> 地區：{regionOf(u.home_region_id)}
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   <ELIcon name="user" size={15} color={AD.muted} />

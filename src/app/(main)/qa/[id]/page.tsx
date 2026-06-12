@@ -213,7 +213,7 @@ export default async function QuestionPage({ params }: { params: Promise<Params>
         ) : (
           <div style={{ background: "var(--cta-soft)", borderRadius: 14, padding: "16px 18px", textAlign: "center" }}>
             <Link href="/login" style={{ color: "var(--cta-ink)", fontWeight: 700 }}>登入</Link>
-            <span style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", display: "inline-flex", alignItems: "center", gap: 4 }}>後即可回答，幫助更多長輩 <ELIcon name="heart" size={16} color="#F26B43" /></span>
+            <span style={{ color: "var(--text-secondary)", fontSize: "0.9375rem" }}>後即可回答，幫助更多長輩</span>
           </div>
         )}
       </div>

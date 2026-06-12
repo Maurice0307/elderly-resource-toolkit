@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { submitResource } from "@/lib/resources/submitAction";
 import { categories } from "@/config/categories";
+import { ELIcon } from "@/components/layout/ELIcon";
 
 type SubcategoryRow = { id: string; slug: string; name: string; category_slug: string };
 type RegionRow      = { id: string; name: string; parent_id: string | null };
@@ -40,7 +41,7 @@ export function SubmitForm({ subcategories, regions }: Props) {
     regions.filter((r) => r.parent_id === parentId);
 
   return (
-    <form action={action} className="mt-8 space-y-8">
+    <form action={action} className="mt-6 space-y-5">
 
       {/* 機構名稱 */}
       <Field label="機構 / 服務名稱" required>
@@ -94,11 +95,11 @@ export function SubmitForm({ subcategories, regions }: Props) {
           {(["local", "national"] as const).map((v) => (
             <label
               key={v}
-              className="flex cursor-pointer items-center gap-3 rounded-2xl px-6 py-4 text-xl transition"
+              className="flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 transition"
               style={
                 scope === v
-                  ? { background: "var(--bg-accent)", border: "2px solid #FDE68A", color: "#92400E", fontWeight: 600, minHeight: "var(--hit)" }
-                  : { background: "var(--bg-soft)", border: "2px solid transparent", color: "var(--text-secondary)", minHeight: "var(--hit)" }
+                  ? { background: "var(--bg-accent)", border: "2px solid #FDE68A", color: "#92400E", fontWeight: 600, fontSize: "1rem", minHeight: 48 }
+                  : { background: "var(--bg-soft)", border: "2px solid transparent", color: "var(--text-secondary)", fontSize: "1rem", minHeight: 48 }
               }
             >
               <input
@@ -191,8 +192,8 @@ export function SubmitForm({ subcategories, regions }: Props) {
       {/* 錯誤訊息 */}
       {state?.error && (
         <div
-          className="rounded-xl px-5 py-4 text-lg"
-          style={{ background: "var(--alert-soft)", color: "var(--alert)" }}
+          className="rounded-xl"
+          style={{ background: "var(--alert-soft)", color: "var(--alert)", padding: "12px 14px", fontSize: "0.9375rem", fontWeight: 600 }}
         >
           {state.error}
         </div>
@@ -201,22 +202,30 @@ export function SubmitForm({ subcategories, regions }: Props) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-2xl py-6 text-2xl font-bold transition disabled:opacity-60"
-        style={{ background: "var(--cta)", color: "var(--cta-on)", minHeight: "var(--hit)" }}
+        className="w-full font-bold transition disabled:opacity-60"
+        style={{ background: "var(--cta)", color: "var(--cta-on)", border: "none", borderRadius: 14, padding: "14px", fontSize: "1.0625rem", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer", minHeight: 52 }}
       >
-        {pending ? "送出中…" : "📮 送出投稿"}
+        <ELIcon name="send" size={19} color="#fff" /> {pending ? "送出中…" : "送出投稿"}
       </button>
 
-      <p className="text-center text-base" style={{ color: "var(--text-muted)" }}>
+      <p className="text-center" style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>
         投稿後會由志工審核，通過後才會公開顯示
       </p>
     </form>
   );
 }
 
-/* helpers */
-const inputClass = "w-full rounded-xl border px-5 py-4 text-xl outline-none transition focus:ring-2";
-const inputStyle = { borderColor: "var(--border)", background: "var(--bg-page)", color: "var(--text-primary)" };
+/* helpers — 對齊「我要提問」表單的格子與字級 */
+const inputClass = "w-full outline-none";
+const inputStyle = {
+  border: "2px solid var(--border-strong)",
+  borderRadius: 13,
+  padding: "12px 14px",
+  fontSize: "1rem",
+  background: "#fff",
+  color: "var(--text-primary)",
+  boxSizing: "border-box" as const,
+};
 
 function Field({
   label,
@@ -231,11 +240,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+      <label className="block" style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: hint ? 4 : 8 }}>
         {label}
-        {required && <span className="ml-1 text-base" style={{ color: "var(--alert)" }}>＊</span>}
+        {required && <span className="ml-1" style={{ color: "var(--cta)" }}>＊</span>}
       </label>
-      {hint && <p className="mb-2 text-base" style={{ color: "var(--text-muted)" }}>{hint}</p>}
+      {hint && <p style={{ margin: "0 0 8px", fontSize: "0.8125rem", color: "var(--text-muted)" }}>{hint}</p>}
       {children}
     </div>
   );

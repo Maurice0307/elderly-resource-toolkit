@@ -78,6 +78,15 @@ export async function mergeUserData(admin: Admin, fromId: string, toId: string) 
 /** 吸收重複帳號：搬資料 → 刪除舊帳號（其綁定關係 FK cascade 一併清除） */
 export async function absorbDuplicate(admin: Admin, fromId: string, toId: string) {
   if (!fromId || !toId || fromId === toId) return;
+  // 合併後以「最早加入時間」為準：存活帳號的 created_at 取兩者較早者
+  try {
+    const { data: rows } = await admin.from("profiles").select("id, created_at").in("id", [fromId, toId]);
+    const from = (rows ?? []).find((r) => r.id === fromId);
+    const to = (rows ?? []).find((r) => r.id === toId);
+    if (from?.created_at && to?.created_at && new Date(from.created_at).getTime() < new Date(to.created_at).getTime()) {
+      await admin.from("profiles").update({ created_at: from.created_at }).eq("id", toId);
+    }
+  } catch {}
   await mergeUserData(admin, fromId, toId);
   try { await admin.auth.admin.deleteUser(fromId); } catch {}
 }
