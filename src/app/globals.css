@@ -2,7 +2,7 @@
 
 /* ── 強制亮色模式 ── */
 :root {
-  color-scheme: light only;
+  color-scheme: only light;
 
   /* ── 品牌珊瑚橘（來自 Claude Design 設計稿） ── */
   --coral:        #F26B43;   /* 裝飾 / icon 點綴 */
