@@ -164,7 +164,7 @@ async function handleNews(replyToken: string, siteUrl: string) {
   const admin = createAdminClient();
   const { data } = await admin
     .from("daily_news")
-    .select("id, title, source_org, published_at, fetched_at")
+    .select("id, title, source_org, image_url, published_at, fetched_at")
     .eq("status", "active")
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(8);
@@ -178,6 +178,7 @@ async function handleNews(replyToken: string, siteUrl: string) {
       sub: n.source_org ?? undefined,
       uri: `${siteUrl}/news/${n.id}`,
       btn: "閱讀",
+      image: (n.image_url && /^https:\/\//.test(n.image_url)) ? n.image_url : null,
     })),
   })]);
 }

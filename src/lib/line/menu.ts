@@ -41,38 +41,41 @@ export function categoryMenu(cats: { name: string }[]): LineMsg {
   };
 }
 
-/* 通用連結清單（carousel；每張卡一個標題＋按鈕連到網站） */
+/* 通用連結清單（carousel；可帶配圖 hero，標題＋按鈕連到網站） */
 export function buildLinkList(opts: {
   altText: string;
   headerColor?: string;
   headerLabel: string;
   emptyText: string;
-  items: { title: string; sub?: string; uri: string; btn?: string }[];
+  items: { title: string; sub?: string; uri: string; btn?: string; image?: string | null }[];
 }): LineMsg {
   if (opts.items.length === 0) return menuText(opts.emptyText);
   const color = opts.headerColor ?? "#E0552E";
-  const bubbles = opts.items.slice(0, 10).map((it) => ({
-    type: "bubble",
-    size: "kilo",
-    header: {
-      type: "box", layout: "vertical", paddingAll: "8px", backgroundColor: color,
-      contents: [{ type: "text", text: opts.headerLabel, size: "xs", weight: "bold", color: "#FFFFFF" }],
-    },
-    body: {
-      type: "box", layout: "vertical", paddingAll: "12px",
-      contents: [
-        { type: "text", text: it.title, weight: "bold", size: "md", wrap: true, color: "#1C1917" },
-        ...(it.sub ? [{ type: "text", text: it.sub, size: "sm", wrap: true, color: "#78716C", margin: "sm" }] : []),
-      ],
-    },
-    footer: {
-      type: "box", layout: "vertical", paddingAll: "12px",
-      contents: [{
-        type: "button", style: "primary", color, height: "sm",
-        action: { type: "uri", label: it.btn ?? "查看", uri: it.uri },
-      }],
-    },
-  }));
+  const bubbles = opts.items.slice(0, 10).map((it) => {
+    const bubble: Record<string, unknown> = {
+      type: "bubble",
+      size: "kilo",
+      body: {
+        type: "box", layout: "vertical", paddingAll: "16px", spacing: "sm",
+        contents: [
+          { type: "text", text: opts.headerLabel, size: "xs", weight: "bold", color },
+          { type: "text", text: it.title, weight: "bold", size: "md", wrap: true, color: "#241F1B", margin: "sm" },
+          ...(it.sub ? [{ type: "text", text: it.sub, size: "sm", wrap: true, color: "#9C8E84" }] : []),
+        ],
+      },
+      footer: {
+        type: "box", layout: "vertical", paddingAll: "16px", paddingTop: "0px",
+        contents: [{
+          type: "button", style: "primary", color, height: "sm",
+          action: { type: "uri", label: it.btn ?? "查看", uri: it.uri },
+        }],
+      },
+    };
+    if (it.image) {
+      bubble.hero = { type: "image", url: it.image, size: "full", aspectRatio: "20:13", aspectMode: "cover" };
+    }
+    return bubble;
+  });
   const flex: LineMsg = bubbles.length === 1
     ? { type: "flex", altText: opts.altText, contents: bubbles[0] }
     : { type: "flex", altText: opts.altText, contents: { type: "carousel", contents: bubbles } };
