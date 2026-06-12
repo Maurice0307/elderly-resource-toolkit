@@ -170,7 +170,7 @@ export function ResourcesClient({
 
   /* ── region state ── */
   const [regionLabel, setRegionLabel] = useState<string>("");
-  const [regionCode,  setRegionCode]  = useState<string>("");
+  const [regionCodes, setRegionCodes] = useState<string[]>([]);
   const [autoGeo,     setAutoGeo]     = useState(false);
   const [dropOpen,    setDropOpen]    = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -178,10 +178,17 @@ export function ResourcesClient({
   /* load saved region or attempt geolocation */
   useEffect(() => {
     const savedLabel = localStorage.getItem("el_region_label") ?? "";
-    const savedCode  = localStorage.getItem("el_region_code") ?? "";
-    if (savedLabel && savedCode) {
+    const savedCodes = (() => {
+      try {
+        const multi = localStorage.getItem("el_region_codes");
+        if (multi) { const a = JSON.parse(multi); if (Array.isArray(a)) return a.filter(Boolean) as string[]; }
+        const single = localStorage.getItem("el_region_code") ?? "";
+        return single ? [single] : [];
+      } catch { return []; }
+    })();
+    if (savedCodes.length > 0) {
       setRegionLabel(savedLabel);
-      setRegionCode(savedCode);
+      setRegionCodes(savedCodes);
       return;
     }
     if (!navigator.geolocation) return;
@@ -198,15 +205,17 @@ export function ResourcesClient({
           const city     = j.address?.city ?? j.address?.state ?? "";
           const code     = DISTRICT_CODE[district] ?? (city.includes("桃園") ? "TW-TYC" : "");
           const label    = code ? (DISTRICT_CODE[district] ? district : "桃園市") : "全台灣";
-          setRegionLabel(label); setRegionCode(code); setAutoGeo(true);
+          setRegionLabel(label); setRegionCodes(code ? [code] : []); setAutoGeo(true);
           localStorage.setItem("el_region_label", label);
           localStorage.setItem("el_region_code", code);
+          localStorage.setItem("el_region_codes", JSON.stringify(code ? [code] : []));
         } catch { /* silent */ }
       },
       () => {
-        setRegionLabel("桃園市"); setRegionCode("TW-TYC");
+        setRegionLabel("桃園市"); setRegionCodes(["TW-TYC"]);
         localStorage.setItem("el_region_label", "桃園市");
         localStorage.setItem("el_region_code", "TW-TYC");
+        localStorage.setItem("el_region_codes", JSON.stringify(["TW-TYC"]));
       }
     );
   }, []);
@@ -223,10 +232,10 @@ export function ResourcesClient({
   /* 地區彈窗（其他區域）變更後：更新 chip 與篩選範圍並重新抓資料 */
   useEffect(() => {
     function onRegion(e: Event) {
-      const d = (e as CustomEvent<{ label: string; code: string }>).detail;
+      const d = (e as CustomEvent<{ label: string; code: string; codes?: string[] }>).detail;
       if (!d) return;
       setRegionLabel(d.label === "全台灣" ? "" : d.label);
-      setRegionCode(d.code);
+      setRegionCodes(Array.isArray(d.codes) ? d.codes : d.code ? [d.code] : []);
     }
     window.addEventListener("el:region-changed", onRegion);
     return () => window.removeEventListener("el:region-changed", onRegion);
@@ -240,13 +249,13 @@ export function ResourcesClient({
     setLoading(true);
     setActiveSub("全部");
     setQ("");
-    const url = `/api/resources?category=${activeCat}${regionCode ? `&regionCode=${encodeURIComponent(regionCode)}` : ""}`;
+    const url = `/api/resources?category=${activeCat}${regionCodes.length ? `&regionCodes=${encodeURIComponent(regionCodes.join(","))}` : ""}`;
     fetch(url)
       .then((r) => r.json())
       .then((data) => { setResources(data ?? []); setLoading(false); })
       .catch(() => { setResources([]); setLoading(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCat, regionCode]);
+  }, [activeCat, regionCodes.join(",")]);
 
   const filtered = resources
     .filter((r) => {
@@ -297,9 +306,11 @@ export function ResourcesClient({
   }
 
   function pickRegion(label: string, code: string) {
-    setRegionLabel(label); setRegionCode(code); setAutoGeo(false); setDropOpen(false);
-    localStorage.setItem("el_region_label", label);
+    const codes = code ? [code] : [];
+    setRegionLabel(label === "全台灣" ? "" : label); setRegionCodes(codes); setAutoGeo(false); setDropOpen(false);
+    localStorage.setItem("el_region_label", label === "全台灣" ? "" : label);
     localStorage.setItem("el_region_code", code);
+    localStorage.setItem("el_region_codes", JSON.stringify(codes));
   }
 
   return (
@@ -382,8 +393,8 @@ export function ResourcesClient({
                         display: "block", width: "100%", textAlign: "left",
                         padding: "9px 12px", border: "none", borderRadius: 10, cursor: "pointer",
                         font: "inherit", fontSize: 15, fontWeight: 700,
-                        background: regionCode === d.code ? "#FFF4EF" : "transparent",
-                        color: regionCode === d.code ? "#B23F1E" : "#574E47",
+                        background: regionCodes.includes(d.code) ? "#FFF4EF" : "transparent",
+                        color: regionCodes.includes(d.code) ? "#B23F1E" : "#574E47",
                       }}
                     >
                       {d.code === "" ? "🗺" : "📍"} {d.label}

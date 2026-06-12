@@ -59,44 +59,73 @@ function Brand() {
 function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
   const [counties, setCounties] = useState<RegionCounty[]>([]);
   const [openCounty, setOpenCounty] = useState<string | null>(null);
-  const [savedCode, setSavedCode] = useState<string>("");
+  const [savedCodes, setSavedCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const sc = (() => { try { return localStorage.getItem("el_region_code") ?? ""; } catch { return ""; } })();
-    setSavedCode(sc);
+    // 讀多選（el_region_codes）；相容舊的單一 el_region_code
+    const codes = (() => {
+      try {
+        const multi = localStorage.getItem("el_region_codes");
+        if (multi) { const arr = JSON.parse(multi); if (Array.isArray(arr)) return arr.filter(Boolean) as string[]; }
+        const single = localStorage.getItem("el_region_code") ?? "";
+        return single ? [single] : [];
+      } catch { return []; }
+    })();
+    setSavedCodes(codes);
     fetch("/api/location/regions")
       .then((r) => r.json())
       .then((data: RegionCounty[]) => {
         const list = (Array.isArray(data) ? data : []).slice().sort((a, b) => countyOrder(a.name) - countyOrder(b.name));
         setCounties(list);
         setLoading(false);
-        // 預設展開：目前已選的縣市，否則第一個
-        const match = list.find((c) => c.code === sc || c.districts.some((d) => d.code === sc));
+        const first = codes[0];
+        const match = first ? list.find((c) => c.code === first || c.districts.some((d) => d.code === first)) : null;
         setOpenCounty(match?.code ?? list[0]?.code ?? null);
       })
       .catch(() => setLoading(false));
   }, []);
 
-  async function pick(code: string, name: string) {
-    setSaving(true);
+  // 計算已選地區的顯示標籤
+  const labelFor = (codes: string[]): string => {
+    if (codes.length === 0) return "全台灣";
+    if (codes.length === 1) {
+      for (const c of counties) {
+        if (c.code === codes[0]) return c.name;
+        const d = c.districts.find((x) => x.code === codes[0]);
+        if (d) return `${c.name} · ${d.name}`;
+      }
+      return "1 個地區";
+    }
+    return `${codes.length} 個地區`;
+  };
+
+  function toggle(code: string) {
+    setSavedCodes((s) => (s.includes(code) ? s.filter((x) => x !== code) : [...s, code]));
+  }
+
+  async function apply() {
+    const codes = savedCodes;
+    const label = labelFor(codes);
     try {
-      await fetch("/api/location/set", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
-      localStorage.setItem("el_region_label", name);
-      localStorage.setItem("el_region_code", code);
+      await fetch("/api/location/set", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: codes[0] ?? "" }) });
+      localStorage.setItem("el_region_codes", JSON.stringify(codes));
+      localStorage.setItem("el_region_label", codes.length ? label : "");
+      localStorage.setItem("el_region_code", codes[0] ?? "");
     } catch { /* ignore */ }
-    window.dispatchEvent(new CustomEvent("el:region-changed", { detail: { label: name, code } }));
-    onClose(name);
+    window.dispatchEvent(new CustomEvent("el:region-changed", { detail: { label, code: codes[0] ?? "", codes } }));
+    onClose(codes.length ? label : undefined);
   }
 
   async function clearRegion() {
+    setSavedCodes([]);
     try {
       await fetch("/api/location/set", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: "" }) });
+      localStorage.removeItem("el_region_codes");
       localStorage.removeItem("el_region_label");
       localStorage.removeItem("el_region_code");
     } catch { /* ignore */ }
-    window.dispatchEvent(new CustomEvent("el:region-changed", { detail: { label: "全台灣", code: "" } }));
+    window.dispatchEvent(new CustomEvent("el:region-changed", { detail: { label: "全台灣", code: "", codes: [] } }));
     onClose(undefined);
   }
 
@@ -118,7 +147,7 @@ function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
         <div style={{ flexShrink: 0, padding: "18px 20px 14px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", borderBottom: "1px solid #EFE5DC" }}>
           <div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#241F1B" }}>變更地區</div>
-            <div style={{ fontSize: 13, color: "#6E645C", marginTop: 3 }}>選擇縣市，再選行政區</div>
+            <div style={{ fontSize: 13, color: "#6E645C", marginTop: 3 }}>可多選縣市／行政區，找跨區資源</div>
           </div>
           <button onClick={() => onClose()} aria-label="關閉" style={{ flexShrink: 0, border: "1px solid #E4D7CC", background: "#fff", width: 38, height: 38, borderRadius: 999, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <ELIcon name="close" size={20} color="#574E47" stroke={2.2} />
@@ -160,13 +189,12 @@ function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
             <div style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>
               {activeCounty && (
                 <>
-                  {[{ code: activeCounty.code, name: "全區", save: activeCounty.name }, ...activeCounty.districts.map((d) => ({ code: d.code, name: d.name, save: `${activeCounty.name} · ${d.name}` }))].map((d) => {
-                    const sel = savedCode === d.code;
+                  {[{ code: activeCounty.code, name: "全區（整個縣市）", save: activeCounty.name }, ...activeCounty.districts.map((d) => ({ code: d.code, name: d.name, save: `${activeCounty.name} · ${d.name}` }))].map((d) => {
+                    const sel = savedCodes.includes(d.code);
                     return (
                       <button
                         key={d.code}
-                        disabled={saving}
-                        onClick={() => pick(d.code, d.save)}
+                        onClick={() => toggle(d.code)}
                         style={{
                           width: "100%", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
                           padding: "13px 16px", border: "none", background: "transparent", borderBottom: "1px solid #F7F1EC",
@@ -184,17 +212,27 @@ function RegionModal({ onClose }: { onClose: (name?: string) => void }) {
           </div>
         )}
 
-        {/* 底部：不篩選 */}
-        <div style={{ flexShrink: 0, padding: "12px 20px calc(14px + env(safe-area-inset-bottom))", borderTop: "1px solid #F0E6DE" }}>
+        {/* 底部：套用（多選）+ 不篩選 */}
+        <div style={{ flexShrink: 0, padding: "12px 20px calc(14px + env(safe-area-inset-bottom))", borderTop: "1px solid #F0E6DE", display: "flex", gap: 10 }}>
           <button
             onClick={clearRegion}
             style={{
-              width: "100%", padding: "11px 0", borderRadius: 12,
+              flexShrink: 0, padding: "0 16px", height: 50, borderRadius: 12,
               border: "1.5px solid #E4D7CC", background: "#fff",
               cursor: "pointer", font: "inherit", fontSize: 15, fontWeight: 700, color: "#574E47",
             }}
           >
-            顯示全部地區（不篩選）
+            全部地區
+          </button>
+          <button
+            onClick={apply}
+            style={{
+              flex: 1, height: 50, borderRadius: 12, border: "none",
+              background: "#E0552E", color: "#fff",
+              cursor: "pointer", font: "inherit", fontSize: 16, fontWeight: 800,
+            }}
+          >
+            {savedCodes.length > 0 ? `套用 ${savedCodes.length} 個地區` : "套用"}
           </button>
         </div>
       </div>
