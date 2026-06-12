@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getAdmin, findCanonicalUserId, linkIdentity, makeSessionTokenHash, findUserIdByEmail, absorbDuplicate } from "@/lib/auth/linking";
+import { verifyOAuthState } from "@/lib/auth/oauthState";
 
 /* Google callback：交換授權碼 → 取得 Google 個資 → 對應 Supabase 帳號 → 建立 session */
 export async function GET(request: Request) {
@@ -18,7 +19,8 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
   const savedState = cookieStore.get("google_oauth_state")?.value;
-  if (!state || !savedState || state !== savedState) return fail("登入驗證失敗，請重新嘗試");
+  // 同瀏覽器用 cookie 比對；手機跳 App 致 cookie 遺失時，改驗 state 的 HMAC 簽章
+  if (!verifyOAuthState(state, savedState)) return fail("登入驗證失敗，請重新嘗試");
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;

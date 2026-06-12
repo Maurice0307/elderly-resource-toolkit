@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
+import { makeOAuthState } from "@/lib/auth/oauthState";
 
 /* LINE Login（自訂 OAuth2 流程，免 Supabase 內建 / 免付費方案）— 啟動授權 */
 export async function GET(request: Request) {
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     linkUid = user.id;
   }
 
-  const state = randomBytes(16).toString("hex");
+  const state = makeOAuthState();
   const redirectUri = `${origin}/auth/line/callback`;
 
   const url = new URL("https://access.line.me/oauth2/v2.1/authorize");

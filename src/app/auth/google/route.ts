@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
+import { makeOAuthState } from "@/lib/auth/oauthState";
 
 /* Google 登入（自訂 OAuth2 流程，免 Supabase 後台 / 免付費）— 啟動授權 */
 export async function GET(request: Request) {
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     linkUid = user.id;
   }
 
-  const state = randomBytes(16).toString("hex");
+  const state = makeOAuthState();
   const redirectUri = `${origin}/auth/google/callback`;
 
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
