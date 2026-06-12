@@ -33,12 +33,6 @@ export async function GET(request: Request) {
   url.searchParams.set("state", state);
   url.searchParams.set("scope", "profile openid");
 
-  // Android 上 LINE App 自動登入常跳「An unknown error occurred」→ 強制用瀏覽器網頁登入（iOS 保留 App 一鍵登入）
-  const ua = request.headers.get("user-agent") ?? "";
-  if (/Android/i.test(ua)) {
-    url.searchParams.set("disable_auto_login", "true");
-  }
-
   const res = NextResponse.redirect(url.toString());
   // 防 CSRF：把 state 暫存到 httpOnly cookie，callback 時比對
   res.cookies.set("line_oauth_state", state, {
