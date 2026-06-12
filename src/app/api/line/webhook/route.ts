@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildResourceMessages, buildWelcomeMessage } from "@/lib/line/flex";
 import { withMenu, menuText, buildLinkList, routeIntent } from "@/lib/line/menu";
+import { getLineProfile, logLineMessage } from "@/lib/line/store";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 
@@ -50,6 +51,11 @@ export async function POST(req: NextRequest) {
         continue;
       }
       if (event.type === "message" && event.message.type === "text") {
+        const userId: string | undefined = event.source?.userId;
+        if (userId) {
+          const name = await getLineProfile(userId);
+          await logLineMessage({ userId, direction: "in", text: event.message.text, displayName: name });
+        }
         await handleMessage(event.message.text, event.replyToken, siteUrl);
       }
     } catch (e) {
@@ -241,6 +247,6 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
 
 // LINE event types
 type LineEvent =
-  | { type: "follow"; replyToken: string }
-  | { type: "message"; replyToken: string; message: { type: "text"; text: string } }
-  | { type: string; replyToken?: string };
+  | { type: "follow"; replyToken: string; source?: { userId?: string } }
+  | { type: "message"; replyToken: string; message: { type: "text"; text: string }; source?: { userId?: string } }
+  | { type: string; replyToken?: string; source?: { userId?: string } };

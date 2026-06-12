@@ -11,6 +11,7 @@ const navItems = [
   { href: "/admin/resources", label: "資源管理", icon: "news" },
   { href: "/admin/questions", label: "問答管理", icon: "qa" },
   { href: "/admin/reports", label: "問題回報", icon: "flag" },
+  { href: "/admin/chats", label: "聊天", icon: "chat" },
   { href: "/admin/news", label: "新聞管理", icon: "megaphone", adminOnly: true },
   { href: "/admin/users", label: "用戶管理", icon: "social", adminOnly: true },
 ];
