@@ -4,20 +4,10 @@ import { useActionState, useState } from "react";
 import { submitResource } from "@/lib/resources/submitAction";
 import { categories } from "@/config/categories";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { RegionMultiSelect } from "@/components/submit/RegionMultiSelect";
 
 type SubcategoryRow = { id: string; slug: string; name: string; category_slug: string };
 type RegionRow      = { id: string; name: string; parent_id: string | null };
-
-// 縣市由北到南排序（涵蓋 台/臺 兩種寫法）
-const NORTH_TO_SOUTH = [
-  "基隆市", "臺北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣",
-  "臺中市", "彰化縣", "南投縣", "雲林縣", "嘉義市", "嘉義縣", "臺南市",
-  "高雄市", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣", "金門縣", "連江縣",
-];
-function countyOrder(name: string): number {
-  const i = NORTH_TO_SOUTH.indexOf(name.replace(/台/g, "臺"));
-  return i < 0 ? 999 : i;
-}
 
 type Props = {
   subcategories: SubcategoryRow[];
@@ -32,13 +22,6 @@ export function SubmitForm({ subcategories, regions }: Props) {
   const filteredSubs = catSlug
     ? subcategories.filter((s) => s.category_slug === catSlug)
     : [];
-
-  const parentRegions = regions
-    .filter((r) => r.parent_id === null)
-    .slice()
-    .sort((a, b) => countyOrder(a.name) - countyOrder(b.name));
-  const childRegions  = (parentId: string) =>
-    regions.filter((r) => r.parent_id === parentId);
 
   return (
     <form action={action} className="mt-6 space-y-5">
@@ -116,29 +99,10 @@ export function SubmitForm({ subcategories, regions }: Props) {
         </div>
       </Field>
 
-      {/* 地區（在地時顯示） */}
+      {/* 服務地區（在地時顯示；可多選縣市／行政區） */}
       {scope === "local" && (
-        <Field label="所在地區" required>
-          <select
-            name="region_id"
-            required={scope === "local"}
-            className={inputClass}
-            style={inputStyle}
-          >
-            <option value="">請選擇地區…</option>
-            {parentRegions.map((p) => {
-              const children = childRegions(p.id);
-              return children.length > 0 ? (
-                <optgroup key={p.id} label={p.name}>
-                  {children.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </optgroup>
-              ) : (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              );
-            })}
-          </select>
+        <Field label="服務地區（可多選）" required hint="縣市必選；行政區可不選（選『全縣市』代表整個縣市）">
+          <RegionMultiSelect regions={regions} />
         </Field>
       )}
 
