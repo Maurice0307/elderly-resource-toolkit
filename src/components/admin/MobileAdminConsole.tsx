@@ -101,7 +101,7 @@ function Overview({ counts, subs, onGo, onReview }: { counts: Counts; subs: Sub[
   // 快速操作（最常用、特別拉出來）→ 直接進到對應的真實頁面 / 分頁
   const quick: [string, string, () => void][] = [
     ["send", "投稿審核", () => onGo("review")],
-    ["flag", "問題回報", () => router.push("/admin/questions")],
+    ["flag", "問題回報", () => router.push("/admin/reports")],
     ["social", "成員權限", () => onGo("members")],
   ];
   return (
@@ -145,7 +145,7 @@ function Overview({ counts, subs, onGo, onReview }: { counts: Counts; subs: Sub[
           </button>
         ))}
         {QUEUE.map((q, i) => (
-          <button key={i} onClick={() => router.push("/admin/questions")} style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #F0E6DE", borderRadius: 16, padding: "13px 14px", cursor: "pointer", fontFamily: "inherit", textAlign: "left", width: "100%" }}>
+          <button key={i} onClick={() => router.push(q.type === "回報" ? "/admin/reports" : "/admin/questions")} style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #F0E6DE", borderRadius: 16, padding: "13px 14px", cursor: "pointer", fontFamily: "inherit", textAlign: "left", width: "100%" }}>
             <Pill tone={q.tone}>{q.type}</Pill>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15.5, fontWeight: 700, color: "#241F1B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{q.name}</div>

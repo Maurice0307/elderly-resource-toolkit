@@ -10,6 +10,7 @@ const navItems = [
   { href: "/admin", label: "概覽", icon: "grid", exact: true },
   { href: "/admin/resources", label: "資源管理", icon: "news" },
   { href: "/admin/questions", label: "問答管理", icon: "qa" },
+  { href: "/admin/reports", label: "問題回報", icon: "flag" },
   { href: "/admin/news", label: "新聞管理", icon: "megaphone", adminOnly: true },
   { href: "/admin/users", label: "用戶管理", icon: "social", adminOnly: true },
 ];
@@ -19,13 +20,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // 通知徽章：待審資源 + 待查證問答
   const admin = createAdminClient();
-  const [{ count: pendingResources }, { count: verifyCount }] = await Promise.all([
+  const [{ count: pendingResources }, { count: verifyCount }, { count: openReports }] = await Promise.all([
     admin.from("resources").select("id", { count: "exact", head: true }).eq("status", "pending"),
     admin.from("questions").select("id", { count: "exact", head: true }).eq("status", "open").gt("answer_count", 0).is("accepted_answer_id", null),
+    admin.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open"),
   ]);
   const badges: Record<string, number> = {
     "/admin/resources": pendingResources ?? 0,
     "/admin/questions": verifyCount ?? 0,
+    "/admin/reports": openReports ?? 0,
   };
 
   return (

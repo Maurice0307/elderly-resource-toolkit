@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ELIcon } from "@/components/layout/ELIcon";
+import { submitContentReport } from "@/lib/reports/actions";
 
 /* 通用回報彈窗（勾選式 + 自行輸入）。可用於資源、活動、溝通錦囊、新知等。 */
 
@@ -56,7 +57,13 @@ export function ReportButton({
     setOpen(false);
     setTimeout(() => { setDone(false); setPicked({}); setNote(""); }, 200);
   }
-  function submit() { if (anyPicked) setDone(true); }
+  function submit() {
+    if (!anyPicked) return;
+    const reasons = Object.keys(picked).filter((k) => picked[k]);
+    // 寫入後台問題回報（fire-and-forget；失敗也不影響使用者）
+    void submitContentReport({ kind, subject, reasons, note: note.trim() });
+    setDone(true);
+  }
 
   return (
     <>

@@ -4,8 +4,10 @@ import { usePathname, useRouter } from "next/navigation";
 
 const TITLES: { match: string; title: string }[] = [
   { match: "/admin/resources/new", title: "新增資源" },
+  { match: "/admin/resources/import", title: "批量匯入" },
   { match: "/admin/resources", title: "資源管理" },
   { match: "/admin/questions", title: "問答管理" },
+  { match: "/admin/reports", title: "問題回報" },
   { match: "/admin/news", title: "新聞管理" },
   { match: "/admin/users", title: "用戶管理" },
 ];

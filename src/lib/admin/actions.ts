@@ -250,6 +250,85 @@ export async function updateResourceAdmin(resourceId: string, formData: FormData
   redirect("/admin/resources?status=active");
 }
 
+// ── CSV 批量匯入（依名稱比對分類與地區） ──────────────────────────────
+export type ImportRow = { name: string; type: string; location: string; content: string; phone?: string; website?: string };
+
+const norm = (s: string) => (s ?? "").replace(/台/g, "臺").replace(/\s+/g, "").trim();
+
+export async function importResources(rows: ImportRow[]): Promise<{ inserted: number; errors: string[] }> {
+  await assertAdmin();
+  const admin = createAdminClient();
+  const out = { inserted: 0, errors: [] as string[] };
+  if (!rows || rows.length === 0) return out;
+
+  // 比對用：子分類（含母分類名）、母分類→第一個子分類、地區
+  const [{ data: subcats }, { data: cats }, { data: regions }] = await Promise.all([
+    admin.from("subcategories").select("id, name, category_id"),
+    admin.from("categories").select("id, name"),
+    admin.from("regions").select("id, name, parent_id"),
+  ]);
+  const subcatByName: Record<string, string> = {};
+  for (const s of subcats ?? []) subcatByName[norm(s.name)] = s.id;
+  const catIdByName: Record<string, string> = {};
+  for (const c of cats ?? []) catIdByName[norm(c.name)] = c.id;
+  const firstSubcatOfCat: Record<string, string> = {};
+  for (const s of subcats ?? []) if (!firstSubcatOfCat[s.category_id]) firstSubcatOfCat[s.category_id] = s.id;
+  const regionByName: Record<string, string> = {};
+  for (const r of regions ?? []) regionByName[norm(r.name)] = r.id;
+
+  const matchSubcat = (type: string): string | null => {
+    const t = norm(type);
+    if (subcatByName[t]) return subcatByName[t];
+    if (catIdByName[t]) return firstSubcatOfCat[catIdByName[t]] ?? null;
+    // 包含式比對（例如「醫療」→ 醫療健康）
+    const sk = Object.keys(subcatByName).find((k) => k.includes(t) || t.includes(k));
+    if (sk) return subcatByName[sk];
+    const ck = Object.keys(catIdByName).find((k) => k.includes(t) || t.includes(k));
+    if (ck) return firstSubcatOfCat[catIdByName[ck]] ?? null;
+    return null;
+  };
+  const matchRegion = (loc: string): { regionId: string | null; national: boolean } => {
+    const l = norm(loc);
+    if (!l || /全國|全台|全臺|不限/.test(l)) return { regionId: null, national: true };
+    if (regionByName[l]) return { regionId: regionByName[l], national: false };
+    // 「桃園市中壢區」→ 取得行政區
+    const rk = Object.keys(regionByName).find((k) => l.endsWith(k) || l.includes(k));
+    if (rk) return { regionId: regionByName[rk], national: false };
+    return { regionId: null, national: false };
+  };
+
+  const payloads: Record<string, unknown>[] = [];
+  for (const row of rows) {
+    const name = (row.name ?? "").trim();
+    if (!name) continue;
+    const subId = matchSubcat(row.type ?? "");
+    if (!subId) { out.errors.push(`找不到對應分類：「${name}」的類型「${row.type}」`); continue; }
+    const { regionId, national } = matchRegion(row.location ?? "");
+    if (!national && !regionId) { out.errors.push(`找不到對應地區：「${name}」的地點「${row.location}」`); continue; }
+    payloads.push({
+      subcategory_id: subId,
+      scope: national ? "national" : "local",
+      region_id: national ? null : regionId,
+      name,
+      summary: (row.content ?? "").trim().slice(0, 100) || null,
+      description: (row.content ?? "").trim() || null,
+      phone: (row.phone ?? "").trim() || null,
+      website_url: (row.website ?? "").trim() || null,
+      status: "active",
+      approved_at: new Date().toISOString(),
+    });
+  }
+
+  if (payloads.length > 0) {
+    const { error } = await admin.from("resources").insert(payloads);
+    if (error) { out.errors.push(`寫入失敗：${error.message}`); return out; }
+    out.inserted = payloads.length;
+  }
+  revalidatePath("/admin/resources");
+  revalidatePath("/resources");
+  return out;
+}
+
 // ── User management (admin only) ───────────────────────────────────────
 
 export async function setUserRole(targetUserId: string, role: "user" | "moderator" | "admin") {
