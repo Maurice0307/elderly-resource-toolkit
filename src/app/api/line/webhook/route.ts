@@ -3,7 +3,7 @@ import crypto from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildResourceMessages, buildWelcomeMessage } from "@/lib/line/flex";
-import { menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, pickerBubble, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
+import { menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, pickerBubble, detailBubble, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
 import { getLineProfile, logLineMessage } from "@/lib/line/store";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
@@ -54,6 +54,11 @@ export async function POST(req: NextRequest) {
         else if (data.startsWith("sub="))     await handleSubcatResources(data.slice(4), rt, siteUrl);
         else if (data.startsWith("act="))     await handleActivityTheme(data.slice(4), rt, siteUrl);
         else if (data.startsWith("scr="))     await handleScriptAudience(data.slice(4), rt, siteUrl);
+        else if (data.startsWith("nd="))      await detailNews(data.slice(3), rt, siteUrl);
+        else if (data.startsWith("ad="))      await detailActivity(data.slice(3), rt, siteUrl);
+        else if (data.startsWith("qd="))      await detailQa(data.slice(3), rt, siteUrl);
+        else if (data.startsWith("sd="))      await detailScript(data.slice(3), rt, siteUrl);
+        else if (data.startsWith("rd="))      await detailResource(data.slice(3), rt, siteUrl);
         continue;
       }
       if (event.type === "follow") {
@@ -100,6 +105,59 @@ const snip = (s: string | null | undefined, n = 46) => {
   const t = (s ?? "").replace(/[#*>]/g, "").replace(/^[-•\s]+/gm, "").replace(/\s+/g, " ").trim();
   return t.length > n ? t.slice(0, n) + "…" : t;
 };
+const fmtD = (d: string | null | undefined) => (d ? new Date(d).toLocaleDateString("zh-TW", { month: "2-digit", day: "2-digit" }) : "");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const arr = (x: any): any[] => (Array.isArray(x) ? x : []);
+
+async function detailNews(id: string, rt: string, siteUrl: string) {
+  const admin = createAdminClient();
+  const { data: n } = await admin.from("daily_news").select("title, source_org, summary_md, published_at, source_url").eq("id", id).maybeSingle();
+  if (!n) { await lineReply(rt, [menuText("找不到這則新知 🙂")]); return; }
+  const lines = (n.summary_md || "").split(/\n+/).map((s: string) => s.replace(/^[-•\s]+/, "• ").replace(/[#*>]/g, "").trim()).filter(Boolean).slice(0, 12);
+  const links: { label: string; uri: string }[] = [];
+  if (n.source_url) links.push({ label: "前往原始來源 ›", uri: n.source_url });
+  links.push({ label: "在網站看完整版", uri: `${siteUrl}/news/${id}` });
+  await lineReply(rt, [detailBubble({ headerLabel: "今日新知", color: "#C2410C", icon: iconUrl(siteUrl, "news"), title: n.title, meta: `${n.source_org || ""}${n.published_at ? " · " + fmtD(n.published_at) : ""}`, lines, links })]);
+}
+
+async function detailActivity(slug: string, rt: string, siteUrl: string) {
+  const admin = createAdminClient();
+  const { data: a } = await admin.from("activity_cards").select("title, summary, steps").eq("slug", slug).maybeSingle();
+  if (!a) { await lineReply(rt, [menuText("找不到這個活動 🙂")]); return; }
+  const steps = arr(a.steps);
+  const lines = [a.summary || "", ...steps.map((s, i) => `${i + 1}. ${s.title || ""}${s.description ? "：" + s.description : ""}`)].filter(Boolean).slice(0, 12);
+  await lineReply(rt, [detailBubble({ headerLabel: "活動圖卡", color: "#2E7D52", icon: iconUrl(siteUrl, "grid"), title: a.title, meta: `約 ${Math.max(5, steps.length * 3)} 分鐘・${steps.length} 個步驟`, lines, links: [{ label: "在網站一步步做 ›", uri: `${siteUrl}/activities/${slug}` }] })]);
+}
+
+async function detailQa(id: string, rt: string, siteUrl: string) {
+  const admin = createAdminClient();
+  const { data: q } = await admin.from("questions").select("title, body, answer_count, updated_at").eq("id", id).maybeSingle();
+  if (!q) { await lineReply(rt, [menuText("找不到這個問題 🙂")]); return; }
+  const { data: ans } = await admin.from("answers").select("body, vote_count, is_accepted").eq("question_id", id).order("is_accepted", { ascending: false }).order("vote_count", { ascending: false }).limit(3);
+  const lines = [q.body || "", arr(ans).length ? "—— 大家的回答 ——" : "", ...arr(ans).map((x) => `${x.is_accepted ? "★ " : "• "}${snip(x.body, 90)}`)].filter(Boolean);
+  await lineReply(rt, [detailBubble({ headerLabel: "互助問答", color: "#B23F1E", icon: iconUrl(siteUrl, "qa"), title: q.title, meta: `${q.answer_count ?? 0} 則回答${q.updated_at ? " · 最後討論 " + fmtD(q.updated_at) : ""}`, lines, links: [{ label: "看完整討論／我要回答 ›", uri: `${siteUrl}/qa/${id}` }] })]);
+}
+
+async function detailScript(slug: string, rt: string, siteUrl: string) {
+  const admin = createAdminClient();
+  const { data: s } = await admin.from("communication_scripts").select("title, context, ok_examples, tips").eq("slug", slug).maybeSingle();
+  if (!s) { await lineReply(rt, [menuText("找不到這個錦囊 🙂")]); return; }
+  const ok = arr(s.ok_examples);
+  const lines = [s.context || "", ok.length ? "✅ 可以這樣說：" : "", ...ok.map((e) => `「${e.text || e}」`), arr(s.tips).length ? "💡 " + arr(s.tips).join("；") : ""].filter(Boolean).slice(0, 12);
+  await lineReply(rt, [detailBubble({ headerLabel: "溝通錦囊", color: "#2952B3", icon: iconUrl(siteUrl, "chat"), title: s.title, lines, links: [{ label: "在網站看完整 ›", uri: `${siteUrl}/scripts/${slug}` }] })]);
+}
+
+async function detailResource(id: string, rt: string, siteUrl: string) {
+  const admin = createAdminClient();
+  const { data: r } = await admin.from("resources").select("name, summary, description, phone, address, website_url, scope, regions(name)").eq("id", id).maybeSingle();
+  if (!r) { await lineReply(rt, [menuText("找不到這個資源 🙂")]); return; }
+  const region = Array.isArray(r.regions) ? r.regions[0] : r.regions;
+  const lines = [r.summary || "", r.description || "", r.address ? "📍 地址：" + r.address : "", r.phone ? "📞 電話：" + r.phone : ""].filter(Boolean);
+  const links: { label: string; uri: string }[] = [];
+  if (r.phone) links.push({ label: "撥打電話", uri: `tel:${r.phone.replace(/[^\d+]/g, "")}` });
+  if (r.website_url) links.push({ label: "前往官網 ›", uri: r.website_url });
+  await lineReply(rt, [detailBubble({ headerLabel: r.scope === "national" ? "全國服務" : (region?.name || "在地服務"), color: "#E0552E", icon: iconUrl(siteUrl, "pin"), title: r.name, lines, links })]);
+}
 
 async function handleResourceMenu(replyToken: string) {
   const admin = createAdminClient();
@@ -195,7 +253,8 @@ async function handleActivityTheme(key: string, replyToken: string, siteUrl: str
         meta: `約 ${mins} 分鐘・${steps} 個步驟`,
         desc: a.summary ? snip(a.summary, 56) : undefined,
         uri: `${siteUrl}/activities/${a.slug}`,
-        btn: "開始活動",
+        btn: "看活動內容",
+        detail: `ad=${a.slug}`,
       };
     }),
   })]);
@@ -226,6 +285,7 @@ async function handleScriptAudience(aud: string, replyToken: string, siteUrl: st
       desc: s.context ? snip(s.context, 56) : undefined,
       uri: `${siteUrl}/scripts/${s.slug}`,
       btn: "看怎麼說",
+      detail: `sd=${s.slug}`,
     })),
   })]);
 }
@@ -246,10 +306,11 @@ async function handleNews(replyToken: string, siteUrl: string) {
     emptyText: "今天還沒有新消息，稍後再來看看 🙂",
     items: (data ?? []).map((n) => ({
       title: n.title,
-      meta: n.source_org ?? undefined,
+      meta: `${n.source_org ?? ""}${n.published_at || n.fetched_at ? " · " + fmtD(n.published_at || n.fetched_at) : ""}`,
       desc: n.summary_md ? snip(n.summary_md, 60) : undefined,
       uri: `${siteUrl}/news/${n.id}`,
-      btn: "閱讀",
+      btn: "看內容",
+      detail: `nd=${n.id}`,
       image: (n.image_url && /^https:\/\//.test(n.image_url)) ? n.image_url : null,
     })),
   })]);
@@ -259,18 +320,19 @@ async function handleQa(replyToken: string, siteUrl: string) {
   const admin = createAdminClient();
   const { data } = await admin
     .from("questions")
-    .select("id, title, body, answer_count")
+    .select("id, title, body, answer_count, updated_at")
     .in("status", ["open", "resolved"])
-    .order("created_at", { ascending: false })
+    .order("updated_at", { ascending: false })
     .limit(7);
   const items = (data ?? []).map((q) => ({
     title: q.title,
-    meta: `${q.answer_count ?? 0} 則回答`,
+    meta: `${q.answer_count ?? 0} 則回答${q.updated_at ? " · 最後討論 " + fmtD(q.updated_at) : ""}`,
     desc: q.body ? snip(q.body, 56) : undefined,
     uri: `${siteUrl}/qa/${q.id}`,
     btn: "看討論",
+    detail: `qd=${q.id}`,
   }));
-  items.push({ title: "我要提問", meta: undefined, desc: "找不到答案？直接問，在地志工幫您解答", uri: `${siteUrl}/qa/ask`, btn: "我要提問" });
+  items.push({ title: "我要提問", meta: undefined, desc: "找不到答案？直接問，在地志工幫您解答", uri: `${siteUrl}/qa/ask`, btn: "我要提問", detail: undefined });
   await lineReply(replyToken, [buildLinkList({
     altText: "互助問答",
     headerColor: "#B23F1E",

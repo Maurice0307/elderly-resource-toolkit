@@ -79,7 +79,7 @@ export function buildLinkList(opts: {
   headerLabel: string;
   icon?: string;
   emptyText: string;
-  items: { title: string; meta?: string; desc?: string; uri: string; btn?: string; image?: string | null }[];
+  items: { title: string; meta?: string; desc?: string; uri: string; btn?: string; detail?: string; image?: string | null }[];
 }): LineMsg {
   if (opts.items.length === 0) return menuText(opts.emptyText);
   const color = opts.headerColor ?? "#E0552E";
@@ -99,11 +99,17 @@ export function buildLinkList(opts: {
         ],
       },
       footer: {
-        type: "box", layout: "vertical", paddingAll: "16px", paddingTop: "0px",
-        contents: [{
-          type: "button", style: "primary", color, height: "sm",
-          action: { type: "uri", label: it.btn ?? "查看", uri: it.uri },
-        }],
+        type: "box", layout: "vertical", spacing: "sm", paddingAll: "16px", paddingTop: "0px",
+        contents: [
+          ...(it.detail ? [{
+            type: "button", style: "primary", color, height: "sm",
+            action: { type: "postback", label: it.btn ?? "看內容", data: it.detail, displayText: it.title.slice(0, 20) },
+          }] : []),
+          {
+            type: "button", style: it.detail ? "link" : "primary", color: it.detail ? undefined : color, height: "sm",
+            action: { type: "uri", label: it.detail ? "在網站開啟 ›" : (it.btn ?? "查看"), uri: it.uri },
+          },
+        ],
       },
     };
     if (it.image) {
@@ -114,6 +120,34 @@ export function buildLinkList(opts: {
   return bubbles.length === 1
     ? { type: "flex", altText: opts.altText, contents: bubbles[0] }
     : { type: "flex", altText: opts.altText, contents: { type: "carousel", contents: bubbles } };
+}
+
+/* 點按鈕直接在聊天室展開內容（不跳網頁） */
+export function detailBubble(opts: {
+  headerLabel: string; color: string; icon?: string; title: string; meta?: string;
+  lines: string[]; links?: { label: string; uri: string }[];
+}): LineMsg {
+  const body: LineMsg[] = [
+    { type: "box", layout: "horizontal", alignItems: "center", spacing: "sm", contents: [
+      ...(opts.icon ? [{ type: "image", url: opts.icon, size: "22px", aspectMode: "fit", flex: 0 }] : []),
+      { type: "text", text: opts.headerLabel, size: "sm", weight: "bold", color: opts.color, flex: 0 },
+    ] },
+    { type: "text", text: opts.title, weight: "bold", size: "xl", wrap: true, color: "#241F1B", margin: "lg" },
+    ...(opts.meta ? [{ type: "text", text: opts.meta, size: "sm", weight: "bold", color: opts.color, wrap: true, margin: "md" }] : []),
+    { type: "separator", margin: "lg", color: "#F0E6DE" },
+    ...opts.lines.filter(Boolean).map((l, i) => ({ type: "text", text: l, size: "md", color: "#574E47", wrap: true, margin: i === 0 ? "lg" : "md" })),
+  ];
+  const bubble: Record<string, unknown> = {
+    type: "bubble", size: "mega",
+    body: { type: "box", layout: "vertical", paddingAll: "20px", contents: body },
+  };
+  if (opts.links && opts.links.length) {
+    bubble.footer = {
+      type: "box", layout: "vertical", spacing: "sm", paddingAll: "20px", paddingTop: "4px",
+      contents: opts.links.map((l) => ({ type: "button", style: "secondary", height: "sm", action: { type: "uri", label: l.label, uri: l.uri } })),
+    };
+  }
+  return { type: "flex", altText: opts.title, contents: bubble };
 }
 
 /* 判斷訊息要走哪個功能；回傳 null 代表當作資源關鍵字搜尋 */

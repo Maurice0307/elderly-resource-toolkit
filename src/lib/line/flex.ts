@@ -60,7 +60,8 @@ function buildBubble(r: Resource, siteUrl: string, icon: string) {
     type: "button", style: "primary", color: accent, height: "md",
     action: { type: "uri", label: "撥打電話", uri: `tel:${r.phone.replace(/[^\d+]/g, "")}` },
   });
-  footer.push({ type: "button", style: "secondary", height: "md", action: { type: "uri", label: "查看詳情", uri: searchUrl } });
+  footer.push({ type: "button", style: "secondary", height: "md", action: { type: "postback", label: "查看詳情", data: `rd=${r.id}`, displayText: r.name.slice(0, 20) } });
+  void searchUrl;
   if (r.website_url) footer.push({ type: "button", style: "link", height: "sm", action: { type: "uri", label: "前往官網 ›", uri: r.website_url } });
 
   return {
