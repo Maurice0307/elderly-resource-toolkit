@@ -64,6 +64,15 @@ body {
   word-break: normal;
 }
 
+/* Next.js 內建錯誤頁會注入 `@media(prefers-color-scheme:dark){body{color:#fff;background:#000}}`，
+   在深色模式手機上會把整頁變黑底白字（看起來像反白）。這個 App 只走亮色，強制蓋回。 */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: var(--bg-page) !important;
+    color: var(--text-primary) !important;
+  }
+}
+
 /* 標題行高緊湊 */
 h1, h2, h3, h4 { line-height: 1.35; font-weight: 800; }
 
