@@ -49,9 +49,10 @@ export async function POST(req: NextRequest) {
       if (event.type === "postback") {
         const data: string = event.postback?.data ?? "";
         const rt = event.replyToken!;
+        const puid = event.source?.userId;
         if (data.startsWith("cat="))         await handleSubcatMenu(decodeURIComponent(data.slice(4)), rt);
-        else if (data.startsWith("catall="))  await handleCategoryResources(decodeURIComponent(data.slice(7)), rt, siteUrl);
-        else if (data.startsWith("sub="))     await handleSubcatResources(data.slice(4), rt, siteUrl);
+        else if (data.startsWith("catall="))  await handleCategoryResources(decodeURIComponent(data.slice(7)), rt, siteUrl, puid);
+        else if (data.startsWith("sub="))     await handleSubcatResources(data.slice(4), rt, siteUrl, puid);
         else if (data.startsWith("act="))     await handleActivityTheme(data.slice(4), rt, siteUrl);
         else if (data.startsWith("scr="))     await handleScriptAudience(data.slice(4), rt, siteUrl);
         else if (data.startsWith("nd="))      await detailNews(data.slice(3), rt, siteUrl);
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
           const name = await getLineProfile(userId);
           await logLineMessage({ userId, direction: "in", text: event.message.text, displayName: name });
         }
-        await handleMessage(event.message.text, event.replyToken, siteUrl);
+        await handleMessage(event.message.text, event.replyToken, siteUrl, userId);
       }
     } catch (e) {
       console.error("[line/webhook] event error:", e);
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-async function handleMessage(text: string, replyToken: string, siteUrl: string) {
+async function handleMessage(text: string, replyToken: string, siteUrl: string, uid?: string) {
   const intent = routeIntent(text);
   switch (intent) {
     case "menu":
@@ -94,7 +95,7 @@ async function handleMessage(text: string, replyToken: string, siteUrl: string) 
     case "script":    await handleScripts(replyToken, siteUrl); return;
     case "news":      await handleNews(replyToken, siteUrl); return;
     case "qa":        await handleQa(replyToken, siteUrl); return;
-    default:          await handleTextMessage(text, replyToken, siteUrl); return;
+    default:          await handleTextMessage(text, replyToken, siteUrl, uid); return;
   }
 }
 
@@ -108,6 +109,25 @@ const snip = (s: string | null | undefined, n = 46) => {
 const fmtD = (d: string | null | undefined) => (d ? new Date(d).toLocaleDateString("zh-TW", { month: "2-digit", day: "2-digit" }) : "");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const arr = (x: any): any[] => (Array.isArray(x) ? x : []);
+
+/* 透過 account_links（網站 LINE 登入時已存）查出此 LINE 使用者的居住地 → 用來篩在地資源 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getRegionFilter(admin: any, lineUserId: string | undefined): Promise<{ ids: string[]; name: string } | null> {
+  if (!lineUserId) return null;
+  const { data: link } = await admin.from("account_links").select("user_id").eq("provider", "line").eq("provider_key", lineUserId).maybeSingle();
+  if (!link) return null;
+  const { data: prof } = await admin.from("profiles").select("home_region_id").eq("id", link.user_id).maybeSingle();
+  const rid = prof?.home_region_id;
+  if (!rid) return null;
+  const { data: reg } = await admin.from("regions").select("id, name, parent_id").eq("id", rid).maybeSingle();
+  if (!reg) return null;
+  const { data: children } = await admin.from("regions").select("id").eq("parent_id", rid);
+  const ids = [rid, ...arr(children).map((c) => c.id)];
+  if (reg.parent_id) ids.push(reg.parent_id);
+  return { ids, name: reg.name };
+}
+const regionNote = (f: { name: string } | null) =>
+  f ? menuText(`🔎 已依您的地區「${f.name}」篩選（全國＋在地）。想看別區可直接打字，例如「台南 長照」`) : null;
 
 async function detailNews(id: string, rt: string, siteUrl: string) {
   const admin = createAdminClient();
@@ -175,35 +195,45 @@ async function handleSubcatMenu(catName: string, replyToken: string) {
   await lineReply(replyToken, [subcategoryMenu(catName, subs)]);
 }
 
-// 「全部 X」→ 整個分類的資源
-async function handleCategoryResources(catName: string, replyToken: string, siteUrl: string) {
+// 「全部 X」→ 整個分類的資源（依使用者地區篩選）
+async function handleCategoryResources(catName: string, replyToken: string, siteUrl: string, uid?: string) {
   siteUrl = siteUrl || "https://elderly-resource-toolkit.vercel.app";
   const admin = createAdminClient();
   const { data: cat } = await admin.from("categories").select("id").eq("name", catName).maybeSingle();
-  if (!cat) { await handleTextMessage(catName, replyToken, siteUrl); return; }
+  if (!cat) { await handleTextMessage(catName, replyToken, siteUrl, uid); return; }
   const { data: subs } = await admin.from("subcategories").select("id").eq("category_id", cat.id);
   const subIds = (subs ?? []).map((s) => s.id);
-  const { data } = subIds.length
-    ? await admin.from("resources").select(RES_COLS).in("subcategory_id", subIds).eq("status", "active").order("like_count", { ascending: false, nullsFirst: false }).limit(8)
-    : { data: [] };
-  const flex = buildResourceMessages(normRes(data ?? []), siteUrl, CATEGORY_ICON[catName] ?? "pin");
-  if (flex) await lineReply(replyToken, [flex]);
-  else await lineReply(replyToken, [menuText(`「${catName}」目前還沒有資源，換個分類或直接打關鍵字試試 👇`)]);
+  const filter = await getRegionFilter(admin, uid);
+  let data: unknown[] = [];
+  if (subIds.length) {
+    let q = admin.from("resources").select(RES_COLS).in("subcategory_id", subIds).eq("status", "active");
+    if (filter) q = q.or(`scope.eq.national,region_id.in.(${filter.ids.join(",")})`);
+    ({ data } = await q.order("like_count", { ascending: false, nullsFirst: false }).limit(8));
+  }
+  await replyResources(replyToken, data, siteUrl, CATEGORY_ICON[catName] ?? "pin", filter, `「${catName}」目前還沒有資源，換個分類或直接打關鍵字試試 👇`);
 }
 
-// 點細分類 → 該細分類的資源
-async function handleSubcatResources(subId: string, replyToken: string, siteUrl: string) {
+// 點細分類 → 該細分類的資源（依使用者地區篩選）
+async function handleSubcatResources(subId: string, replyToken: string, siteUrl: string, uid?: string) {
   const admin = createAdminClient();
   const { data: sub } = await admin.from("subcategories").select("name, category_id").eq("id", subId).maybeSingle();
-  const { data } = await admin.from("resources").select(RES_COLS).eq("subcategory_id", subId).eq("status", "active").order("like_count", { ascending: false, nullsFirst: false }).limit(8);
+  const filter = await getRegionFilter(admin, uid);
+  let q = admin.from("resources").select(RES_COLS).eq("subcategory_id", subId).eq("status", "active");
+  if (filter) q = q.or(`scope.eq.national,region_id.in.(${filter.ids.join(",")})`);
+  const { data } = await q.order("like_count", { ascending: false, nullsFirst: false }).limit(8);
   let iconName = "pin";
   if (sub?.category_id) {
     const { data: cat } = await admin.from("categories").select("name").eq("id", sub.category_id).maybeSingle();
     if (cat?.name) iconName = CATEGORY_ICON[cat.name] ?? "pin";
   }
-  const flex = buildResourceMessages(normRes(data ?? []), siteUrl, iconName);
-  if (flex) await lineReply(replyToken, [flex]);
-  else await lineReply(replyToken, [menuText(`「${sub?.name ?? "這一項"}」目前還沒有資源，換一項或直接打關鍵字試試 👇`)]);
+  await replyResources(replyToken, data ?? [], siteUrl, iconName, filter, `「${sub?.name ?? "這一項"}」目前還沒有資源，換一項或直接打關鍵字試試 👇`);
+}
+
+async function replyResources(replyToken: string, data: unknown[], siteUrl: string, icon: string, filter: { name: string } | null, emptyMsg: string) {
+  const flex = buildResourceMessages(normRes(data as never[]), siteUrl, icon);
+  if (!flex) { await lineReply(replyToken, [menuText(emptyMsg)]); return; }
+  const note = regionNote(filter);
+  await lineReply(replyToken, note ? [note, flex] : [flex]);
 }
 
 // 活動分類（對齊網站 activities 頁的 CARD_CATS / themeKeyFor）
@@ -343,7 +373,7 @@ async function handleQa(replyToken: string, siteUrl: string) {
   })]);
 }
 
-async function handleTextMessage(text: string, replyToken: string, siteUrl: string) {
+async function handleTextMessage(text: string, replyToken: string, siteUrl: string, uid?: string) {
   const admin = createAdminClient();
   let keyword = text.trim();
   let regionId: string | null = null;
@@ -380,6 +410,9 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
     // fallback: use raw text
   }
 
+  // 使用者沒指定縣市時，套用「我的地區」篩選（已登入網站者）
+  const homeFilter = regionId ? null : await getRegionFilter(admin, uid);
+
   // Query resources
   let query = admin
     .from("resources")
@@ -389,13 +422,9 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
     .limit(5);
 
   if (regionId) {
-    query = admin
-      .from("resources")
-      .select(RES_COLS)
-      .eq("status", "active")
-      .or(`scope.eq.national,region_id.eq.${regionId}`)
-      .or(`name.ilike.%${keyword}%,summary.ilike.%${keyword}%`)
-      .limit(5);
+    query = query.or(`scope.eq.national,region_id.eq.${regionId}`);
+  } else if (homeFilter) {
+    query = query.or(`scope.eq.national,region_id.in.(${homeFilter.ids.join(",")})`);
   }
 
   const { data: resources } = await query;
@@ -408,8 +437,10 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
   }
 
   const flexMsg = buildResourceMessages(normRes(resources), siteUrl, "search");
-
-  if (flexMsg) await lineReply(replyToken, [flexMsg]);
+  if (flexMsg) {
+    const note = regionNote(homeFilter);
+    await lineReply(replyToken, note ? [note, flexMsg] : [flexMsg]);
+  }
 }
 
 // LINE event types
