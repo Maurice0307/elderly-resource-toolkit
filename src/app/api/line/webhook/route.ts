@@ -5,8 +5,20 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildResourceMessages, buildWelcomeMessage } from "@/lib/line/flex";
 import { menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, pickerBubble, detailBubble, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
 import { getLineProfile, logLineMessage } from "@/lib/line/store";
+import { matchFaq } from "@/lib/line/faq";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
+const RM_NEWBIE = "richmenu-e6ed60c63ea87dd965d558c7d2ee4716"; // 新手選單
+const RM_FULL = "richmenu-8cb934de51ef15424ae34367c26cdd5b";   // 完整六大功能選單
+
+async function linkRichMenu(uid: string | undefined, menuId: string) {
+  if (!uid) return;
+  try {
+    await fetch(`https://api.line.me/v2/bot/user/${uid}/richmenu/${menuId}`, {
+      method: "POST", headers: { Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}` },
+    });
+  } catch { /* ignore */ }
+}
 
 function verifySignature(body: string, signature: string, secret: string): boolean {
   const hash = crypto.createHmac("sha256", secret).update(body).digest("base64");
@@ -64,9 +76,11 @@ export async function POST(req: NextRequest) {
         else if (data.startsWith("rc="))      await lineReply(rt, [await districtPickerMsg(createAdminClient(), data.slice(3))]);
         else if (data.startsWith("rok="))     await confirmRegion(data.slice(4), rt, puid);
         else if (data.startsWith("rset="))    await confirmRegion(data.slice(5), rt, puid);
+        else if (data === "fullmenu")         { await linkRichMenu(puid, RM_FULL); await lineReply(rt, [menuText("已為您開啟完整功能選單 👇 點下方大圖示就能用六大功能！")]); }
         continue;
       }
       if (event.type === "follow") {
+        await linkRichMenu(event.source?.userId, RM_NEWBIE); // 新手先看新手選單
         await lineReply(event.replyToken, [buildWelcomeMessage(siteUrl), await buildRegionAsk(createAdminClient(), event.source?.userId)]);
         continue;
       }
@@ -208,7 +222,8 @@ async function confirmRegion(payload: string, rt: string, uid: string | undefine
   const rid = idx >= 0 ? payload.slice(0, idx) : payload;
   const name = idx >= 0 ? payload.slice(idx + 1) : "您的地區";
   if (uid && rid) await setUserRegion(createAdminClient(), uid, rid, name);
-  await lineReply(rt, [menuText(`好的！已記住您在「${name}」🏠\n之後「找資源」會自動幫您篩「全國＋在地」。\n點下方選單或直接打字試試看！`)]);
+  await linkRichMenu(uid, RM_FULL); // 設定好地區 → 切換到完整功能選單
+  await lineReply(rt, [menuText(`好的！已記住您在「${name}」🏠\n已為您開啟完整功能選單（下方六大圖示）。\n之後「找資源」會自動幫您篩「全國＋在地」。直接點選單或打字都可以！`)]);
 }
 
 async function detailNews(id: string, rt: string, siteUrl: string) {
@@ -490,6 +505,12 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
     }
   } catch {
     // fallback: use raw text
+  }
+
+  // 沒指定縣市時，先看是不是常見問題（FAQ 自動導引）；命中就回導引，不用再硬搜
+  if (!regionId) {
+    const faq = matchFaq(text);
+    if (faq) { await lineReply(replyToken, [menuText(faq)]); return; }
   }
 
   // 使用者沒指定縣市時，套用「我的地區」篩選（已登入網站者）
