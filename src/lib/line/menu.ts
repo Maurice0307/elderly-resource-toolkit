@@ -151,8 +151,9 @@ export function detailBubble(opts: {
 }
 
 /* 判斷訊息要走哪個功能；回傳 null 代表當作資源關鍵字搜尋 */
-export function routeIntent(text: string): "menu" | "resource" | "activity" | "script" | "news" | "qa" | null {
+export function routeIntent(text: string): "menu" | "resource" | "activity" | "script" | "news" | "qa" | "region" | null {
   const t = text.trim();
+  if (/設定地區|我的地區|換地區|改地區|所在地區|我住在/.test(t)) return "region";
   if (/^(選單|功能|menu|主選單|嗨|hi|hello|你好|哈囉|home|開始)$/i.test(t)) return "menu";
   if (/^找資源$|找資源|^資源$/.test(t)) return "resource";
   if (/活動|圖卡/.test(t)) return "activity";

@@ -60,10 +60,14 @@ export async function POST(req: NextRequest) {
         else if (data.startsWith("qd="))      await detailQa(data.slice(3), rt, siteUrl);
         else if (data.startsWith("sd="))      await detailScript(data.slice(3), rt, siteUrl);
         else if (data.startsWith("rd="))      await detailResource(data.slice(3), rt, siteUrl);
+        else if (data === "rchg")             await lineReply(rt, [await countyPickerMsg(createAdminClient())]);
+        else if (data.startsWith("rc="))      await lineReply(rt, [await districtPickerMsg(createAdminClient(), data.slice(3))]);
+        else if (data.startsWith("rok="))     await confirmRegion(data.slice(4), rt, puid);
+        else if (data.startsWith("rset="))    await confirmRegion(data.slice(5), rt, puid);
         continue;
       }
       if (event.type === "follow") {
-        await lineReply(event.replyToken, [buildWelcomeMessage(siteUrl), menuText("👇 點下方「功能選單」的大圖示，或直接打字告訴我你想找什麼")]);
+        await lineReply(event.replyToken, [buildWelcomeMessage(siteUrl), await buildRegionAsk(createAdminClient(), event.source?.userId)]);
         continue;
       }
       if (event.type === "message" && event.message.type === "text") {
@@ -88,6 +92,9 @@ async function handleMessage(text: string, replyToken: string, siteUrl: string, 
     case "menu":
       await lineReply(replyToken, [menuText("您好！想找什麼呢？點下方的選單按鈕，或直接打字告訴我 🙂")]);
       return;
+    case "region":
+      await lineReply(replyToken, [await buildRegionAsk(createAdminClient(), uid)]);
+      return;
     case "resource":
       await handleResourceMenu(replyToken);
       return;
@@ -111,13 +118,21 @@ const fmtD = (d: string | null | undefined) => (d ? new Date(d).toLocaleDateStri
 const arr = (x: any): any[] => (Array.isArray(x) ? x : []);
 
 /* 透過 account_links（網站 LINE 登入時已存）查出此 LINE 使用者的居住地 → 用來篩在地資源 */
+// 找出此 LINE 使用者要套用的地區：① 他在 LINE 選過的（line_user_prefs）② 否則網站個人資料的居住地
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function getRegionFilter(admin: any, lineUserId: string | undefined): Promise<{ ids: string[]; name: string } | null> {
+async function resolveUserRegionId(admin: any, lineUserId: string | undefined): Promise<string | null> {
   if (!lineUserId) return null;
+  try {
+    const { data: pref } = await admin.from("line_user_prefs").select("region_id").eq("line_user_id", lineUserId).maybeSingle();
+    if (pref?.region_id) return pref.region_id;
+  } catch { /* 表未建立 */ }
   const { data: link } = await admin.from("account_links").select("user_id").eq("provider", "line").eq("provider_key", lineUserId).maybeSingle();
   if (!link) return null;
   const { data: prof } = await admin.from("profiles").select("home_region_id").eq("id", link.user_id).maybeSingle();
-  const rid = prof?.home_region_id;
+  return prof?.home_region_id ?? null;
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function regionFilterFromId(admin: any, rid: string | null): Promise<{ ids: string[]; name: string } | null> {
   if (!rid) return null;
   const { data: reg } = await admin.from("regions").select("id, name, parent_id").eq("id", rid).maybeSingle();
   if (!reg) return null;
@@ -126,8 +141,75 @@ async function getRegionFilter(admin: any, lineUserId: string | undefined): Prom
   if (reg.parent_id) ids.push(reg.parent_id);
   return { ids, name: reg.name };
 }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getRegionFilter(admin: any, lineUserId: string | undefined) {
+  return regionFilterFromId(admin, await resolveUserRegionId(admin, lineUserId));
+}
 const regionNote = (f: { name: string } | null) =>
   f ? menuText(`🔎 已依您的地區「${f.name}」篩選（全國＋在地）。想看別區可直接打字，例如「台南 長照」`) : null;
+
+// 縣市由北到南
+const N2S = ["基隆市", "臺北市", "新北市", "桃園市", "新竹市", "新竹縣", "苗栗縣", "臺中市", "彰化縣", "南投縣", "雲林縣", "嘉義市", "嘉義縣", "臺南市", "高雄市", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "澎湖縣", "金門縣", "連江縣"];
+const countyOrder = (n: string) => { const i = N2S.indexOf((n || "").replace(/台/g, "臺")); return i < 0 ? 99 : i; };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function setUserRegion(admin: any, uid: string, regionId: string, name: string) {
+  try {
+    await admin.from("line_user_prefs").upsert({ line_user_id: uid, region_id: regionId, region_name: name, onboarded: true, updated_at: new Date().toISOString() }, { onConflict: "line_user_id" });
+  } catch { /* 表未建立 */ }
+}
+
+// 確認地區的卡片
+function confirmRegionBubble(name: string, rid: string): LineMsg {
+  return {
+    type: "flex", altText: "確認您的地區",
+    contents: {
+      type: "bubble", size: "mega",
+      body: { type: "box", layout: "vertical", paddingAll: "22px", contents: [
+        { type: "text", text: "請先確認您住在哪裡", size: "sm", color: "#9C8E84" },
+        { type: "text", text: name, weight: "bold", size: "xxl", color: "#E0552E", margin: "md", wrap: true },
+        { type: "text", text: "確認後，找資源會自動幫您篩「全國＋在地」", size: "sm", color: "#574E47", margin: "md", wrap: true },
+      ] },
+      footer: { type: "box", layout: "vertical", spacing: "sm", paddingAll: "20px", paddingTop: "0px", contents: [
+        { type: "button", style: "primary", color: "#E0552E", height: "md", action: { type: "postback", label: "是，就用這裡", data: `rok=${rid}|${name}`, displayText: `確認：${name}` } },
+        { type: "button", style: "secondary", height: "md", action: { type: "postback", label: "想換地區", data: "rchg", displayText: "換地區" } },
+      ] },
+    },
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function countyPickerMsg(admin: any): Promise<LineMsg> {
+  const { data } = await admin.from("regions").select("id, name").eq("level", "county");
+  const counties = arr(data).slice().sort((a, b) => countyOrder(a.name) - countyOrder(b.name));
+  return pickerBubble("您住在哪個縣市？", "選縣市，再選行政區", [], counties.map((c) => ({ label: c.name, data: `rc=${c.id}` })));
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function districtPickerMsg(admin: any, countyId: string): Promise<LineMsg> {
+  const { data: county } = await admin.from("regions").select("name").eq("id", countyId).maybeSingle();
+  const { data: dists } = await admin.from("regions").select("id, name").eq("parent_id", countyId);
+  const cname = county?.name ?? "";
+  const opts = [{ label: `整個${cname}（全縣市）`, data: `rset=${countyId}|${cname}` }, ...arr(dists).map((d) => ({ label: d.name, data: `rset=${d.id}|${cname} ${d.name}` }))];
+  return pickerBubble(cname, "選行政區，或選「全縣市」", [], opts, "#E0552E");
+}
+
+// 進入點：有預設就確認、沒有就選縣市
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function buildRegionAsk(admin: any, uid: string | undefined): Promise<LineMsg> {
+  if (uid) {
+    const rid = await resolveUserRegionId(admin, uid);
+    if (rid) { const f = await regionFilterFromId(admin, rid); return confirmRegionBubble(f?.name ?? "您的地區", rid); }
+  }
+  return countyPickerMsg(admin);
+}
+
+async function confirmRegion(payload: string, rt: string, uid: string | undefined) {
+  const idx = payload.indexOf("|");
+  const rid = idx >= 0 ? payload.slice(0, idx) : payload;
+  const name = idx >= 0 ? payload.slice(idx + 1) : "您的地區";
+  if (uid && rid) await setUserRegion(createAdminClient(), uid, rid, name);
+  await lineReply(rt, [menuText(`好的！已記住您在「${name}」🏠\n之後「找資源」會自動幫您篩「全國＋在地」。\n點下方選單或直接打字試試看！`)]);
+}
 
 async function detailNews(id: string, rt: string, siteUrl: string) {
   const admin = createAdminClient();
