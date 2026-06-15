@@ -114,7 +114,7 @@ export default function GuidePage() {
             </div>
           </div>
           <a
-            href="https://line.me/R/ti/p/@elderlink"
+            href="https://line.me/R/ti/p/@796rwlaq"
             target="_blank" rel="noopener noreferrer"
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,

@@ -189,7 +189,7 @@ export async function MobileHome() {
 
       {/* 加 LINE CTA */}
       <section style={{ padding: "18px 18px 24px" }}>
-        <a href="https://line.me" target="_blank" rel="noreferrer" style={{
+        <a href="https://line.me/R/ti/p/@796rwlaq" target="_blank" rel="noreferrer" style={{
           display: "flex", alignItems: "center", gap: 13,
           background: "linear-gradient(120deg,#E0552E,#F26B43)", borderRadius: 18, padding: "17px 18px",
           textDecoration: "none", boxShadow: "0 8px 20px rgba(224,85,46,0.28)",

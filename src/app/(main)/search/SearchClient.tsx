@@ -277,7 +277,7 @@ export function SearchClient({ query, items, regionLabel, cats }: { query: strin
 
           {/* 沒找到 → LINE */}
           <div style={{ padding: "0 18px 26px" }}>
-            <a href="https://line.me" target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, background: "linear-gradient(120deg,#E0552E,#F26B43)", borderRadius: 18, padding: "16px 18px", textDecoration: "none", boxShadow: "0 8px 20px rgba(224,85,46,0.26)" }}>
+            <a href="https://line.me/R/ti/p/@796rwlaq" target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 12, background: "linear-gradient(120deg,#E0552E,#F26B43)", borderRadius: 18, padding: "16px 18px", textDecoration: "none", boxShadow: "0 8px 20px rgba(224,85,46,0.26)" }}>
               <span style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <ELIcon name="chat" size={23} color="#fff" />
               </span>
