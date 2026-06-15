@@ -128,6 +128,20 @@ const snip = (s: string | null | undefined, n = 46) => {
   return t.length > n ? t.slice(0, n) + "…" : t;
 };
 const fmtD = (d: string | null | undefined) => (d ? new Date(d).toLocaleDateString("zh-TW", { month: "2-digit", day: "2-digit" }) : "");
+
+/* 查不到資源時，用 AI 給長輩友善、個別化的實用回答（取代罐頭「找不到」） */
+async function aiAnswer(text: string): Promise<string> {
+  try {
+    const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const msg = await claude.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 420,
+      system: "你是台灣「幸福好厝邊」長者資源 LINE 小幫手。用繁體中文、溫和白話、簡短（3-6 句）回答長輩的問題，給實用又安心的方向。原則：醫療/法律/金錢只給大方向並建議洽詢專業或官方專線（長照 1966、福利諮詢 1957、反詐騙 165、緊急 119/110、安心專線 1925、老人保護 113），絕不編造具體機構名稱、地址或電話。情緒低落要先同理、給安心專線。最後用一句引導：可點下方選單，或打「縣市＋需求」(例如「中壢 長照」) 讓我幫忙找在地資源。",
+      messages: [{ role: "user", content: text.slice(0, 500) }],
+    });
+    return msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+  } catch { return ""; }
+}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const arr = (x: any): any[] => (Array.isArray(x) ? x : []);
 
@@ -533,8 +547,11 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
   const { data: resources } = await query;
 
   if (!resources || resources.length === 0) {
+    // 查無在地資源 → 用 AI 給個別化回答（不再每次都回同一句）
+    const ai = await aiAnswer(text);
+    if (ai) { await lineReply(replyToken, [menuText(ai)]); return; }
     await lineReply(replyToken, [
-      menuText(`抱歉，找不到與「${text}」相關的資源 😔\n\n您可以到平台搜尋更多：\n${siteUrl}/search?q=${encodeURIComponent(text)}\n\n或點下方選單試試其他功能 👇`),
+      menuText(`這個問題我先幫您記著了 😊 您可以到網站找更多：\n${siteUrl}/search?q=${encodeURIComponent(text)}\n或點下方選單、打「縣市＋需求」(例如「中壢 長照」) 讓我幫您找 👇`),
     ]);
     return;
   }
