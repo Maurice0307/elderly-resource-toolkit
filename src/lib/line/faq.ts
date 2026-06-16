@@ -130,8 +130,10 @@ export const FAQS: Faq[] = [
   { q: "怎麼跟我聯絡真人/客服", k: ["真人", "客服", "聯絡你們", "找人服務"], a: "想找真人協助：到「互助問答」發問會有志工回覆；或點「打開網站」看聯絡方式。緊急請打 119/110。" },
 ];
 
-/* 比對使用者訊息，命中回 FAQ 的導引；否則回 null（交給關鍵字搜尋） */
-export function matchFaq(text: string): string | null {
+/* 比對使用者訊息。回 { a, route }：
+   route=true 表示「導引型」（內容叫使用者『傳您的地區+需求』）→ 已知地區時應改為直接搜尋；
+   route=false 表示「直接答案」（如 165/119/1925 專線）→ 永遠照回。 */
+export function matchFaq(text: string): { a: string; route: boolean } | null {
   const t = (text || "").toLowerCase().replace(/\s/g, "");
   let best: { a: string; score: number } | null = null;
   for (const f of FAQS) {
@@ -142,5 +144,6 @@ export function matchFaq(text: string): string | null {
       }
     }
   }
-  return best?.a ?? null;
+  if (!best) return null;
+  return { a: best.a, route: best.a.includes("您的地區") };
 }

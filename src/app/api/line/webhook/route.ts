@@ -521,23 +521,34 @@ async function handleTextMessage(text: string, replyToken: string, siteUrl: stri
     // fallback: use raw text
   }
 
-  // 沒指定縣市時，先看是不是常見問題（FAQ 自動導引）；命中就回導引，不用再硬搜
-  if (!regionId) {
-    const faq = matchFaq(text);
-    if (faq) { await lineReply(replyToken, [menuText(faq)]); return; }
+  // 先決定地區：訊息有講(regionId) 或 使用者已設定(homeFilter)
+  const homeFilter = regionId ? null : await getRegionFilter(admin, uid);
+  const hasRegion = !!regionId || !!homeFilter;
+
+  // FAQ：直接答案(專線/安全)永遠回；導引型(叫你傳地區)只有在「不知道地區」時才回——
+  // 已知地區就直接幫他搜，不再叫他重打地區（避免一直回同樣的）
+  const faq = matchFaq(text);
+  if (faq && (!faq.route || !hasRegion)) {
+    await lineReply(replyToken, [menuText(faq.a)]);
+    return;
   }
 
-  // 使用者沒指定縣市時，套用「我的地區」篩選（已登入網站者）
-  const homeFilter = regionId ? null : await getRegionFilter(admin, uid);
+  // 關鍵字也比對「分類/子分類名稱」——資源多以機構命名，純文字常搜不到（例如「長照」對不到「中壢區衛生所」）
+  const orParts = [`name.ilike.%${keyword}%`, `summary.ilike.%${keyword}%`];
+  try {
+    const subIds = new Set<string>();
+    const { data: subM } = await admin.from("subcategories").select("id").ilike("name", `%${keyword}%`);
+    for (const s of subM ?? []) subIds.add(s.id);
+    const { data: catM } = await admin.from("categories").select("id").ilike("name", `%${keyword}%`);
+    if (catM && catM.length) {
+      const { data: catSubs } = await admin.from("subcategories").select("id").in("category_id", catM.map((c) => c.id));
+      for (const s of catSubs ?? []) subIds.add(s.id);
+    }
+    if (subIds.size) orParts.unshift(`subcategory_id.in.(${[...subIds].join(",")})`);
+  } catch { /* ignore */ }
 
   // Query resources
-  let query = admin
-    .from("resources")
-    .select(RES_COLS)
-    .eq("status", "active")
-    .or(`name.ilike.%${keyword}%,summary.ilike.%${keyword}%`)
-    .limit(5);
-
+  let query = admin.from("resources").select(RES_COLS).eq("status", "active").or(orParts.join(",")).limit(8);
   if (regionId) {
     query = query.or(`scope.eq.national,region_id.eq.${regionId}`);
   } else if (homeFilter) {
