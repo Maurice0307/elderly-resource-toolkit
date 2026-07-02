@@ -11,7 +11,8 @@
 這是一個致力於整合與規劃「長者資源」的開源專案 ElderLink。我們的目標是打造一個友善的工具，讓長者及其照護者能夠更輕鬆地獲取必要的服務、醫療資訊與社區支持。
 
 ### 線上預覽
-幸福好厝邊 [https://elderly-resource-toolkit.vercel.app/](https://elderly-resource-toolkit.vercel.app/)
+幸福好厝邊 ElderLink 官方網站 [https://elderly-resource-toolkit.vercel.app/](https://elderly-resource-toolkit.vercel.app/)
+加入好友（LINE 小幫手）[https://line.me/R/ti/p/@796rwlaq](https://line.me/R/ti/p/@796rwlaq)
 
 ### 使用意見回饋
 我們非常重視您的使用體驗！如果您在使用過程中發現任何問題，或是希望增加什麼功能，歡迎透過以下方式告訴我們：
@@ -40,6 +41,7 @@ This project (ElderLink) is an open-source initiative dedicated to integrating a
 
 ### Live Demo
 ElderLink Web [https://elderly-resource-toolkit.vercel.app/](https://elderly-resource-toolkit.vercel.app/)
+LINE Official account [https://line.me/R/ti/p/@796rwlaq](https://line.me/R/ti/p/@796rwlaq)
 
 ### User Feedback
 We highly value your user experience! If you encounter any issues or have suggestions for new features, please let me know through the following channels:
