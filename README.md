@@ -31,6 +31,8 @@
 ### 授權條款 (License)
 本專案採用 **GNU GPLv3** 授權條款。此條款確保了本專案將永遠保持開源，並禁止任何單位將其改為閉源的商業化產品。
 
+![GitHub release](https://img.shields.io/github/v/release/Maurice0307/elderly-resource-toolkit?include_prereleases)
+
 ---
 
 <a name="english"></a>
@@ -59,6 +61,8 @@ We welcome contributions from the community! Whether it's **debugging**, **impro
 
 ### License
 This project is licensed under the **GNU GPLv3** license. This ensures that the project remains open-source and prevents any entity from making it proprietary or closed-source for commercial use.
+
+![GitHub release](https://img.shields.io/github/v/release/Maurice0307/elderly-resource-toolkit?include_prereleases)
 
 ---
 
