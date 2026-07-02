@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Elderly Resource Toolkit (長者資源工具包)
 
-## Getting Started
+[English](#english) | [繁體中文](#繁體中文)
 
-First, run the development server:
+---
+
+<a name="繁體中文"></a>
+## 繁體中文
+
+### 專案介紹
+這是一個致力於整合與規劃「長者資源」的開源專案 ElderLink。我們的目標是打造一個友善的工具，讓長者及其照護者能夠更輕鬆地獲取必要的服務、醫療資訊與社區支持。
+
+### 如何參與貢獻
+我們非常歡迎大家加入！無論是 **Debug (技術除錯)**、**優化介面體驗 (UI/UX)**，或是 **開發新的功能模組**，您的每一份協助對這個專案都至關重要。
+
+**貢獻流程：**
+1. 請務必先閱讀 [CONTRIBUTING.md](CONTRIBUTING.md) 以了解詳細的貢獻規範。
+2. 前往 [Issues](https://github.com/Maurice0307/elderly-resource-toolkit/issues) 頁面，查看標記為 `help wanted` 或 `good first issue` 的任務。
+3. Fork 此儲存庫並提交 **Pull Request (PR)**。
+4. 所有 PR 都會由維護者（創始人）進行代碼審核 (Code Review)，確保程式碼品質並符合專案的公益目標。
+
+### 授權條款 (License)
+本專案採用 **GNU GPLv3** 授權條款。此條款確保了本專案將永遠保持開源，並禁止任何單位將其改為閉源的商業化產品。
+
+---
+
+<a name="english"></a>
+## English
+
+### Introduction
+This project (ElderLink) is an open-source initiative dedicated to integrating and organizing resources for the elderly. Our mission is to build a user-friendly tool that helps seniors and their caregivers easily access essential services, medical information, and community support.
+
+### Contributing
+We welcome contributions from the community! Whether it's **debugging**, **improving UI/UX**, or **adding new functional modules**, your help is invaluable to our mission.
+
+**How to contribute:**
+1. Please refer to our [CONTRIBUTING.md](CONTRIBUTING.md) for the detailed contribution process.
+2. Check the [Issues](https://github.com/Maurice0307/elderly-resource-toolkit/issues) page to find tasks labeled `help wanted` or `good first issue`.
+3. Fork this repository and submit a **Pull Request (PR)**.
+4. All PRs will be reviewed by the maintainer (founder) to ensure quality and alignment with our project goals.
+
+### License
+This project is licensed under the **GNU GPLv3** license. This ensures that the project remains open-source and prevents any entity from making it proprietary or closed-source for commercial use.
+
+---
+
+### Getting Started (開始使用)
+This is a [Next.js](https://nextjs.org/) project. To run it locally:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
