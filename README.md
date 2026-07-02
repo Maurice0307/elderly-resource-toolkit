@@ -7,6 +7,9 @@
 <a name="繁體中文"></a>
 ## 繁體中文
 
+[![Node.js CI](https://github.com/Maurice0307/elderly-resource-toolkit/actions/workflows/node.js.yml/badge.svg)](https://github.com/Maurice0307/elderly-resource-toolkit/actions/workflows/node.js.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE.txt)
+
 ### 專案介紹
 這是一個致力於整合與規劃「長者資源」的開源專案 ElderLink。我們的目標是打造一個友善的工具，讓長者及其照護者能夠更輕鬆地獲取必要的服務、醫療資訊與社區支持。
 
@@ -26,6 +29,9 @@
 
 <a name="english"></a>
 ## English
+
+[![Node.js CI](https://github.com/Maurice0307/elderly-resource-toolkit/actions/workflows/node.js.yml/badge.svg)](https://github.com/Maurice0307/elderly-resource-toolkit/actions/workflows/node.js.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE.txt)
 
 ### Introduction
 This project (ElderLink) is an open-source initiative dedicated to integrating and organizing resources for the elderly. Our mission is to build a user-friendly tool that helps seniors and their caregivers easily access essential services, medical information, and community support.
