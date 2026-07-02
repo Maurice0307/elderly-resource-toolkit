@@ -162,8 +162,9 @@ button, [role="button"], a.btn, .btn {
 .wv-nav {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-left: 14px;
+  gap: 4px;
+  margin-left: 12px;
+  margin-right: 12px;
   min-width: 0;
 }
 .wv-navlink {
@@ -172,25 +173,31 @@ button, [role="button"], a.btn, .btn {
   background: transparent;
   cursor: pointer;
   font: inherit;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: #574E47;
-  padding: 10px 15px;
+  padding: 9px 12px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   white-space: nowrap;
   transition: background .15s ease, color .15s ease;
 }
 .wv-navlink:hover { background: #FFF4EF; color: #B23F1E; }
 .wv-navlink.on  { background: #FFE7DD; color: #B23F1E; }
 
+/* 中等寬度（941–1140px）：導覽列再壓縮，避免和右側 AA／地區擠在一起 */
+@media (min-width: 941px) and (max-width: 1140px) {
+  .wv-navlink { font-size: 14.5px; padding: 8px 9px; gap: 4px; }
+  .wv-nav { gap: 2px; margin-left: 8px; margin-right: 8px; }
+}
+
 .wv-headright {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 .wv-headright > * { flex-shrink: 0; }

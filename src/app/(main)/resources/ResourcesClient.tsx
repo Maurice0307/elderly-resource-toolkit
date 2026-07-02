@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ELIcon } from "@/components/layout/ELIcon";
@@ -21,7 +21,26 @@ type ResourceItem = {
   scope?: string | null;
   tags?: string[] | null;
   like_count?: number | null;
+  bookmark_count?: number | null;
+  subcat_name?: string | null;
+  subcat_names?: string[] | null;
+  source_org?: string | null;
 };
+
+type Subcat = { id: string; name: string };
+
+/* 綜合排序評分：越官方／政府／大型機構越前面 */
+function officialScore(r: ResourceItem): number {
+  let s = 0;
+  const src = r.source_org ?? "";
+  if (r.scope === "national") s += 100; // 全國官方專線最權威
+  if (/政府|衛生福利|衛福|健保|國民健康|疾病管制|疾管|勞動|教育部|公路|警政|國稅|社會局|衛生局|社會及家庭|中央|部$|署$|委員會/.test(src)) s += 60;
+  else if (src) s += 25; // 有標明來源（多為官方或可靠機構）
+  if (/醫學中心|醫院|總院|榮民總|大學/.test(r.name)) s += 30; // 大型醫療／機構
+  if (/基金會|協會|聯盟|公會/.test(r.name + src)) s += 10;
+  s += Math.min(r.like_count ?? 0, 50); // 微幅納入人氣
+  return s;
+}
 
 type SortKey = "recommend" | "local" | "popular" | "name";
 
@@ -30,25 +49,6 @@ const CAT_ICON_MAP: Record<string, string> = {
   finance: "finance", subsidy: "coin", social: "social",
   leisure: "leisure", education: "education",
 };
-
-/* ─── Taoyuan districts ─── */
-const TAOYUAN_DISTRICTS = [
-  { label: "全台灣",   code: "" },
-  { label: "桃園市",   code: "TW-TYC" },
-  { label: "桃園區",   code: "TW-TYC-TY" },
-  { label: "中壢區",   code: "TW-TYC-ZL" },
-  { label: "八德區",   code: "TW-TYC-BD" },
-  { label: "大溪區",   code: "TW-TYC-DX" },
-  { label: "蘆竹區",   code: "TW-TYC-LZ" },
-  { label: "龜山區",   code: "TW-TYC-GS" },
-  { label: "平鎮區",   code: "TW-TYC-PZ" },
-  { label: "楊梅區",   code: "TW-TYC-YM" },
-  { label: "龍潭區",   code: "TW-TYC-LT" },
-  { label: "大園區",   code: "TW-TYC-DY" },
-  { label: "復興區",   code: "TW-TYC-FX" },
-  { label: "新屋區",   code: "TW-TYC-XW" },
-  { label: "觀音區",   code: "TW-TYC-GY" },
-];
 
 /* Nominatim district → code */
 const DISTRICT_CODE: Record<string, string> = {
@@ -130,6 +130,15 @@ function ResourceCard({ res, catSlug }: { res: ResourceItem; catSlug: string }) 
         <h3 style={{ flex: 1, margin: 0, fontSize: 18, fontWeight: 800, color: "#241F1B", lineHeight: 1.4 }}>{res.name}</h3>
         <LocBadge scope={res.scope} address={res.address} />
       </div>
+      {(res.subcat_names?.length ? res.subcat_names : res.subcat_name ? [res.subcat_name] : []).length > 0 && (
+        <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {(res.subcat_names?.length ? res.subcat_names : [res.subcat_name!]).map((t) => (
+            <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12.5, fontWeight: 700, color: "#7A4A2E", background: "#FBEFE6", padding: "3px 10px", borderRadius: 999 }}>
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
       {res.summary && (
         <p style={{ margin: "8px 0 0", fontSize: 16, color: "#574E47", lineHeight: 1.55 }}>{res.summary}</p>
       )}
@@ -147,33 +156,115 @@ function ResourceCard({ res, catSlug }: { res: ResourceItem; catSlug: string }) 
           ))}
         </div>
       )}
+      {res.source_org && (
+        <div style={{ marginTop: 10, fontSize: 12, color: "#9A8E84", lineHeight: 1.5 }}>
+          資料來源：{res.source_org}
+        </div>
+      )}
     </div>
+  );
+}
+
+/* 置頂工具卡：依「子分類名稱」對應一組官方查詢工具，顯示在該子分類列表最上方 */
+type PinnedTool = { title: string; desc: string; url: string; tag?: string };
+const PINNED_TOOLS: Record<string, PinnedTool[]> = {
+  "鄰近醫學中心、診所": [
+    {
+      title: "快速查找開診院所（六日／春節／連假）",
+      desc: "查詢假日、夜間、春節與連假期間有開診的醫療院所與藥局——健保署全國即時資訊。",
+      url: "https://info.nhi.gov.tw/INAE1000/INAE1002S01",
+      tag: "健保署．假日就醫查詢",
+    },
+  ],
+  "1966 長照服務": [
+    {
+      title: "長照 2.0 服務與在地據點查詢",
+      desc: "查長照服務項目、找在地長照據點與日照中心，或線上申請、試算補助——撥 1966 也可。",
+      url: "https://1966.gov.tw/",
+      tag: "衛福部．長照 2.0",
+    },
+  ],
+  "輔具申請": [
+    {
+      title: "政府輔具資源服務與補助查詢",
+      desc: "查政府輔具服務、各縣市輔具資源中心與可補助的輔具項目及申請流程——社家署輔具資源入口網。",
+      url: "https://newrepat.sfaa.gov.tw/home/gov-repat-service",
+      tag: "社家署．輔具入口網",
+    },
+  ],
+  "疫苗資訊": [
+    {
+      title: "公費流感疫苗接種計畫",
+      desc: "查公費流感疫苗的接種對象、時程與常見問答——疾管署官方說明。",
+      url: "https://www.cdc.gov.tw/Category/QAPage/T93ZfoLyyuCaZvKf7v9eww",
+      tag: "疾管署．接種計畫",
+    },
+    {
+      title: "流感、新冠疫苗及流感藥劑地圖",
+      desc: "用地圖找附近有提供流感／新冠疫苗、流感藥劑的院所——疾管署即時地圖。",
+      url: "https://vaxmap.cdc.gov.tw",
+      tag: "疾管署．疫苗地圖",
+    },
+  ],
+};
+
+/* 置頂工具卡樣式（珊瑚漸層、明顯，點了開官方查詢頁） */
+function PinnedToolCard({ t }: { t: PinnedTool }) {
+  return (
+    <a
+      href={t.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "flex", alignItems: "center", gap: 14, textDecoration: "none",
+        background: "linear-gradient(120deg,#FFF4EF,#FFE7DD)", border: "1.5px solid #FFD6C7",
+        borderRadius: 18, padding: 16, boxShadow: "0 4px 14px rgba(224,85,46,0.10)",
+      }}
+    >
+      <span style={{ width: 48, height: 48, borderRadius: 13, flexShrink: 0, background: "linear-gradient(135deg,#F2764F,#E0552E)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 5px 12px rgba(224,85,46,0.28)" }}>
+        <ELIcon name="search" size={24} color="#fff" />
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {t.tag && (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 800, color: "#B23F1E", background: "#fff", padding: "2px 9px", borderRadius: 999, marginBottom: 6 }}>
+            <ELIcon name="check" size={12} color="#2E7D52" /> {t.tag}
+          </span>
+        )}
+        <div style={{ fontSize: 17, fontWeight: 800, color: "#241F1B", lineHeight: 1.4 }}>{t.title}</div>
+        <div style={{ marginTop: 3, fontSize: 14, color: "#574E47", lineHeight: 1.55 }}>{t.desc}</div>
+      </div>
+      <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6, background: "#E0552E", color: "#fff", fontSize: 14, fontWeight: 800, padding: "10px 16px", borderRadius: 999, whiteSpace: "nowrap" }}>
+        立即查詢 <ELIcon name="arrow" size={15} color="#fff" />
+      </span>
+    </a>
   );
 }
 
 export function ResourcesClient({
   categories,
+  subcatsByCat,
   initialCat,
 }: {
   categories: readonly Category[];
+  subcatsByCat: Record<string, Subcat[]>;
   initialCat?: string | null;
 }) {
   const router = useRouter();
   const [activeCat, setActiveCat]     = useState(initialCat ?? categories[0]?.slug ?? "health");
-  const [activeSub, setActiveSub]     = useState("全部");
+  const [activeSubId, setActiveSubId] = useState("");   // "" = 全部；否則為子分類 id（伺服器端篩選）
   const [sortKey,   setSortKey]       = useState<SortKey>("recommend");
   const [q,         setQ]             = useState("");
   const [resources, setResources]     = useState<ResourceItem[]>([]);
   const [loading,      setLoading]      = useState(false);
   const [showNational, setShowNational] = useState(true); // ON = 顯示全國專線（手機與桌面共用）
   const [showLocal,    setShowLocal]    = useState(true); // ON = 顯示在地資源（手機 scope chip 用；桌面恆 true）
+  const [total,        setTotal]        = useState(0);     // 該分類+地區的真實總數（來自 API header）
+  const [loadingMore,  setLoadingMore]  = useState(false);
 
   /* ── region state ── */
   const [regionLabel, setRegionLabel] = useState<string>("");
   const [regionCodes, setRegionCodes] = useState<string[]>([]);
   const [autoGeo,     setAutoGeo]     = useState(false);
-  const [dropOpen,    setDropOpen]    = useState(false);
-  const dropRef = useRef<HTMLDivElement>(null);
 
   /* load saved region or attempt geolocation */
   useEffect(() => {
@@ -220,20 +311,12 @@ export function ResourcesClient({
     );
   }, []);
 
-  /* close dropdown on outside click */
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setDropOpen(false);
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  /* 地區彈窗（其他區域）變更後：更新 chip 與篩選範圍並重新抓資料 */
+  /* 地區彈窗（共用 modal）變更後：更新 chip 與篩選範圍並重新抓資料 */
   useEffect(() => {
     function onRegion(e: Event) {
       const d = (e as CustomEvent<{ label: string; code: string; codes?: string[] }>).detail;
       if (!d) return;
+      setActiveSubId("");
       setRegionLabel(d.label === "全台灣" ? "" : d.label);
       setRegionCodes(Array.isArray(d.codes) ? d.codes : d.code ? [d.code] : []);
     }
@@ -241,21 +324,60 @@ export function ResourcesClient({
     return () => window.removeEventListener("el:region-changed", onRegion);
   }, []);
 
-  const cat  = categories.find((c) => c.slug === activeCat);
-  const subs = cat ? ["全部", ...cat.subcategories.map((s) => s.name)] : ["全部"];
+  /* 返回上頁還原篩選（分類/子分類/排序）；地區另存在 localStorage */
+  const [filterReady, setFilterReady] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("el_res_filter");
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.cat) setActiveCat(s.cat);
+        if (typeof s.sub === "string") setActiveSubId(s.sub);
+        if (s.sort) setSortKey(s.sort);
+      }
+    } catch { /* ignore */ }
+    setFilterReady(true);
+  }, []);
+  useEffect(() => {
+    if (!filterReady) return;
+    try { sessionStorage.setItem("el_res_filter", JSON.stringify({ cat: activeCat, sub: activeSubId, sort: sortKey })); } catch { /* ignore */ }
+  }, [filterReady, activeCat, activeSubId, sortKey]);
 
-  /* fetch when category or region changes */
+  const cat     = categories.find((c) => c.slug === activeCat);
+  const subList = subcatsByCat[activeCat] ?? [];
+  const activeSubName = subList.find((s) => s.id === activeSubId)?.name ?? "";
+  const pinnedTools = activeSubName ? (PINNED_TOOLS[activeSubName] ?? []) : [];
+
+  const buildUrl = (offset: number) =>
+    `/api/resources?category=${activeCat}${activeSubId ? `&subcat=${activeSubId}` : ""}${regionCodes.length ? `&regionCodes=${encodeURIComponent(regionCodes.join(","))}` : ""}&offset=${offset}`;
+
+  /* fetch when category / subcategory / region changes（子分類為伺服器端篩選）*/
   useEffect(() => {
     setLoading(true);
-    setActiveSub("全部");
     setQ("");
-    const url = `/api/resources?category=${activeCat}${regionCodes.length ? `&regionCodes=${encodeURIComponent(regionCodes.join(","))}` : ""}`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((data) => { setResources(data ?? []); setLoading(false); })
-      .catch(() => { setResources([]); setLoading(false); });
+    fetch(buildUrl(0))
+      .then(async (r) => {
+        const data = await r.json();
+        setTotal(Number(r.headers.get("X-Total-Count") ?? (data?.length ?? 0)));
+        setResources(data ?? []);
+        setLoading(false);
+      })
+      .catch(() => { setResources([]); setTotal(0); setLoading(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCat, regionCodes.join(",")]);
+  }, [activeCat, activeSubId, regionCodes.join(",")]);
+
+  /* 載入更多（分頁，附加到已載入清單，前端篩選/搜尋仍可用） */
+  async function loadMore() {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const r = await fetch(buildUrl(resources.length));
+      const data = await r.json();
+      setResources((prev) => [...prev, ...(data ?? [])]);
+      setTotal(Number(r.headers.get("X-Total-Count") ?? total));
+    } catch { /* ignore */ }
+    setLoadingMore(false);
+  }
 
   const filtered = resources
     .filter((r) => {
@@ -269,18 +391,14 @@ export function ResourcesClient({
         const hay = [r.name, r.summary, ...(r.tags ?? [])].join(" ").toLowerCase();
         if (!hay.includes(q.toLowerCase())) return false;
       }
-      if (activeSub !== "全部") {
-        const subEntry = cat?.subcategories.find((s) => s.name === activeSub);
-        const haystack = [r.name, r.summary, ...(r.tags ?? [])].join(" ");
-        if (subEntry && !haystack.includes(activeSub) && !haystack.includes(subEntry.slug)) return false;
-      }
+      // 子分類已由伺服器端篩選（activeSubId），這裡不再做文字比對
       return true;
     })
     .sort((a, b) => {
-      if (sortKey === "popular") return (b.like_count ?? 0) - (a.like_count ?? 0);
+      if (sortKey === "popular") return (b.bookmark_count ?? 0) - (a.bookmark_count ?? 0);
       if (sortKey === "local")   return a.scope === "local" ? -1 : b.scope === "local" ? 1 : 0;
       if (sortKey === "name")    return a.name.localeCompare(b.name, "zh-TW");
-      return 0;
+      return officialScore(b) - officialScore(a); // 綜合推薦：官方/政府/大型優先
     });
 
   /* 手機版：排序循環 + scope 計數文字（對齊設計稿） */
@@ -302,15 +420,7 @@ export function ResourcesClient({
     : "在地與全國資源";
 
   function handleCatChange(slug: string) {
-    setActiveCat(slug); setSortKey("recommend");
-  }
-
-  function pickRegion(label: string, code: string) {
-    const codes = code ? [code] : [];
-    setRegionLabel(label === "全台灣" ? "" : label); setRegionCodes(codes); setAutoGeo(false); setDropOpen(false);
-    localStorage.setItem("el_region_label", label === "全台灣" ? "" : label);
-    localStorage.setItem("el_region_code", code);
-    localStorage.setItem("el_region_codes", JSON.stringify(codes));
+    setActiveCat(slug); setSortKey("recommend"); setActiveSubId("");
   }
 
   return (
@@ -361,10 +471,10 @@ export function ResourcesClient({
         <div>
           {/* 搜尋框 + 地區選擇（桌機；手機改用返回列放大鏡 + scope chips） */}
           <div className="wv-hideSm" style={{ display: "flex", background: "#fff", borderRadius: 999, padding: "6px 6px 6px 0", boxShadow: "0 10px 26px rgba(120,60,30,0.10)", marginBottom: 18, alignItems: "center" }}>
-            {/* Region dropdown */}
-            <div ref={dropRef} style={{ position: "relative", flexShrink: 0 }}>
+            {/* Region：開啟共用地區彈窗（與首頁／導覽列連動同一個 modal） */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
               <button
-                onClick={() => setDropOpen(!dropOpen)}
+                onClick={() => window.dispatchEvent(new Event("el:open-region"))}
                 style={{
                   height: 44, borderRadius: 999, border: "none", background: "#FFF4EF",
                   padding: "0 14px 0 14px", display: "flex", alignItems: "center", gap: 6,
@@ -378,29 +488,6 @@ export function ResourcesClient({
               </button>
               {autoGeo && (
                 <span style={{ position: "absolute", bottom: -16, left: 14, fontSize: 11, color: "#6E645C", whiteSpace: "nowrap" }}>(已自動定位)</span>
-              )}
-              {dropOpen && (
-                <div style={{
-                  position: "absolute", top: "calc(100% + 8px)", left: 0, background: "#fff",
-                  borderRadius: 16, border: "1px solid #F0E6DE", boxShadow: "0 8px 28px rgba(0,0,0,0.13)",
-                  padding: 8, zIndex: 200, minWidth: 150, maxHeight: 320, overflowY: "auto",
-                }}>
-                  {TAOYUAN_DISTRICTS.map((d) => (
-                    <button
-                      key={d.code}
-                      onClick={() => pickRegion(d.label, d.code)}
-                      style={{
-                        display: "block", width: "100%", textAlign: "left",
-                        padding: "9px 12px", border: "none", borderRadius: 10, cursor: "pointer",
-                        font: "inherit", fontSize: 15, fontWeight: 700,
-                        background: regionCodes.includes(d.code) ? "#FFF4EF" : "transparent",
-                        color: regionCodes.includes(d.code) ? "#B23F1E" : "#574E47",
-                      }}
-                    >
-                      {d.code === "" ? "🗺" : "📍"} {d.label}
-                    </button>
-                  ))}
-                </div>
               )}
             </div>
 
@@ -424,15 +511,15 @@ export function ResourcesClient({
             </div>
           </div>
 
-          {/* 細分類 chips */}
-          {subs.length > 1 && (
+          {/* 細分類 chips（真實子分類，伺服器端篩選） */}
+          {subList.length > 0 && (
             <div className="wv-subwrap" style={{ marginBottom: 16 }}>
-              {subs.map((s) => {
-                const on = activeSub === s;
+              {[{ id: "", name: "全部" }, ...subList].map((s) => {
+                const on = activeSubId === s.id;
                 return (
                   <button
-                    key={s}
-                    onClick={() => setActiveSub(activeSub === s ? "全部" : s)}
+                    key={s.id || "all"}
+                    onClick={() => setActiveSubId(s.id)}
                     style={{
                       padding: "9px 16px", borderRadius: 999, cursor: "pointer", font: "inherit",
                       fontSize: 15, fontWeight: 700, whiteSpace: "nowrap",
@@ -441,7 +528,7 @@ export function ResourcesClient({
                       color: on ? "#fff" : "#574E47",
                     }}
                   >
-                    {s}
+                    {s.name}
                   </button>
                 );
               })}
@@ -467,7 +554,7 @@ export function ResourcesClient({
               </button>
             </div>
             <div style={{ fontSize: 13, color: "#6E645C", marginBottom: 14 }}>
-              共 <b style={{ color: "#241F1B" }}>{filtered.length}</b> 項服務 · {scopeText}
+              共 <b style={{ color: "#241F1B" }}>{total}</b> 項服務 · {scopeText}
             </div>
           </div>
 
@@ -476,7 +563,7 @@ export function ResourcesClient({
             {/* 左：分類名稱 + 計數 */}
             <div style={{ fontSize: 19, fontWeight: 800, color: "#241F1B", flexShrink: 0 }}>
               {cat?.name ?? "資源"}
-              <span style={{ marginLeft: 8, fontSize: 15, fontWeight: 700, color: "#6E645C" }}>{filtered.length} 筆</span>
+              <span style={{ marginLeft: 8, fontSize: 15, fontWeight: 700, color: "#6E645C" }}>{total} 筆</span>
             </div>
 
             {/* 中：純文字狀態提示（不可點擊） */}
@@ -543,6 +630,13 @@ export function ResourcesClient({
             </div>
           </div>
 
+          {/* 置頂工具卡（依子分類顯示官方查詢工具，恆在最上方） */}
+          {pinnedTools.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 14 }}>
+              {pinnedTools.map((t) => <PinnedToolCard key={t.url} t={t} />)}
+            </div>
+          )}
+
           {/* 資源卡片列表 */}
           {loading ? (
             <div style={{ textAlign: "center", padding: "48px 0", color: "#6E645C" }}>
@@ -560,6 +654,22 @@ export function ResourcesClient({
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {filtered.map((r) => <ResourceCard key={r.id} res={r} catSlug={activeCat} />)}
             </div>
+          )}
+
+          {/* 載入更多（分頁）：還有未載入的資源才顯示 */}
+          {!loading && resources.length < total && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              style={{
+                marginTop: 16, width: "100%", padding: "14px 0", borderRadius: 14,
+                border: "1.5px solid #E4D7CC", background: "#fff", cursor: "pointer",
+                font: "inherit", fontSize: 16, fontWeight: 800, color: "#B23F1E",
+                opacity: loadingMore ? 0.6 : 1,
+              }}
+            >
+              {loadingMore ? "載入中⋯" : `載入更多（已顯示 ${resources.length} / ${total} 筆）`}
+            </button>
           )}
 
           {/* 找不到 → 投稿（對齊設計稿 page-category 底部 CTA） */}

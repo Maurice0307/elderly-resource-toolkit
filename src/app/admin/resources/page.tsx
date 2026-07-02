@@ -7,6 +7,10 @@ import { AD, AdPill, AdStat, AdTab, AdCard, AdPageHead, AdEmpty, adBtn, RESOURCE
 import { ELIcon } from "@/components/layout/ELIcon";
 import { ResourcesAdminTable, type ResRow } from "@/components/admin/ResourcesAdminTable";
 
+// 縣市由台北往南排序
+const COUNTY_ORDER = ["台北市","新北市","基隆市","桃園市","新竹市","新竹縣","苗栗縣","台中市","彰化縣","南投縣","雲林縣","嘉義市","嘉義縣","台南市","高雄市","屏東縣","宜蘭縣","花蓮縣","台東縣","澎湖縣","金門縣","連江縣"];
+const countyRank = (name: string) => { const i = COUNTY_ORDER.indexOf((name ?? "").replace(/臺/g, "台")); return i < 0 ? 99 : i; };
+
 const STATUS_TABS = [
   { value: "active",   label: "已上架" },
   { value: "pending",  label: "待審核" },
@@ -96,7 +100,7 @@ export default async function AdminResourcesPage({
   if (!skipMain) {
     let query = admin
       .from("resources")
-      .select("id, name, summary, phone, website_url, scope, status, created_at, approved_at, subcategory_id, region_id")
+      .select("id, name, summary, phone, website_url, scope, status, created_at, approved_at, subcategory_id, region_id, submitted_by, source_org")
       .eq("status", status)
       .order("created_at", { ascending: false })
       .limit(200);
@@ -156,8 +160,18 @@ export default async function AdminResourcesPage({
 
   const currentTab = STATUS_TABS.find((t) => t.value === status) ?? STATUS_TABS[0];
 
+  // ── 新增者名稱（投稿者 profile；否則用資料來源；皆無＝系統匯入）──
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const submitterIds = [...new Set(resources.map((r: any) => r.submitted_by).filter(Boolean))] as string[];
+  const submitterMap: Record<string, string> = {};
+  if (submitterIds.length > 0) {
+    const { data: subProfiles } = await admin.from("profiles").select("id, display_name").in("id", submitterIds);
+    for (const p of subProfiles ?? []) submitterMap[p.id] = p.display_name ?? "使用者";
+  }
+
   // ── 組成顯示列 + 依排序方式排序（手機卡片與桌機表格共用） ──
-  const rows: ResRow[] = resources.map((r) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows: ResRow[] = resources.map((r: any) => {
     const subcat = subcatMap[r.subcategory_id ?? ""];
     const regionEntry = regionMap[r.region_id ?? ""] ?? null;
     const regionName = regionEntry
@@ -168,6 +182,7 @@ export default async function AdminResourcesPage({
       scope: r.scope, status: r.status,
       categoryName: subcat?.category_name ?? "", subcatName: subcat?.name ?? "",
       regionName, createdAt: r.created_at, approvedAt: r.approved_at,
+      addedBy: r.submitted_by ? (submitterMap[r.submitted_by] ?? "使用者") : (r.source_org || "系統匯入"),
     };
   });
   const collator = new Intl.Collator("zh-Hant");
@@ -274,7 +289,7 @@ export default async function AdminResourcesPage({
         </select>
         <select name="reg" defaultValue={reg} style={field}>
           <option value="">全部縣市</option>
-          {(allCounties ?? []).map((r) => (
+          {[...(allCounties ?? [])].sort((a, b) => countyRank(a.name) - countyRank(b.name)).map((r) => (
             <option key={r.id} value={r.id}>{r.name}</option>
           ))}
         </select>

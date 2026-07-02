@@ -310,7 +310,7 @@ function MobileMenu({ onClose, currentPath }: { onClose: () => void; currentPath
   );
 }
 
-function AccountMenu({ user, onClose, onLogout }: { user: { email?: string; phone?: string; name?: string; avatar?: string }; onClose: () => void; onLogout: () => void }) {
+function AccountMenu({ user, staff, onClose, onLogout }: { user: { email?: string; phone?: string; name?: string; avatar?: string }; staff?: boolean; onClose: () => void; onLogout: () => void }) {
   const initial = (user.name || user.email || "?")[0].toUpperCase();
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 55 }}>
@@ -351,6 +351,19 @@ function AccountMenu({ user, onClose, onLogout }: { user: { email?: string; phon
           </div>
         </div>
         <div style={{ padding: 8 }}>
+          {staff && (
+            <Link
+              href="/admin"
+              onClick={onClose}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 11,
+                padding: "12px 12px", borderRadius: 12, textDecoration: "none",
+                fontSize: 16, fontWeight: 800, color: "#B23F1E", background: "#FFF4EF", marginBottom: 4,
+              }}
+            >
+              <ELIcon name="shield" size={20} color="#E0552E" /> 管理後台
+            </Link>
+          )}
           {[
             { label: "個人中心", icon: "user",  href: "/profile" },
             { label: "我的收藏", icon: "heart", href: "/profile?tab=saved" },
@@ -400,6 +413,7 @@ export function WebTopNav() {
   const [regionOpen, setRegionOpen] = useState(false);
   const [regionLabel, setRegionLabel] = useState<string | null>(null);
   const [user, setUser] = useState<{ email?: string; phone?: string; name?: string; avatar?: string } | null>(null);
+  const [staff, setStaff] = useState(false);
   const [mounted, setMounted] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -425,7 +439,15 @@ export function WebTopNav() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }: { data: { user: { email?: string; phone?: string; user_metadata?: Record<string, string> } | null } }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const checkStaff = (uid?: string) => {
+      if (!uid) { setStaff(false); return; }
+      supabase.from("profiles").select("role").eq("id", uid).maybeSingle()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .then(({ data }: any) => setStaff(data?.role === "admin" || data?.role === "moderator"));
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase.auth.getUser().then(({ data }: { data: { user: any | null } }) => {
       if (data.user) {
         setUser({
           email: data.user.email,
@@ -433,6 +455,7 @@ export function WebTopNav() {
           name: data.user.user_metadata?.display_name || data.user.user_metadata?.full_name || data.user.user_metadata?.name,
           avatar: data.user.user_metadata?.avatar_url,
         });
+        checkStaff(data.user.id);
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: { user: { email?: string; phone?: string; user_metadata?: Record<string, string> } } | null) => {
@@ -443,8 +466,11 @@ export function WebTopNav() {
           name: session.user.user_metadata?.display_name || session.user.user_metadata?.full_name || session.user.user_metadata?.name,
           avatar: session.user.user_metadata?.avatar_url,
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        checkStaff((session.user as any).id);
       } else {
         setUser(null);
+        setStaff(false);
       }
     });
     return () => subscription.unsubscribe();
@@ -580,7 +606,7 @@ export function WebTopNav() {
           >
             <ELIcon name="pin" size={16} color="#F26B43" />
             <span style={{ fontSize: 14.5, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {regionLabel ?? "選擇地區"}
+              {(regionLabel ?? "選擇地區").split(" · ")[0]}
             </span>
           </button>
 
@@ -628,7 +654,7 @@ export function WebTopNav() {
 
       {/* 覆蓋層用 Portal 渲染到 body，避開 .wv-header 的 backdrop-filter 造成的 containing block 陷阱 */}
       {mounted && acctOpen && user && createPortal(
-        <AccountMenu user={user} onClose={() => setAcctOpen(false)} onLogout={handleLogout} />,
+        <AccountMenu user={user} staff={staff} onClose={() => setAcctOpen(false)} onLogout={handleLogout} />,
         document.body
       )}
       {mounted && regionOpen && createPortal(

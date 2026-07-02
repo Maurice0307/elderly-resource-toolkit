@@ -19,7 +19,6 @@ export default async function AdminDashboard() {
     { count: newsCount },
     { data: pendingList },
     { data: recentQ },
-    { data: activeForDist },
   ] = await Promise.all([
     admin.from("resources").select("id", { count: "exact", head: true }).eq("status", "pending"),
     admin.from("resources").select("id", { count: "exact", head: true }).eq("status", "active"),
@@ -28,27 +27,23 @@ export default async function AdminDashboard() {
     admin.from("daily_news").select("id", { count: "exact", head: true }).eq("status", "active"),
     admin.from("resources").select("id, name, created_at, subcategory_id").eq("status", "pending").order("created_at", { ascending: false }).limit(6),
     admin.from("questions").select("id, title, created_at").eq("status", "open").order("created_at", { ascending: false }).limit(4),
-    admin.from("resources").select("subcategory_id").eq("status", "active").limit(1000),
   ]);
 
-  // ── 資源分類分布（由真實資料計算）──
-  const subIds = [...new Set((activeForDist ?? []).map((r) => r.subcategory_id).filter(Boolean))] as string[];
-  const { data: subs } = subIds.length
-    ? await admin.from("subcategories").select("id, category_id").in("id", subIds)
-    : { data: [] as { id: string; category_id: string | null }[] };
-  const catIds = [...new Set((subs ?? []).map((s) => s.category_id).filter(Boolean))] as string[];
-  const { data: cats } = catIds.length
-    ? await admin.from("categories").select("id, name").in("id", catIds)
-    : { data: [] as { id: string; name: string }[] };
-  const subToCat: Record<string, string | null> = Object.fromEntries((subs ?? []).map((s) => [s.id, s.category_id]));
-  const catName: Record<string, string> = Object.fromEntries((cats ?? []).map((c) => [c.id, c.name]));
-  const distCount: Record<string, number> = {};
-  for (const r of activeForDist ?? []) {
-    const cid = r.subcategory_id ? subToCat[r.subcategory_id] : null;
-    const nm = (cid && catName[cid]) || "其他";
-    distCount[nm] = (distCount[nm] ?? 0) + 1;
-  }
-  const dist = Object.entries(distCount).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  // ── 資源分類分布（每分類用 count 查詢，準確不取樣）──
+  const [{ data: allCatsD }, { data: allSubsD }] = await Promise.all([
+    admin.from("categories").select("id, name"),
+    admin.from("subcategories").select("id, category_id"),
+  ]);
+  const subsByCatD: Record<string, string[]> = {};
+  for (const s of allSubsD ?? []) (subsByCatD[s.category_id as string] ??= []).push(s.id);
+  const distArr: [string, number][] = [];
+  await Promise.all((allCatsD ?? []).map(async (c) => {
+    const ids = subsByCatD[c.id] ?? [];
+    if (!ids.length) { distArr.push([c.name, 0]); return; }
+    const { count } = await admin.from("resources").select("id", { count: "exact", head: true }).in("subcategory_id", ids).eq("status", "active");
+    distArr.push([c.name, count ?? 0]);
+  }));
+  const dist = distArr.sort((a, b) => b[1] - a[1]).slice(0, 6);
   const distTotal = dist.reduce((s, [, v]) => s + v, 0) || 1;
 
   // ── 待處理佇列（投稿 + 問答，皆可點進真實頁面）──

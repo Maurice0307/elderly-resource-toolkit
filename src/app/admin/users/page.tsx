@@ -34,23 +34,36 @@ export default async function AdminUsersPage() {
   }
   const regionOf = (id: string | null) => (id && regionName[id]) || "—";
 
-  // 聯絡資訊（email / 手機）來自 auth.users
+  // 聯絡資訊與頭像：auth.users（email/手機/頭貼）+ account_links（已綁定的 LINE/Google/手機）
   const { data: authList } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
   const contactMap: Record<string, { email: string | null; phone: string | null }> = {};
+  const avatarMap: Record<string, string> = {};
   for (const au of authList?.users ?? []) {
     contactMap[au.id] = { email: au.email ?? null, phone: au.phone ?? null };
+    const av = (au.user_metadata as Record<string, string> | undefined)?.avatar_url;
+    if (av) avatarMap[au.id] = av;
   }
-  // 把後台合成帳號的 email 轉成可讀來源
+  // 已綁定的帳號（同一使用者可綁 LINE + Google + 手機）
+  const { data: links } = await admin.from("account_links").select("user_id, provider, provider_key");
+  const linkMap: Record<string, { line?: boolean; google?: string; phone?: string }> = {};
+  for (const l of links ?? []) {
+    const m = (linkMap[l.user_id] ??= {});
+    if (l.provider === "line") m.line = true;
+    else if (l.provider === "google" && /@/.test(l.provider_key)) m.google = l.provider_key;
+    else if (l.provider === "phone") m.phone = l.provider_key;
+  }
+  // 整合列出 LINE / 電話 / Email 三種
   function contactLines(id: string): { kind: string; value: string }[] {
     const c = contactMap[id];
-    if (!c) return [];
+    const lk = linkMap[id] ?? {};
     const out: { kind: string; value: string }[] = [];
-    if (c.phone) out.push({ kind: "phone", value: c.phone });
-    if (c.email) {
-      if (c.email.endsWith("@line.users")) { if (!c.phone) out.push({ kind: "line", value: "LINE 登入" }); }
-      else if (c.email.endsWith("@phone.users")) { /* 手機合成信箱，略過 */ }
-      else out.push({ kind: "email", value: c.email });
-    }
+    const isLine = lk.line || (c?.email ?? "").endsWith("@line.users");
+    if (isLine) out.push({ kind: "line", value: "LINE 登入" });
+    const phone = c?.phone || lk.phone;
+    if (phone) out.push({ kind: "phone", value: phone });
+    const email = lk.google || (c?.email && !c.email.endsWith("@line.users") && !c.email.endsWith("@phone.users") ? c.email : null);
+    if (email) out.push({ kind: "email", value: email });
+    if (out.length === 0 && c?.email) out.push({ kind: "email", value: c.email });
     return out;
   }
 
@@ -120,9 +133,14 @@ export default async function AdminUsersPage() {
                   <tr key={u.id} style={{ borderBottom: `1px solid ${AD.border}` }}>
                     <td style={{ padding: "12px 14px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg,#F2764F,#E0552E)", color: "#fff", fontSize: 15, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {(u.display_name ?? "?").slice(0, 1).toUpperCase()}
-                        </div>
+                        {avatarMap[u.id] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={avatarMap[u.id]} alt={u.display_name ?? ""} style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0, objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg,#F2764F,#E0552E)", color: "#fff", fontSize: 15, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {(u.display_name ?? "?").slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
                         <span style={{ fontSize: 14.5, fontWeight: 700, color: AD.ink, whiteSpace: "nowrap" }}>
                           {u.display_name ?? "（未設定名稱）"}
                           {isSelf && <span style={{ marginLeft: 5, fontSize: 12, fontWeight: 600, color: AD.muted }}>（你）</span>}
@@ -158,9 +176,14 @@ export default async function AdminUsersPage() {
           return (
             <AdCard key={u.id}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 46, height: 46, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg,#F2764F,#E0552E)", color: "#fff", fontSize: 18, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {(u.display_name ?? "?").slice(0, 1).toUpperCase()}
-                </div>
+                {avatarMap[u.id] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarMap[u.id]} alt={u.display_name ?? ""} style={{ width: 46, height: 46, borderRadius: "50%", flexShrink: 0, objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: 46, height: 46, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg,#F2764F,#E0552E)", color: "#fff", fontSize: 18, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {(u.display_name ?? "?").slice(0, 1).toUpperCase()}
+                  </div>
+                )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 16, fontWeight: 800, color: AD.ink }}>
                     {u.display_name ?? "（未設定名稱）"}

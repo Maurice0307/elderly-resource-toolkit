@@ -13,7 +13,7 @@ export type ResRow = {
   id: string; name: string; summary: string | null; phone: string | null;
   website_url: string | null; scope: string; status: string;
   categoryName: string; subcatName: string; regionName: string | null;
-  createdAt: string; approvedAt: string | null;
+  createdAt: string; approvedAt: string | null; addedBy?: string;
 };
 
 const STATUS_PILL: Record<string, { tone: Tone; label: string }> = {
@@ -98,6 +98,7 @@ export function ResourcesAdminTable({
                 <Th label="範圍" sortKey="scope" w={80} />
                 <Th label="電話" w={130} />
                 <Th label="認證時間" sortKey="verified" w={120} />
+                <Th label="新增者" w={130} />
                 <Th label="狀態" w={90} />
                 <th style={{ textAlign: "right", padding: "10px 16px 10px 14px", fontSize: 12.5, color: AD.muted, fontWeight: 700, whiteSpace: "nowrap" }}>操作</th>
               </tr>
@@ -125,6 +126,7 @@ export function ResourcesAdminTable({
                     </td>
                     <td style={{ padding: "12px 14px", fontSize: 12.5, color: AD.sub, whiteSpace: "nowrap", fontFamily: "ui-monospace, monospace" }}>{r.phone || "—"}</td>
                     <td style={{ padding: "12px 14px", fontSize: 12.5, color: AD.sub, whiteSpace: "nowrap" }}>{fmt(r.approvedAt)}</td>
+                    <td style={{ padding: "12px 14px", fontSize: 12.5, color: AD.sub, maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={r.addedBy}>{r.addedBy || "—"}</td>
                     <td style={{ padding: "12px 14px" }}><AdPill tone={sp.tone}>{sp.label}</AdPill></td>
                     <td style={{ padding: "10px 16px 10px 14px" }}>
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>

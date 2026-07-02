@@ -5,7 +5,7 @@ import { adminSendLine } from "@/lib/line/chatActions";
 import { AD, AdCard, AdPageHead, AdEmpty, adBtn } from "@/components/admin/adminUi";
 import { ELIcon } from "@/components/layout/ELIcon";
 
-type Msg = { id: string; line_user_id: string; display_name: string | null; direction: string; text: string; by_admin: boolean; created_at: string };
+type Msg = { id: string; line_user_id: string; display_name: string | null; avatar_url: string | null; direction: string; text: string; by_admin: boolean; created_at: string };
 
 const fmt = (d: string) => new Date(d).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
 
@@ -16,7 +16,7 @@ export default async function AdminChatsPage({ searchParams }: { searchParams: P
 
   const { data, error } = await admin
     .from("line_messages")
-    .select("id, line_user_id, display_name, direction, text, by_admin, created_at")
+    .select("id, line_user_id, display_name, avatar_url, direction, text, by_admin, created_at")
     .order("created_at", { ascending: false })
     .limit(600);
 
@@ -45,6 +45,10 @@ export default async function AdminChatsPage({ searchParams }: { searchParams: P
       convMap.set(m.line_user_id, { userId: m.line_user_id, name: m.display_name || "LINE 使用者", last: m });
     }
   }
+  // 每位使用者的 LINE 大頭貼（從任一帶頭貼的訊息取得）
+  const avatarByUser: Record<string, string> = {};
+  for (const m of msgs) { if (m.avatar_url && !avatarByUser[m.line_user_id]) avatarByUser[m.line_user_id] = m.avatar_url; }
+
   const convs = [...convMap.values()];
   const selectedId = u || convs[0]?.userId || "";
   const thread = msgs.filter((m) => m.line_user_id === selectedId).slice().reverse();
@@ -69,12 +73,20 @@ export default async function AdminChatsPage({ searchParams }: { searchParams: P
           {convs.map((c) => {
             const on = c.userId === selectedId;
             return (
-              <Link key={c.userId} href={`/admin/chats?u=${encodeURIComponent(c.userId)}`} style={{ display: "block", padding: "12px 14px", borderBottom: `1px solid ${AD.border}`, textDecoration: "none", background: on ? "#FFF4EF" : "#fff" }}>
-                <div style={{ fontSize: 14.5, fontWeight: 800, color: on ? AD.coralDark : AD.ink }}>{c.name}</div>
-                <div style={{ marginTop: 2, fontSize: 12.5, color: AD.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {c.last.direction === "out" ? "你：" : ""}{c.last.text}
+              <Link key={c.userId} href={`/admin/chats?u=${encodeURIComponent(c.userId)}`} style={{ display: "flex", gap: 10, alignItems: "center", padding: "12px 14px", borderBottom: `1px solid ${AD.border}`, textDecoration: "none", background: on ? "#FFF4EF" : "#fff" }}>
+                {avatarByUser[c.userId] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarByUser[c.userId]} alt={c.name} style={{ width: 38, height: 38, borderRadius: "50%", flexShrink: 0, objectFit: "cover" }} />
+                ) : (
+                  <span style={{ width: 38, height: 38, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg,#F2764F,#E0552E)", color: "#fff", fontSize: 15, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{c.name.slice(0, 1)}</span>
+                )}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 800, color: on ? AD.coralDark : AD.ink }}>{c.name}</div>
+                  <div style={{ marginTop: 2, fontSize: 12.5, color: AD.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {c.last.direction === "out" ? "你：" : ""}{c.last.text}
+                  </div>
+                  <div style={{ marginTop: 2, fontSize: 11.5, color: AD.muted }}>{fmt(c.last.created_at)}</div>
                 </div>
-                <div style={{ marginTop: 2, fontSize: 11.5, color: AD.muted }}>{fmt(c.last.created_at)}</div>
               </Link>
             );
           })}
@@ -83,9 +95,14 @@ export default async function AdminChatsPage({ searchParams }: { searchParams: P
         {/* 對話內容 + 回覆 */}
         <AdCard style={{ padding: 0, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 420 }}>
           <div style={{ padding: "13px 16px", borderBottom: `1px solid ${AD.border}`, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#F2764F,#E0552E)", color: "#fff", fontSize: 14, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              {selectedName.slice(0, 1)}
-            </span>
+            {avatarByUser[selectedId] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarByUser[selectedId]} alt={selectedName} style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover" }} />
+            ) : (
+              <span style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#F2764F,#E0552E)", color: "#fff", fontSize: 14, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                {selectedName.slice(0, 1)}
+              </span>
+            )}
             <span style={{ fontSize: 15.5, fontWeight: 800, color: AD.ink }}>{selectedName}</span>
             {/* 手機版：回對話清單 */}
             <Link href="/admin/chats" className="wv-mobile-only" style={{ marginLeft: "auto", ...adBtn("neutral"), minHeight: 32, fontSize: 12.5 }}>清單</Link>

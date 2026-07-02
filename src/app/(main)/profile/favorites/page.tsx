@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { MobileSubHeader } from "@/components/layout/MobileSubHeader";
 import { ELIcon } from "@/components/layout/ELIcon";
 
@@ -21,8 +22,9 @@ export default async function FavoritesPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/profile/favorites");
 
-  const { data } = await supabase
-    .from("resource_likes")
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("resource_bookmarks")
     .select("resource:resources(id, name, summary, tags, subcategory:subcategories(category:categories(slug, name)))")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });

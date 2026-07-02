@@ -4,8 +4,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildResourceMessages, buildWelcomeMessage } from "@/lib/line/flex";
 import { menuText, buildLinkList, routeIntent, categoryMenu, subcategoryMenu, pickerBubble, detailBubble, CATEGORY_ICON, iconUrl } from "@/lib/line/menu";
-import { getLineProfile, logLineMessage } from "@/lib/line/store";
+import { getLineProfileFull, logLineMessage } from "@/lib/line/store";
 import { matchFaq } from "@/lib/line/faq";
+import { parseLocation, regionConflict, searchTokensOf, expandRegionIds, REGION_GROUPS, nz, type RegionRow } from "@/lib/region/locationParse";
+import { expandKeyword } from "@/lib/search/keywordExpand";
+import { rankResources } from "@/lib/search/rank";
 
 const LINE_REPLY_URL = "https://api.line.me/v2/bot/message/reply";
 const RM_NEWBIE = "richmenu-e6ed60c63ea87dd965d558c7d2ee4716"; // 新手選單
@@ -25,7 +28,43 @@ function verifySignature(body: string, signature: string, secret: string): boole
   return hash === signature;
 }
 
-async function lineReply(replyToken: string, messages: object[]) {
+
+// 地區 quick reply：每次（有 uid 的）回覆底部帶「目前地區：XX」「換地區」
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function regionQuickReply(uid?: string): Promise<any | undefined> {
+  if (!uid) return undefined;
+  try {
+    const admin = createAdminClient();
+    const rid = await resolveUserRegionId(admin, uid);
+    let nm = "全台灣";
+    if (rid) {
+      const { data: r } = await admin.from("regions").select("name, parent_id").eq("id", rid).maybeSingle();
+      if (r) {
+        nm = r.name;
+        if (r.parent_id) {
+          const { data: p } = await admin.from("regions").select("name").eq("id", r.parent_id).maybeSingle();
+          if (p?.name) nm = `${p.name}${r.name}`;
+        }
+      }
+    }
+    const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://elderly-resource-toolkit.vercel.app";
+    const pin = iconUrl(site, "pin");
+    return { items: [
+      // 目前地區：純顯示，點了不動作（noop）
+      { type: "action", imageUrl: pin, action: { type: "postback", label: `目前地區：${nm}`.slice(0, 20), data: "noop" } },
+      // 換地區：固定在底部、不隨訊息滾動（前面不放 icon）
+      { type: "action", action: { type: "postback", label: "換地區", data: "rchg", displayText: "換地區" } },
+    ] };
+  } catch { return undefined; }
+}
+
+async function lineReply(replyToken: string, messages: object[], logUserId?: string) {
+  // 有 uid → 在最後一則訊息附上「目前地區 / 換地區」quick reply（固定在底部、不隨訊息滾動）
+  if (logUserId && messages.length > 0) {
+    const qr = await regionQuickReply(logUserId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (qr) (messages[messages.length - 1] as any).quickReply = qr;
+  }
   await fetch(LINE_REPLY_URL, {
     method: "POST",
     headers: {
@@ -34,6 +73,14 @@ async function lineReply(replyToken: string, messages: object[]) {
     },
     body: JSON.stringify({ replyToken, messages }),
   });
+  // 把 bot 自動回覆記進對話紀錄（後台聊天可見）
+  if (logUserId) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const summary = (messages as any[]).map((m) => m?.type === "text" ? m.text : (m?.altText || (m?.type === "flex" ? "[資源卡]" : "[訊息]"))).join("\n").slice(0, 400);
+      if (summary) await logLineMessage({ userId: logUserId, direction: "out", text: summary, byAdmin: false });
+    } catch { /* ignore */ }
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -72,6 +119,10 @@ export async function POST(req: NextRequest) {
         else if (data.startsWith("qd="))      await detailQa(data.slice(3), rt, siteUrl);
         else if (data.startsWith("sd="))      await detailScript(data.slice(3), rt, siteUrl);
         else if (data.startsWith("rd="))      await detailResource(data.slice(3), rt, siteUrl);
+        else if (data === "noop")             { /* 「目前地區」只是顯示用，點了不做事 */ }
+        else if (data.startsWith("rsearch=")) { const bar = data.indexOf("|"); const rid = data.slice(8, bar); const kw = decodeURIComponent(data.slice(bar + 1)); await searchByRegionId(rid, kw, rt, siteUrl, puid); }
+        else if (data.startsWith("rgroup="))  { const bar = data.indexOf("|"); const lab = decodeURIComponent(data.slice(7, bar)); const kw = decodeURIComponent(data.slice(bar + 1)); await searchByGroup(lab, kw, rt, siteUrl, puid); }
+        else if (data === "rcancel")          await lineReply(rt, [menuText("好的 😊 您可以再輸入其他問題。不含地區時，我會用您設定的地區幫您找。")], puid);
         else if (data === "rchg")             await lineReply(rt, [await countyPickerMsg(createAdminClient())]);
         else if (data.startsWith("rc="))      await lineReply(rt, [await districtPickerMsg(createAdminClient(), data.slice(3))]);
         else if (data.startsWith("rok="))     await confirmRegion(data.slice(4), rt, puid);
@@ -87,8 +138,8 @@ export async function POST(req: NextRequest) {
       if (event.type === "message" && event.message.type === "text") {
         const userId: string | undefined = event.source?.userId;
         if (userId) {
-          const name = await getLineProfile(userId);
-          await logLineMessage({ userId, direction: "in", text: event.message.text, displayName: name });
+          const prof = await getLineProfileFull(userId);
+          await logLineMessage({ userId, direction: "in", text: event.message.text, displayName: prof.name, avatarUrl: prof.picture });
         }
         await handleMessage(event.message.text, event.replyToken, siteUrl, userId);
       }
@@ -120,7 +171,7 @@ async function handleMessage(text: string, replyToken: string, siteUrl: string, 
   }
 }
 
-const RES_COLS = "id, name, summary, phone, website_url, address, scope, region_id, regions(name)";
+const RES_COLS = "id, name, summary, phone, website_url, address, scope, region_id, regions(name), subcategory_id, extra_subcats, tags, bookmark_count, like_count";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const normRes = (rows: any[]): any[] => (rows ?? []).map((r) => ({ ...r, regions: Array.isArray(r.regions) ? r.regions[0] : r.regions }));
 const snip = (s: string | null | undefined, n = 46) => {
@@ -144,6 +195,16 @@ async function aiAnswer(text: string): Promise<string> {
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const arr = (x: any): any[] => (Array.isArray(x) ? x : []);
+
+// 地區清單快取（warm lambda 共用，省去每次查詢）
+let _regionsCache: RegionRow[] | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function loadRegions(admin: any): Promise<RegionRow[]> {
+  if (_regionsCache) return _regionsCache;
+  const { data } = await admin.from("regions").select("id, name, level, parent_id");
+  _regionsCache = (data ?? []) as RegionRow[];
+  return _regionsCache;
+}
 
 /* 透過 account_links（網站 LINE 登入時已存）查出此 LINE 使用者的居住地 → 用來篩在地資源 */
 // 找出此 LINE 使用者要套用的地區：① 他在 LINE 選過的（line_user_prefs）② 否則網站個人資料的居住地
@@ -317,11 +378,11 @@ async function handleCategoryResources(catName: string, replyToken: string, site
   const filter = await getRegionFilter(admin, uid);
   let data: unknown[] = [];
   if (subIds.length) {
-    let q = admin.from("resources").select(RES_COLS).in("subcategory_id", subIds).eq("status", "active");
+    let q = admin.from("resources").select(RES_COLS).or(`subcategory_id.in.(${subIds.join(",")}),extra_subcats.ov.{${subIds.join(",")}}`).eq("status", "active");
     if (filter) q = q.or(`scope.eq.national,region_id.in.(${filter.ids.join(",")})`);
     ({ data } = await q.order("like_count", { ascending: false, nullsFirst: false }).limit(8));
   }
-  await replyResources(replyToken, data, siteUrl, CATEGORY_ICON[catName] ?? "pin", filter, `「${catName}」目前還沒有資源，換個分類或直接打關鍵字試試 👇`);
+  await replyResources(replyToken, data, siteUrl, CATEGORY_ICON[catName] ?? "pin", filter, `「${catName}」目前還沒有資源，換個分類或直接打關鍵字試試 👇`, undefined, uid);
 }
 
 // 點細分類 → 該細分類的資源（依使用者地區篩選）
@@ -329,7 +390,7 @@ async function handleSubcatResources(subId: string, replyToken: string, siteUrl:
   const admin = createAdminClient();
   const { data: sub } = await admin.from("subcategories").select("name, category_id").eq("id", subId).maybeSingle();
   const filter = await getRegionFilter(admin, uid);
-  let q = admin.from("resources").select(RES_COLS).eq("subcategory_id", subId).eq("status", "active");
+  let q = admin.from("resources").select(RES_COLS).or(`subcategory_id.eq.${subId},extra_subcats.ov.{${subId}}`).eq("status", "active");
   if (filter) q = q.or(`scope.eq.national,region_id.in.(${filter.ids.join(",")})`);
   const { data } = await q.order("like_count", { ascending: false, nullsFirst: false }).limit(8);
   let iconName = "pin";
@@ -337,14 +398,48 @@ async function handleSubcatResources(subId: string, replyToken: string, siteUrl:
     const { data: cat } = await admin.from("categories").select("name").eq("id", sub.category_id).maybeSingle();
     if (cat?.name) iconName = CATEGORY_ICON[cat.name] ?? "pin";
   }
-  await replyResources(replyToken, data ?? [], siteUrl, iconName, filter, `「${sub?.name ?? "這一項"}」目前還沒有資源，換一項或直接打關鍵字試試 👇`);
+  const pin = pinnedBySub(sub?.name);
+  await replyResources(replyToken, data ?? [], siteUrl, iconName, filter, `「${sub?.name ?? "這一項"}」目前還沒有資源，換一項或直接打關鍵字試試 👇`, pin ? toolBubble(pin) : undefined, uid);
 }
 
-async function replyResources(replyToken: string, data: unknown[], siteUrl: string, icon: string, filter: { name: string } | null, emptyMsg: string) {
+/* 官方查詢工具（對應網站置頂工具卡）：依子分類名或關鍵字觸發 */
+type PinTool = { sub: string; trig: RegExp; title: string; tag: string; url?: string; links?: { label: string; url: string }[] };
+const LINE_PINNED: PinTool[] = [
+  { sub: "鄰近醫學中心、診所", trig: /看診|診所|醫院|開診|門診|急診|假日.*醫|連假.*醫|過年.*醫/, title: "假日／連假開診院所查詢", url: "https://info.nhi.gov.tw/INAE1000/INAE1002S01", tag: "健保署" },
+  { sub: "1966 長照服務", trig: /長照|1966|居家照顧|日照|喘息|照顧服務/, title: "長照 2.0 服務與在地據點查詢", url: "https://1966.gov.tw/", tag: "衛福部" },
+  { sub: "輔具申請", trig: /輔具|輪椅|助行器|氣墊床|拐杖|助聽器/, title: "政府輔具資源服務與補助查詢", url: "https://newrepat.sfaa.gov.tw/home/gov-repat-service", tag: "社家署" },
+  { sub: "疫苗資訊", trig: /疫苗|流感|肺炎鏈球菌|接種/, title: "流感疫苗接種計畫與疫苗地圖", tag: "疾管署", links: [
+    { label: "公費流感接種計畫", url: "https://www.cdc.gov.tw/Category/QAPage/T93ZfoLyyuCaZvKf7v9eww" },
+    { label: "疫苗及流感藥劑地圖", url: "https://vaxmap.cdc.gov.tw" },
+  ] },
+];
+const pinnedBySub = (name?: string | null) => LINE_PINNED.find((p) => p.sub === name) ?? null;
+const pinnedByText = (s: string) => LINE_PINNED.find((p) => p.trig.test(s)) ?? null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toolBubble(t: PinTool): any {
+  const links = t.links ?? (t.url ? [{ label: "立即查詢", url: t.url }] : []);
+  return {
+    type: "flex", altText: `${t.tag} 官方查詢：${t.title}`,
+    contents: {
+      type: "bubble", size: "kilo",
+      body: { type: "box", layout: "vertical", spacing: "sm", contents: [
+        { type: "text", text: `🔍 ${t.tag}．官方查詢`, size: "xs", weight: "bold", color: "#B23F1E" },
+        { type: "text", text: t.title, weight: "bold", size: "md", wrap: true, color: "#241F1B" },
+      ] },
+      footer: { type: "box", layout: "vertical", spacing: "sm", contents:
+        links.map((lk) => ({ type: "button", style: "primary", color: "#E0552E", height: "sm",
+          action: { type: "uri", label: lk.label, uri: lk.url } })) },
+    },
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function replyResources(replyToken: string, data: unknown[], siteUrl: string, icon: string, filter: { name: string } | null, emptyMsg: string, pinned?: any, uid?: string) {
   const flex = buildResourceMessages(normRes(data as never[]), siteUrl, icon);
-  if (!flex) { await lineReply(replyToken, [menuText(emptyMsg)]); return; }
   const note = regionNote(filter);
-  await lineReply(replyToken, note ? [note, flex] : [flex]);
+  const msgs = [pinned, note, flex || (data.length ? null : menuText(emptyMsg))].filter(Boolean);
+  if (msgs.length === 0) { await lineReply(replyToken, [menuText(emptyMsg)], uid); return; }
+  await lineReply(replyToken, msgs, uid);
 }
 
 // 活動分類（對齊網站 activities 頁的 CARD_CATS / themeKeyFor）
@@ -484,94 +579,226 @@ async function handleQa(replyToken: string, siteUrl: string) {
   })]);
 }
 
+// 換地區確認卡（搜尋字提到的地區 ≠ 已設定地區時）
+// postbackData：是 → 執行搜尋（rsearch=.. 或 rgroup=..）；否 → rcancel
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function switchConfirmBubble(name: string, postbackData: string, keyword: string): any {
+  const kw = keyword || "這個";
+  return {
+    type: "flex", altText: `要切換到${name}搜尋嗎？`,
+    contents: {
+      type: "bubble",
+      body: { type: "box", layout: "vertical", spacing: "md", contents: [
+        { type: "text", text: "要換個地區搜尋嗎？", weight: "bold", size: "lg", color: "#241F1B" },
+        { type: "text", text: `您搜尋「${kw}」並提到「${name}」，但目前設定的地區不是這裡。要改看「${name}」的在地資源嗎？`, size: "sm", color: "#574E47", wrap: true },
+      ] },
+      footer: { type: "box", layout: "vertical", spacing: "sm", contents: [
+        { type: "button", style: "primary", color: "#E0552E", action: { type: "postback", label: `是，看${name}`.slice(0, 20), data: postbackData, displayText: `看${name}的資源` } },
+        { type: "button", style: "secondary", action: { type: "postback", label: "否，維持原本", data: "rcancel", displayText: "維持原本地區" } },
+      ] },
+    },
+  };
+}
+
+// 同名地區消歧卡（大安、信義、中正…）：列出候選讓使用者點選
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ambiguityBubble(base: string, kw: string, candidates: { label: string; regionId: string }[]): any {
+  const kwLabel = kw || "這個";
+  return {
+    type: "flex", altText: `「${base}」有好幾個，請選一個`,
+    contents: {
+      type: "bubble",
+      body: { type: "box", layout: "vertical", spacing: "md", contents: [
+        { type: "text", text: `「${base}」有好幾個地方`, weight: "bold", size: "lg", color: "#241F1B" },
+        { type: "text", text: `您要找「${kwLabel}」，請問是哪一個「${base}」呢？`, size: "sm", color: "#574E47", wrap: true },
+      ] },
+      footer: { type: "box", layout: "vertical", spacing: "sm", contents: [
+        ...candidates.slice(0, 4).map((c) => ({
+          type: "button", style: "primary", color: "#E0552E", height: "md" as const,
+          action: { type: "postback", label: c.label.slice(0, 20), data: `rsearch=${c.regionId}|${encodeURIComponent(kw)}`, displayText: `看${c.label}` },
+        })),
+        { type: "button", style: "secondary", height: "md" as const, action: { type: "postback", label: "都不是", data: "rcancel", displayText: "取消" } },
+      ] },
+    },
+  };
+}
+
+// 搜尋情境：要套用的地區 id 集合 + 排序用縣市/區
+type SearchCtx = { ids: string[]; countyIds: string[]; districtId: string | null } | null;
+
+// 由地區 id 推出搜尋情境（自己 + 子區 + 父縣市，並標出縣市/區層級）
+function ctxFromRegionId(regions: RegionRow[], id: string): SearchCtx {
+  const self = regions.find((r) => r.id === id);
+  if (!self) return null;
+  const ids = expandRegionIds(regions, id);
+  if (self.level === "county") return { ids, countyIds: [id], districtId: null };
+  return { ids, countyIds: self.parent_id ? [self.parent_id] : [], districtId: id };
+}
+
+// 主入口：解析地區 → 衝突才跳確認；否則直接搜
 async function handleTextMessage(text: string, replyToken: string, siteUrl: string, uid?: string) {
   const admin = createAdminClient();
-  let keyword = text.trim();
-  let regionId: string | null = null;
 
-  // Use Claude to extract keyword + region
-  try {
-    const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const msg = await claude.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 128,
-      messages: [
-        {
-          role: "user",
-          content: `從以下用戶訊息中抽取搜尋關鍵字與台灣縣市，回傳 JSON。
-訊息：「${text}」
-只回傳：{"keyword":"搜尋關鍵字","region":"縣市名或空字串"}`,
-        },
-      ],
-    });
-    const raw = msg.content[0].type === "text" ? msg.content[0].text : "{}";
-    const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? "{}");
-    if (parsed.keyword) keyword = parsed.keyword;
+  // 安全分流（急症、中風、輕生、受虐…，p≥8）→ 最優先直接回，
+  // 不進地區判斷、不跳換地區卡，確保緊急狀況不被流程耽誤。
+  // 一般直接答案 FAQ（健保卡、119 等）不在此短路，留待後面流程處理，
+  // 才不會擋到像「民間救護車」這種其實要查資源的需求。
+  const safetyFaq = matchFaq(text);
+  if (safetyFaq && safetyFaq.prio >= 8) { await lineReply(replyToken, [menuText(safetyFaq.a)], uid); return; }
 
-    if (parsed.region) {
-      const { data: matchedRegion } = await admin
-        .from("regions")
-        .select("id")
-        .ilike("name", `%${parsed.region}%`)
-        .limit(1)
-        .single();
-      regionId = matchedRegion?.id ?? null;
+  const regions = await loadRegions(admin);
+  const parsed = parseLocation(text, regions);
+  const curId = await resolveUserRegionId(admin, uid);
+
+  // (1) 沒偵測到地區 → 用使用者預設地區（沒設定就全台）
+  if (parsed.region.type === "none") {
+    const ctx = curId ? ctxFromRegionId(regions, curId) : null;
+    const home = curId ? regions.find((r) => r.id === curId) ?? null : null;
+    // 提到不認得的在地地名（民生社區、xx新村…）→ 先說明，再用設定地區推薦
+    let noteMsg = ctx ? regionNote(home ? { name: home.name } : null) : null;
+    if (parsed.unknownPlace) {
+      noteMsg = menuText(home
+        ? `我不太確定「${parsed.unknownPlace}」在哪裡 🙂 先用您設定的地區「${home.name}」為您推薦：`
+        : `我不太確定「${parsed.unknownPlace}」在哪裡 🙂 您可以打「縣市＋需求」(例如「桃園 送餐」)，或先點下方「換地區」設定您的所在地。`);
     }
-  } catch {
-    // fallback: use raw text
-  }
-
-  // 先決定地區：訊息有講(regionId) 或 使用者已設定(homeFilter)
-  const homeFilter = regionId ? null : await getRegionFilter(admin, uid);
-  const hasRegion = !!regionId || !!homeFilter;
-
-  // FAQ：直接答案(專線/安全)永遠回；導引型(叫你傳地區)只有在「不知道地區」時才回——
-  // 已知地區就直接幫他搜，不再叫他重打地區（避免一直回同樣的）
-  const faq = matchFaq(text);
-  if (faq && (!faq.route || !hasRegion)) {
-    await lineReply(replyToken, [menuText(faq.a)]);
+    await searchAndReply({ admin, regions, keyword: parsed.keyword, origText: text, replyToken, siteUrl, uid, ctx, noteMsg });
     return;
   }
 
-  // 關鍵字也比對「分類/子分類名稱」——資源多以機構命名，純文字常搜不到（例如「長照」對不到「中壢區衛生所」）
-  const orParts = [`name.ilike.%${keyword}%`, `summary.ilike.%${keyword}%`];
-  try {
-    const subIds = new Set<string>();
-    const { data: subM } = await admin.from("subcategories").select("id").ilike("name", `%${keyword}%`);
-    for (const s of subM ?? []) subIds.add(s.id);
-    const { data: catM } = await admin.from("categories").select("id").ilike("name", `%${keyword}%`);
-    if (catM && catM.length) {
-      const { data: catSubs } = await admin.from("subcategories").select("id").in("category_id", catM.map((c) => c.id));
-      for (const s of catSubs ?? []) subIds.add(s.id);
+  // (2) 需要消歧 / 偏鄉
+  if (parsed.region.type === "choice") {
+    const conf = regionConflict(parsed, curId, regions);
+    if (conf.autoChoice) {
+      // 候選正好落在目前縣市 → 直接採用、不打擾
+      const c = conf.autoChoice;
+      await searchAndReply({ admin, regions, keyword: parsed.keyword, origText: text, replyToken, siteUrl, uid, ctx: { ids: c.ids, countyIds: c.countyId ? [c.countyId] : [], districtId: c.districtId }, noteMsg: localeNote(c.label) });
+      return;
     }
-    if (subIds.size) orParts.unshift(`subcategory_id.in.(${[...subIds].join(",")})`);
-  } catch { /* ignore */ }
-
-  // Query resources
-  let query = admin.from("resources").select(RES_COLS).eq("status", "active").or(orParts.join(",")).limit(8);
-  if (regionId) {
-    query = query.or(`scope.eq.national,region_id.eq.${regionId}`);
-  } else if (homeFilter) {
-    query = query.or(`scope.eq.national,region_id.in.(${homeFilter.ids.join(",")})`);
+    if (parsed.region.reason === "rural") {
+      await lineReply(replyToken, [menuText("偏鄉的長輩資源每個縣市都有 🙂 您想找哪個縣市的偏鄉呢？\n可以打「縣市＋偏鄉＋需求」，例如「屏東 偏鄉 送餐」或「南投 偏鄉 共餐」。")], uid);
+      return;
+    }
+    // 同名地區 → 候選卡
+    const cands = parsed.region.candidates.map((c) => ({ label: c.label, regionId: (c.districtId ?? c.countyId) as string }));
+    await lineReply(replyToken, [ambiguityBubble(parsed.region.label, parsed.keyword, cands)], uid);
+    return;
   }
 
+  // (3) 已解析出明確地區（或群組）
+  const r = parsed.region;
+  const conf = regionConflict(parsed, curId, regions);
+  if (conf.needPrompt) {
+    const data = r.isGroup
+      ? `rgroup=${encodeURIComponent(r.label)}|${encodeURIComponent(parsed.keyword)}`
+      : `rsearch=${(r.districtId ?? r.countyId) as string}|${encodeURIComponent(parsed.keyword)}`;
+    await lineReply(replyToken, [switchConfirmBubble(r.label, data, parsed.keyword)], uid);
+    return;
+  }
+  // 不衝突（與目前地區一致，或沒設定地區）→ 直接搜
+  const countyIds = r.isGroup ? r.ids : (r.countyId ? [r.countyId] : []);
+  await searchAndReply({ admin, regions, keyword: parsed.keyword, origText: text, replyToken, siteUrl, uid, ctx: { ids: r.ids, countyIds, districtId: r.districtId }, noteMsg: localeNote(r.label) });
+}
+
+const localeNote = (label: string) => menuText(`📍 已為您看「${label}」的資源（全國優先，再依縣市、行政區排序）🙂`);
+
+// 共用搜尋 + 回覆（LINE）：依關鍵字找資源、依 全國→縣市→區 排序、附上地區提示
+async function searchAndReply(o: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any; regions: RegionRow[]; keyword: string; origText: string;
+  replyToken: string; siteUrl: string; uid?: string; ctx: SearchCtx;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  noteMsg: any | null;
+}) {
+  const { admin, keyword, origText, replyToken, siteUrl, uid, ctx, noteMsg } = o;
+
+  // FAQ：直接答案(專線/安全)永遠回；導引型只有在不知道地區時才回
+  const faq = matchFaq(origText);
+  if (faq && (!faq.route || !ctx)) { await lineReply(replyToken, [menuText(faq.a)], uid); return; }
+
+  // 關鍵字斷詞（含黏在一起的中文 bigram，提高召回）
+  const searchTokens = searchTokensOf(keyword);
+  const toks = searchTokens.length ? searchTokens : [keyword || origText.trim()];
+
+  // 口語 → 細標籤對照（精準）：把「救護車」對到「民間救護車」等
+  const exp = expandKeyword(keyword);
+  const ilikeTerms = [...new Set([...toks, ...exp.terms])];
+
+  const subIds = new Set<string>();
+  // (1) 口語對照命中的細標籤 → 精準取 id
+  if (exp.subcatNames.length) {
+    try {
+      const { data } = await admin.from("subcategories").select("id").in("name", exp.subcatNames);
+      for (const s of data ?? []) subIds.add(s.id);
+    } catch { /* ignore */ }
+  }
+  // (2) 斷詞與分類名比對（補強）
+  for (const tok of toks) {
+    try {
+      const { data: subM } = await admin.from("subcategories").select("id").ilike("name", `%${tok}%`);
+      for (const s of subM ?? []) subIds.add(s.id);
+      const { data: catM } = await admin.from("categories").select("id").ilike("name", `%${tok}%`);
+      if (catM && catM.length) {
+        const { data: catSubs } = await admin.from("subcategories").select("id").in("category_id", catM.map((c: { id: string }) => c.id));
+        for (const s of catSubs ?? []) subIds.add(s.id);
+      }
+    } catch { /* ignore */ }
+  }
+  const orParts: string[] = [];
+  if (subIds.size) {
+    orParts.push(`subcategory_id.in.(${[...subIds].join(",")})`);
+    orParts.push(`extra_subcats.ov.{${[...subIds].join(",")}}`);
+  }
+  for (const tok of ilikeTerms) {
+    orParts.push(`name.ilike.%${tok}%`);
+    orParts.push(`summary.ilike.%${tok}%`);
+  }
+
+  let query = admin.from("resources").select(RES_COLS).eq("status", "active").or(orParts.join(",")).limit(12);
+  if (ctx) query = query.or(`scope.eq.national,region_id.in.(${ctx.ids.join(",")})`);
   const { data: resources } = await query;
 
+  const pin = pinnedByText(`${origText} ${keyword}`);
+  const pinMsg = pin ? toolBubble(pin) : null;
+
   if (!resources || resources.length === 0) {
-    // 查無在地資源 → 用 AI 給個別化回答（不再每次都回同一句）
-    const ai = await aiAnswer(text);
-    if (ai) { await lineReply(replyToken, [menuText(ai)]); return; }
-    await lineReply(replyToken, [
-      menuText(`這個問題我先幫您記著了 😊 您可以到網站找更多：\n${siteUrl}/search?q=${encodeURIComponent(text)}\n或點下方選單、打「縣市＋需求」(例如「中壢 長照」) 讓我幫您找 👇`),
-    ]);
+    const ai = await aiAnswer(origText);
+    if (ai) { await lineReply(replyToken, [pinMsg, menuText(ai)].filter(Boolean), uid); return; }
+    await lineReply(replyToken, [pinMsg,
+      menuText(`這個問題我先幫您記著了 😊 您可以到網站找更多：\n${siteUrl}/search?q=${encodeURIComponent(origText)}\n或點下方選單、打「縣市＋需求」(例如「中壢 長照」) 讓我幫您找 👇`),
+    ].filter(Boolean), uid);
     return;
   }
 
-  const flexMsg = buildResourceMessages(normRes(resources), siteUrl, "search");
+  // 相關度排序（細標籤 > 名稱 > 標籤 > 摘要；同分再 全國→縣市→區 + 收藏數）
+  const strongTerms = [...keyword.split(/[\s,，、]+/).map((t) => t.trim()).filter((t) => t.length >= 2), ...exp.terms];
+  const ranked = rankResources(normRes(resources), {
+    subIds,
+    terms: strongTerms,
+    countyIds: ctx?.countyIds ?? [],
+    districtId: ctx?.districtId ?? null,
+  });
+  const flexMsg = buildResourceMessages(ranked, siteUrl, "search");
   if (flexMsg) {
-    const note = regionNote(homeFilter);
-    await lineReply(replyToken, note ? [note, flexMsg] : [flexMsg]);
+    await lineReply(replyToken, [pinMsg, noteMsg, flexMsg].filter(Boolean), uid);
   }
+}
+
+// 由 postback 觸發的搜尋（使用者已選好地區 / 候選 / 群組）→ 不再確認，直接搜
+async function searchByRegionId(regionId: string, keyword: string, replyToken: string, siteUrl: string, uid?: string) {
+  const admin = createAdminClient();
+  const regions = await loadRegions(admin);
+  const ctx = ctxFromRegionId(regions, regionId);
+  const label = regions.find((r) => r.id === regionId)?.name ?? "您選的地區";
+  await searchAndReply({ admin, regions, keyword, origText: keyword, replyToken, siteUrl, uid, ctx, noteMsg: localeNote(label) });
+}
+
+async function searchByGroup(groupLabel: string, keyword: string, replyToken: string, siteUrl: string, uid?: string) {
+  const admin = createAdminClient();
+  const regions = await loadRegions(admin);
+  const g = REGION_GROUPS.find((x) => x.label === groupLabel);
+  if (!g) { await searchAndReply({ admin, regions, keyword, origText: keyword, replyToken, siteUrl, uid, ctx: null, noteMsg: null }); return; }
+  const countyIds = g.counties.map((cn) => regions.find((r) => r.level === "county" && nz(r.name) === nz(cn))?.id).filter(Boolean) as string[];
+  await searchAndReply({ admin, regions, keyword, origText: keyword, replyToken, siteUrl, uid, ctx: { ids: countyIds, countyIds, districtId: null }, noteMsg: localeNote(groupLabel) });
 }
 
 // LINE event types

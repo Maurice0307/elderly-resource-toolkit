@@ -96,21 +96,13 @@ async function ThemeListPage({ themeKey }: { themeKey: string }) {
           <Link href="/activities" className="wv-pill" style={{ display: "inline-flex", alignItems: "center", gap: 7, marginBottom: 16 }}>
             <ELIcon name="chevron" size={16} color="#574E47" style={{ transform: "rotate(180deg)" }} /> 互動學習
           </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 14, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-              <ELIcon name={theme.icon} size={28} color="#F26B43" />
-            </div>
-            <div>
-              <h1 style={{ margin: "0 0 2px", fontSize: 26, fontWeight: 800, color: theme.color }}>{theme.label}</h1>
-              <div style={{ fontSize: 15, color: "#574E47" }}>{theme.sub} · {cards.length} 張圖卡</div>
-            </div>
-          </div>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: theme.color }}>{theme.label}</h1>
         </div>
       </div>
 
       <div className="wv-wrap" style={{ paddingTop: 16, paddingBottom: 56 }}>
-        {/* 手機版分類標頭：圖示 + 子說明 + 共 N 張圖卡 · 點一張開始 */}
-        <div className="wv-mobile-only" style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+        {/* 分類標頭：圖示 + 子說明 + 共 N 張圖卡 · 點一張開始（桌機與手機都顯示）*/}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <span style={{ width: 46, height: 46, borderRadius: 13, background: "#FFF4EF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <ELIcon name={theme.icon} size={24} color="#F26B43" />
           </span>

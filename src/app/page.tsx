@@ -58,23 +58,25 @@ async function CategoryGrid() {
     education: "樂齡、社大、3C 教學",
   };
 
-  /* dynamic counts: resource count per category */
-  let countBySlug: Record<string, number> = {};
+  /* dynamic counts: resource count per category（用 count 查詢，避免被 1000 筆上限截斷）*/
+  const countBySlug: Record<string, number> = {};
   try {
-    const [{ data: catRows }, { data: subcatRows }, { data: resRows }] = await Promise.all([
+    const [{ data: catRows }, { data: subcatRows }] = await Promise.all([
       supabase.from("categories").select("id, slug"),
       supabase.from("subcategories").select("id, category_id"),
-      supabase.from("resources").select("subcategory_id").eq("status", "active"),
     ]);
-    const catIdToSlug: Record<string, string> = {};
-    for (const c of catRows ?? []) catIdToSlug[c.id] = c.slug;
-    const subcatToCategory: Record<string, string> = {};
-    for (const s of subcatRows ?? []) subcatToCategory[s.id] = s.category_id;
-    for (const r of resRows ?? []) {
-      const catId = subcatToCategory[r.subcategory_id];
-      const slug  = catId ? catIdToSlug[catId] : null;
-      if (slug) countBySlug[slug] = (countBySlug[slug] ?? 0) + 1;
-    }
+    const subIdsByCat: Record<string, string[]> = {};
+    for (const s of subcatRows ?? []) (subIdsByCat[s.category_id] ??= []).push(s.id);
+    await Promise.all((catRows ?? []).map(async (c: { id: string; slug: string }) => {
+      const subIds = subIdsByCat[c.id] ?? [];
+      if (subIds.length === 0) { countBySlug[c.slug] = 0; return; }
+      const { count } = await supabase
+        .from("resources")
+        .select("id", { count: "exact", head: true })
+        .in("subcategory_id", subIds)
+        .eq("status", "active");
+      countBySlug[c.slug] = count ?? 0;
+    }));
   } catch { /* fallback to zero */ }
 
   return (

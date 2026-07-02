@@ -9,6 +9,7 @@ import { DwellTracker } from "@/components/resources/DwellTracker";
 import { MobileResourceDetail } from "@/components/resources/MobileResourceDetail";
 import { getResourceById } from "@/lib/resources/queries";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ELIcon } from "@/components/layout/ELIcon";
 
 type Params = { category: string; id: string };
@@ -27,18 +28,18 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
   const resource = await getResourceById(id);
   if (!resource) notFound();
 
+  // 收藏狀態與數量（伺服器端收藏）
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  let initialLiked = false;
+  const adminCli = createAdminClient();
+  const { count: bmCount } = await adminCli.from("resource_bookmarks").select("user_id", { count: "exact", head: true }).eq("resource_id", resource.id);
+  let savedBm = false;
+  let likedByMe = false;
   if (user) {
-    const { data } = await supabase
-      .from("resource_likes")
-      .select("id")
-      .eq("resource_id", resource.id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-    initialLiked = !!data;
+    const { data: bm } = await adminCli.from("resource_bookmarks").select("user_id").eq("resource_id", resource.id).eq("user_id", user.id).maybeSingle();
+    savedBm = !!bm;
+    const { data: lk } = await adminCli.from("resource_likes").select("id").eq("resource_id", resource.id).eq("user_id", user.id).maybeSingle();
+    likedByMe = !!lk;
   }
 
   const isNational = resource.scope === "national";
@@ -64,6 +65,8 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
           sourceOrg={resource.source_org}
           tags={resource.tags as string[] | null}
           likeCount={resource.like_count}
+          userId={user?.id ?? null}
+          initialLiked={likedByMe}
           lat={resource.latitude}
           lng={resource.longitude}
           backHref={`/resources?cat=${cat.slug}`}
@@ -96,6 +99,9 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
                 {(resource as any).like_count > 0 && (
                   <span style={{ fontSize: 13, color: "#6E645C" }}>· {(resource as any).like_count} 位厝邊說有用</span>
                 )}
+                <span style={{ marginLeft: "auto" }}>
+                  <LikeButton resourceId={resource.id} initialCount={(resource as any).like_count ?? 0} initialLiked={likedByMe} userId={user?.id ?? null} compact />
+                </span>
               </div>
 
               {/* 標題 + 摘要 */}
@@ -203,21 +209,7 @@ export default async function ResourcePage({ params }: { params: Promise<Params>
             <div style={{ background: "#fff", borderRadius: 20, border: "1px solid #F0E6DE", padding: 22 }}>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#241F1B", marginBottom: 14 }}>這筆資源</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <LikeButton
-                  resourceId={resource.id}
-                  initialCount={resource.like_count}
-                  initialLiked={initialLiked}
-                  userId={user?.id ?? null}
-                />
-                <BookmarkButton resourceId={resource.id} />
-                {resource.website_url && (
-                  <a
-                    href={resource.website_url} target="_blank" rel="noopener noreferrer"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, height: 46, borderRadius: 999, border: "1.5px solid #E4D7CC", background: "#fff", fontSize: 15, fontWeight: 700, color: "#574E47", textDecoration: "none" }}
-                  >
-                    <ELIcon name="link" size={19} color="#6E645C" /> 前往官網
-                  </a>
-                )}
+                <BookmarkButton resourceId={resource.id} initialSaved={savedBm} initialCount={bmCount ?? 0} loggedIn={!!user} />
                 <ShareButton title={resource.name} phone={resource.phone} address={resource.address} />
                 <ReportButton subject={resource.name} kind="resource" />
               </div>

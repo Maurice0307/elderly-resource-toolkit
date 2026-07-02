@@ -3,24 +3,30 @@ import { createAdminClient } from "@/lib/supabase/admin";
 /* LINE 對話紀錄 + Profile + 主動推播（表未建立時靜默略過，不影響 bot） */
 
 export async function getLineProfile(userId: string): Promise<string | null> {
+  return (await getLineProfileFull(userId)).name;
+}
+
+// 取 LINE 顯示名稱 + 大頭貼
+export async function getLineProfileFull(userId: string): Promise<{ name: string | null; picture: string | null }> {
   try {
     const r = await fetch(`https://api.line.me/v2/bot/profile/${userId}`, {
       headers: { Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}` },
     });
-    if (!r.ok) return null;
+    if (!r.ok) return { name: null, picture: null };
     const d = await r.json();
-    return d.displayName ?? null;
-  } catch { return null; }
+    return { name: d.displayName ?? null, picture: d.pictureUrl ?? null };
+  } catch { return { name: null, picture: null }; }
 }
 
 export async function logLineMessage(opts: {
-  userId: string; direction: "in" | "out"; text: string; displayName?: string | null; byAdmin?: boolean;
+  userId: string; direction: "in" | "out"; text: string; displayName?: string | null; byAdmin?: boolean; avatarUrl?: string | null;
 }): Promise<void> {
   try {
     const admin = createAdminClient();
     await admin.from("line_messages").insert({
       line_user_id: opts.userId,
       display_name: opts.displayName ?? null,
+      avatar_url: opts.avatarUrl ?? null,
       direction: opts.direction,
       text: opts.text.slice(0, 2000),
       by_admin: opts.byAdmin ?? false,

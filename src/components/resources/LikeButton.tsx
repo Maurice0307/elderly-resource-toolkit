@@ -10,9 +10,10 @@ type Props = {
   initialCount: number;
   initialLiked: boolean;
   userId: string | null;
+  compact?: boolean;
 };
 
-export function LikeButton({ resourceId, initialCount, initialLiked, userId }: Props) {
+export function LikeButton({ resourceId, initialCount, initialLiked, userId, compact }: Props) {
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,27 @@ export function LikeButton({ resourceId, initialCount, initialLiked, userId }: P
     }
 
     setLoading(false);
+  }
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={loading}
+        aria-pressed={liked}
+        title="說讚"
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
+          border: "none", background: "transparent", cursor: loading ? "not-allowed" : "pointer",
+          font: "inherit", fontSize: 13.5, fontWeight: 700, padding: "4px 6px",
+          color: liked ? "#B23F1E" : "#6E645C", opacity: loading ? 0.6 : 1,
+        }}
+      >
+        <ELIcon name="like" size={17} color={liked ? "#F26B43" : "#9C8E84"} />
+        說讚{count > 0 ? ` ${count}` : ""}
+      </button>
+    );
   }
 
   return (

@@ -6,12 +6,15 @@ import { createPortal } from "react-dom";
 import { ELIcon } from "@/components/layout/ELIcon";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { ReportButton } from "@/components/resources/ReportButton";
+import { LikeButton } from "@/components/resources/LikeButton";
 
 type Props = {
   resourceId: string;
   name: string;
   summary?: string | null;
   scope?: string | null;
+  userId?: string | null;
+  initialLiked?: boolean;
   address?: string | null;
   categoryName: string;
   categoryIcon: string;
@@ -67,7 +70,7 @@ function InfoRow({ icon, label, children, action }: { icon: string; label: strin
 }
 
 export function MobileResourceDetail(props: Props) {
-  const { resourceId, name, summary, scope, address, categoryName, categoryIcon, phone, phoneHint, websiteUrl, sourceOrg, tags, likeCount, lat, lng, backHref } = props;
+  const { resourceId, name, summary, scope, address, categoryName, categoryIcon, phone, phoneHint, websiteUrl, sourceOrg, tags, likeCount, lat, lng, backHref, userId, initialLiked } = props;
   const router = useRouter();
   const [saved, setSaved] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -130,6 +133,7 @@ export function MobileResourceDetail(props: Props) {
         <button onClick={() => setShareOpen(true)} aria-label="分享" style={{ width: 40, height: 40, borderRadius: 999, border: "1px solid #E4D7CC", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
           <ELIcon name="send" size={20} color="#574E47" />
         </button>
+        <LikeButton resourceId={resourceId} initialCount={likeCount ?? 0} initialLiked={!!initialLiked} userId={userId ?? null} compact />
       </div>
 
       {/* 標題區 */}

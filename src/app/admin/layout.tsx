@@ -40,7 +40,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         style={{ background: "#1C1917" }}
       >
         {/* 第一行：回前台 + 身分 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Link
             href="/"
             className="shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-base font-bold transition"

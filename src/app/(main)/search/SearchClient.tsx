@@ -21,7 +21,15 @@ export type SearchItem = {
 
 type CatCount = { slug: string; name: string; count: number };
 
-const SORTS = ["在地優先", "最近更新", "依名稱"] as const;
+export type RegionHint =
+  | { kind: "switch"; label: string; code: string }
+  | { kind: "choose"; label: string; options: { label: string; code: string }[] }
+  | { kind: "group"; label: string }
+  | { kind: "rural"; label: string }
+  | { kind: "unknown"; label: string }
+  | null;
+
+const SORTS = ["綜合排序", "最近更新", "依名稱"] as const;
 
 /* 地區徽章（對齊設計稿 LocBadge） */
 function Badge({ isLocal, scope, regionName }: { isLocal: boolean; scope?: string | null; regionName?: string | null }) {
@@ -47,7 +55,7 @@ function Chip({ active, onClick, children }: { active?: boolean; onClick: () => 
   );
 }
 
-export function SearchClient({ query, items, regionLabel, cats }: { query: string; items: SearchItem[]; regionLabel?: string | null; cats: CatCount[] }) {
+export function SearchClient({ query, items, regionLabel, cats, hint }: { query: string; items: SearchItem[]; regionLabel?: string | null; cats: CatCount[]; hint?: RegionHint }) {
   const router = useRouter();
   const [q, setQ] = useState(query);
   const [showLocal, setShowLocal] = useState(true);
@@ -66,6 +74,24 @@ export function SearchClient({ query, items, regionLabel, cats }: { query: strin
     window.addEventListener("el:region-changed", onRegion);
     return () => window.removeEventListener("el:region-changed", onRegion);
   }, [router]);
+
+  // 地區提示（由 server 用共用解析核心算好）：切換 / 同名消歧 / 群組 / 偏鄉
+  const [hintDismissed, setHintDismissed] = useState(false);
+  useEffect(() => { setHintDismissed(false); }, [query]);
+
+  // 切換到指定地區（同步 localStorage + server cookie，再重整）
+  const switchTo = (code: string, name: string) => {
+    try {
+      localStorage.setItem("el_region_codes", JSON.stringify([code]));
+      localStorage.setItem("el_region_code", code);
+      localStorage.setItem("el_region_label", name);
+    } catch {}
+    window.dispatchEvent(new CustomEvent("el:region-changed", { detail: { label: name, code, codes: [code] } }));
+    setHintDismissed(true);
+    fetch("/api/location/set", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) })
+      .catch(() => {})
+      .finally(() => router.refresh());
+  };
 
   const submit = (text?: string) => {
     const t = (text ?? q).trim();
@@ -105,8 +131,8 @@ export function SearchClient({ query, items, regionLabel, cats }: { query: strin
     if (catFilter && r.catSlug !== catFilter) return false;
     return true;
   });
-  if (sort === 0) list = [...list].sort((a, b) => (a.isLocal ? 0 : 1) - (b.isLocal ? 0 : 1));
-  else if (sort === 2) list = [...list].sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+  // sort 0「綜合排序」：沿用 server 端排序（全國 → 縣市 → 區）
+  if (sort === 2) list = [...list].sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
 
   const scopeText = showLocal && showNational ? "在地與全國" : showLocal ? "在地資源" : showNational ? "全國資源" : "在地與全國";
   const localChip = regionLabel || "全台灣";
@@ -146,10 +172,46 @@ export function SearchClient({ query, items, regionLabel, cats }: { query: strin
             </button>
           )}
         </div>
-        <button onClick={startVoice} aria-label="語音搜尋" className={listening ? "wv-mic-on" : undefined} style={{ width: 46, height: 46, borderRadius: 10, background: "#E0552E", border: "none", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
-          <ELIcon name="mic" size={22} color="#fff" />
+        <button onClick={() => submit()} aria-label="搜尋" style={{ height: 46, borderRadius: 10, background: "#E0552E", border: "none", display: "inline-flex", alignItems: "center", gap: 6, padding: "0 16px", flexShrink: 0, cursor: "pointer", color: "#fff", fontSize: 15, fontWeight: 800, font: "inherit" }}>
+          <ELIcon name="search" size={19} color="#fff" /> 搜尋
+        </button>
+        <button onClick={startVoice} aria-label="語音搜尋" className={listening ? "wv-mic-on" : undefined} style={{ width: 46, height: 46, borderRadius: 10, background: "#fff", border: "1.5px solid #E4D7CC", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>
+          <ELIcon name="mic" size={22} color="#E0552E" />
         </button>
       </div>
+
+      {/* 地區提示：偵測到地區且與目前選擇衝突 → 切換 / 同名消歧 / 群組 / 偏鄉 */}
+      {hint && !hintDismissed && (
+        <div style={{ margin: "12px 18px 0", background: "#FFF4EF", border: "1.5px solid #FFD6C7", borderRadius: 14, padding: "12px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <ELIcon name="pin" size={18} color="#F26B43" />
+            <span style={{ flex: 1, fontSize: 14, color: "#574E47", lineHeight: 1.5 }}>
+              {hint.kind === "switch" && <>你搜尋的是「<b style={{ color: "#B23F1E" }}>{hint.label}</b>」，要切換看這裡的在地資源嗎？</>}
+              {hint.kind === "choose" && <>「<b style={{ color: "#B23F1E" }}>{hint.label}</b>」有好幾個地方，請選一個：</>}
+              {hint.kind === "group" && <>「<b style={{ color: "#B23F1E" }}>{hint.label}</b>」範圍較大，已幫你以「全國＋你的地區」排序。想看特定縣市可在搜尋字加上縣市名。</>}
+              {hint.kind === "rural" && <>偏鄉資源每個縣市都有，建議在搜尋字加上縣市，例如「<b style={{ color: "#B23F1E" }}>屏東 偏鄉 送餐</b>」。</>}
+              {hint.kind === "unknown" && <>我不太確定「<b style={{ color: "#B23F1E" }}>{hint.label}</b>」是哪裡，已為您用目前地區{regionLabel ? `「${regionLabel}」` : ""}推薦資源。</>}
+            </span>
+            {hint.kind === "switch" && (
+              <button onClick={() => switchTo(hint.code, hint.label)} style={{ flexShrink: 0, background: "#E0552E", color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px", fontSize: 13.5, fontWeight: 800, cursor: "pointer", font: "inherit" }}>
+                切換到{hint.label}
+              </button>
+            )}
+            <button onClick={() => setHintDismissed(true)} aria-label="關閉" style={{ flexShrink: 0, border: "none", background: "transparent", cursor: "pointer", padding: 4 }}>
+              <ELIcon name="close" size={16} color="#9C8E84" />
+            </button>
+          </div>
+          {hint.kind === "choose" && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, paddingLeft: 28 }}>
+              {hint.options.map((o) => (
+                <button key={o.code} onClick={() => switchTo(o.code, o.label)} style={{ background: "#E0552E", color: "#fff", border: "none", borderRadius: 999, padding: "8px 14px", fontSize: 13.5, fontWeight: 800, cursor: "pointer", font: "inherit" }}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {!query ? (
         /* 空白狀態：提示 + 大家常找的 */

@@ -63,17 +63,21 @@ export default async function ProfilePage() {
   const provider = user.user_metadata?.provider as string | undefined;
   const isLineAcct = provider === "line" || (user.email ?? "").endsWith("@line.users");
   const admin = getAdmin();
-  const { data: linkRows } = await admin.from("account_links").select("provider").eq("user_id", user.id);
+  const { data: linkRows } = await admin.from("account_links").select("provider, provider_key").eq("user_id", user.id);
   const linkedSet = new Set<string>((linkRows ?? []).map((r: { provider: string }) => r.provider));
   if (user.phone) linkedSet.add("phone");
   if (isLineAcct) linkedSet.add("line");
   if (provider === "google" && user.email) linkedSet.add("google");
+  // 顯示用 email：優先真實信箱（非 @line.users）；LINE 登入者改抓已綁定的 Google 信箱
+  const googleEmail = (linkRows ?? []).find((r: { provider: string; provider_key: string }) => r.provider === "google" && /@/.test(r.provider_key))?.provider_key;
+  const realEmail = (user.email && !isLineAcct) ? user.email : googleEmail;
+  const displayEmail = realEmail ?? (isLineAcct ? "（以 LINE 登入）" : (user.email ?? "—"));
   const unlinkedCount = ["line", "google", "phone"].filter((p) => !linkedSet.has(p)).length;
   const region = (user.user_metadata?.region as string | undefined) ?? "";
 
   const [{ count: savedCount }, { count: submittedCount }, { count: qaCount }, { data: profileRow }] =
     await Promise.all([
-      supabase.from("resource_likes").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+      admin.from("resource_bookmarks").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       supabase.from("resources").select("*", { count: "exact", head: true }).eq("submitted_by", user.id),
       supabase.from("questions").select("*", { count: "exact", head: true }).eq("author_id", user.id),
       supabase.from("profiles").select("identity, points, role").eq("id", user.id).maybeSingle(),
@@ -103,7 +107,7 @@ export default async function ProfilePage() {
 
   const infoFields = [
     { label: "顯示名稱", value: displayName },
-    { label: "電子信箱", value: user.email ?? "—" },
+    { label: "電子信箱", value: displayEmail },
     { label: "所在地區", value: region || "未設定" },
     { label: "身份", value: identityLabel },
   ];
@@ -117,6 +121,7 @@ export default async function ProfilePage() {
     ...(isVolunteer ? [{ icon: "gift", name: "點數兌換商店", meta: `${points} 點`, href: "/rewards" }] : []),
   ];
   const menuSettings = [
+    ...(isStaff ? [{ icon: "shield", name: "管理後台", meta: role === "admin" ? "管理員" : "審核員", href: "/admin" }] : []),
     { icon: "education", name: "使用教學與理念", meta: "", href: "/guide" },
     { icon: "textsize", name: "字級與無障礙", meta: "", href: "/accessibility" },
     { icon: "send", name: "通知設定", meta: "", href: "/notifications" },
