@@ -7,11 +7,11 @@
 <a name="繁體中文"></a>
 ## 繁體中文
 
-[![Node.js CI](https://github.com/Maurice0307/elderly-resource-toolkit/actions/workflows/node.js.yml/badge.svg)](https://github.com/Maurice0307/elderly-resource-toolkit/actions/workflows/node.js.yml)
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE.txt)
-
 ### 專案介紹
 這是一個致力於整合與規劃「長者資源」的開源專案 ElderLink。我們的目標是打造一個友善的工具，讓長者及其照護者能夠更輕鬆地獲取必要的服務、醫療資訊與社區支持。
+
+### 線上預覽
+幸福好厝邊 [https://elderly-resource-toolkit.vercel.app/](https://elderly-resource-toolkit.vercel.app/)
 
 ### 如何參與貢獻
 我們非常歡迎大家加入！無論是 **Debug (技術除錯)**、**優化介面體驗 (UI/UX)**，或是 **開發新的功能模組**，您的每一份協助對這個專案都至關重要。
@@ -30,11 +30,11 @@
 <a name="english"></a>
 ## English
 
-[![Node.js CI](https://github.com/Maurice0307/elderly-resource-toolkit/actions/workflows/node.js.yml/badge.svg)](https://github.com/Maurice0307/elderly-resource-toolkit/actions/workflows/node.js.yml)
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE.txt)
-
 ### Introduction
 This project (ElderLink) is an open-source initiative dedicated to integrating and organizing resources for the elderly. Our mission is to build a user-friendly tool that helps seniors and their caregivers easily access essential services, medical information, and community support.
+
+### Live Demo
+ElderLink Web [https://elderly-resource-toolkit.vercel.app/](https://elderly-resource-toolkit.vercel.app/)
 
 ### Contributing
 We welcome contributions from the community! Whether it's **debugging**, **improving UI/UX**, or **adding new functional modules**, your help is invaluable to our mission.
