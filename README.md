@@ -15,8 +15,8 @@
 
 ### 使用意見回饋
 我們非常重視您的使用體驗！如果您在使用過程中發現任何問題，或是希望增加什麼功能，歡迎透過以下方式告訴我們：
--回報問題 / 提供建議： 請直接前往 [Issues](https://github.com/Maurice0307/elderly-resource-toolkit/issues) 頁面 點擊 "New issue"。
--私訊開發者： 也可以透過 GitHub 的討論區跟我聯繫。
+- 回報問題 / 提供建議： 請直接前往 [Issues](https://github.com/Maurice0307/elderly-resource-toolkit/issues) 頁面 點擊 "New issue"。
+- 私訊開發者： 也可以透過 GitHub 的討論區跟我聯繫。
 
 ### 如何參與貢獻
 我們非常歡迎大家加入！無論是 **Debug (技術除錯)**、**優化介面體驗 (UI/UX)**，或是 **開發新的功能模組**，您的每一份協助對這個專案都至關重要。
@@ -43,8 +43,8 @@ ElderLink Web [https://elderly-resource-toolkit.vercel.app/](https://elderly-res
 
 ### User Feedback
 We highly value your user experience! If you encounter any issues or have suggestions for new features, please let us know through the following channels:
--Report an Issue / Suggestion: Please head over to the [Issues](https://github.com/Maurice0307/elderly-resource-toolkit/issues) page and click "New issue."
--Contact the Developer: You can also reach out to us via the GitHub discussion board.
+- Report an Issue / Suggestion: Please head over to the [Issues](https://github.com/Maurice0307/elderly-resource-toolkit/issues) page and click "New issue."
+- Contact the Developer: You can also reach out to us via the GitHub discussion board.
 
 ### Contributing
 We welcome contributions from the community! Whether it's **debugging**, **improving UI/UX**, or **adding new functional modules**, your help is invaluable to our mission.
